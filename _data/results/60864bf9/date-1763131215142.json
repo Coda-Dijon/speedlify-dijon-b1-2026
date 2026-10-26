@@ -1,0 +1,66 @@
+{
+  "url": "https://coda-school.github.io/25-html-g5/josserand/",
+  "requestedUrl": "https://coda-school.github.io/25-html-g5/josserand/",
+  "timestamp": 1763131509480,
+  "ranks": {
+    "hundos": 5,
+    "performance": 6,
+    "accessibility": 3,
+    "cumulative": 5
+  },
+  "lighthouse": {
+    "version": "12.8.2",
+    "performance": 0.94,
+    "accessibility": 0.93,
+    "bestPractices": 0.71,
+    "seo": 0.91,
+    "total": 349
+  },
+  "firstContentfulPaint": 808.27,
+  "speedIndex": 808.27,
+  "largestContentfulPaint": 1705.631,
+  "totalBlockingTime": 0,
+  "cumulativeLayoutShift": 0.14094733644447816,
+  "timeToInteractive": 1705.631,
+  "maxPotentialFirstInputDelay": 16,
+  "timeToFirstByte": 54.858999999999995,
+  "weight": {
+    "summary": "10 requests • 1.1 MiB",
+    "total": 1164935,
+    "image": 1157113,
+    "imageCount": 7,
+    "script": 0,
+    "scriptCount": 0,
+    "document": 1625,
+    "font": 0,
+    "fontCount": 0,
+    "stylesheet": 814,
+    "stylesheetCount": 1,
+    "thirdParty": 1157113,
+    "thirdPartyCount": 7
+  },
+  "run": {
+    "number": 1,
+    "total": 1
+  },
+  "sidequests": {
+    "-weight.total": 5,
+    "+weight.total": 3,
+    "-weight.document": 6,
+    "+weight.document": 2,
+    "-weight.script": 1,
+    "+weight.script": 1,
+    "-weight.image": 5,
+    "+weight.image": 2,
+    "-weight.font": 1,
+    "+weight.font": 1,
+    "+weight.fontCount": 1,
+    "-timeToFirstByte": 4,
+    "-totalBlockingTime": 1,
+    "-largestContentfulPaint": 4
+  },
+  "axe": {
+    "passes": 142,
+    "violations": 0
+  }
+}

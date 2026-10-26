@@ -1,0 +1,20 @@
+{
+  "url": "https://coda-school.github.io/25-html-g5/charlie/create_tl.html",
+  "error": "Unknown error (no scores).",
+  "sidequests": {
+    "-weight.total": 8,
+    "+weight.total": 8,
+    "-weight.document": 8,
+    "+weight.document": 8,
+    "-weight.script": 1,
+    "+weight.script": 1,
+    "-weight.image": 3,
+    "+weight.image": 3,
+    "-weight.font": 1,
+    "+weight.font": 1,
+    "+weight.fontCount": 1,
+    "-timeToFirstByte": 8,
+    "-totalBlockingTime": 1,
+    "-largestContentfulPaint": 8
+  }
+}

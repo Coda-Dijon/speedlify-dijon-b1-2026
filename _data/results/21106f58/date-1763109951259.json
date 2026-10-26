@@ -1,0 +1,66 @@
+{
+  "url": "https://coda-school.github.io/25-html-g5/charlie/tl/meilleur_perso_solotage_dofus/end.html",
+  "requestedUrl": "https://coda-school.github.io/25-html-g5/charlie/tl/meilleur_perso_solotage_dofus/end.html",
+  "timestamp": 1763110273749,
+  "ranks": {
+    "hundos": 8,
+    "performance": 8,
+    "accessibility": 8,
+    "cumulative": 8
+  },
+  "lighthouse": {
+    "version": "12.8.2",
+    "performance": 0.77,
+    "accessibility": 0.85,
+    "bestPractices": 0.93,
+    "seo": 0.82,
+    "total": 337
+  },
+  "firstContentfulPaint": 876.282,
+  "speedIndex": 876.282,
+  "largestContentfulPaint": 2724.089,
+  "totalBlockingTime": 0,
+  "cumulativeLayoutShift": 0.4324486112906626,
+  "timeToInteractive": 2724.089,
+  "maxPotentialFirstInputDelay": 16,
+  "timeToFirstByte": 98.422,
+  "weight": {
+    "summary": "21 requests • 322 KiB",
+    "total": 329736,
+    "image": 322076,
+    "imageCount": 18,
+    "script": 0,
+    "scriptCount": 0,
+    "document": 1260,
+    "font": 0,
+    "fontCount": 0,
+    "stylesheet": 1019,
+    "stylesheetCount": 1,
+    "thirdParty": 322076,
+    "thirdPartyCount": 2
+  },
+  "run": {
+    "number": 1,
+    "total": 1
+  },
+  "sidequests": {
+    "-weight.total": 6,
+    "+weight.total": 3,
+    "-weight.document": 6,
+    "+weight.document": 3,
+    "-weight.script": 1,
+    "+weight.script": 1,
+    "-weight.image": 2,
+    "+weight.image": 3,
+    "-weight.font": 1,
+    "+weight.font": 1,
+    "+weight.fontCount": 1,
+    "-timeToFirstByte": 5,
+    "-totalBlockingTime": 1,
+    "-largestContentfulPaint": 7
+  },
+  "axe": {
+    "passes": 146,
+    "violations": 9
+  }
+}

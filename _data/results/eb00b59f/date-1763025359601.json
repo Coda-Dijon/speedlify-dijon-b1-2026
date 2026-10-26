@@ -1,0 +1,66 @@
+{
+  "url": "https://coda-school.github.io/25-html-g2/Roulette.html",
+  "requestedUrl": "https://coda-school.github.io/25-html-g2/Roulette.html",
+  "timestamp": 1763025445018,
+  "ranks": {
+    "hundos": 5,
+    "performance": 4,
+    "accessibility": 4,
+    "cumulative": 5
+  },
+  "lighthouse": {
+    "version": "12.8.2",
+    "performance": 1,
+    "accessibility": 0.85,
+    "bestPractices": 0.93,
+    "seo": 0.82,
+    "total": 360
+  },
+  "firstContentfulPaint": 818.033,
+  "speedIndex": 818.033,
+  "largestContentfulPaint": 818.033,
+  "totalBlockingTime": 0,
+  "cumulativeLayoutShift": 0,
+  "timeToInteractive": 818.033,
+  "maxPotentialFirstInputDelay": 16,
+  "timeToFirstByte": 18.964,
+  "weight": {
+    "summary": "6 requests • 4.4 MiB",
+    "total": 4613132,
+    "image": 4063437,
+    "imageCount": 3,
+    "script": 0,
+    "scriptCount": 0,
+    "document": 1724,
+    "font": 0,
+    "fontCount": 0,
+    "stylesheet": 2718,
+    "stylesheetCount": 1,
+    "thirdParty": 0,
+    "thirdPartyCount": 0
+  },
+  "run": {
+    "number": 1,
+    "total": 1
+  },
+  "sidequests": {
+    "-weight.total": 5,
+    "+weight.total": 2,
+    "-weight.document": 6,
+    "+weight.document": 1,
+    "-weight.script": 1,
+    "+weight.script": 1,
+    "-weight.image": 3,
+    "+weight.image": 2,
+    "-weight.font": 1,
+    "+weight.font": 2,
+    "+weight.fontCount": 2,
+    "-timeToFirstByte": 4,
+    "-totalBlockingTime": 1,
+    "-largestContentfulPaint": 4
+  },
+  "axe": {
+    "passes": 119,
+    "violations": 8
+  }
+}

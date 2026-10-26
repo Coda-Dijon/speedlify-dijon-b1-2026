@@ -1,0 +1,66 @@
+{
+  "url": "https://coda-school.github.io/25-html-g2/SlotMachine/Slot-machine.html",
+  "requestedUrl": "https://coda-school.github.io/25-html-g2/SlotMachine/Slot-machine.html",
+  "timestamp": 1763129756540,
+  "ranks": {
+    "hundos": 6,
+    "performance": 6,
+    "accessibility": 7,
+    "cumulative": 6
+  },
+  "lighthouse": {
+    "version": "12.8.2",
+    "performance": 0.8,
+    "accessibility": 0.95,
+    "bestPractices": 0.96,
+    "seo": 0.91,
+    "total": 362
+  },
+  "firstContentfulPaint": 2311.7400000000002,
+  "speedIndex": 2311.7400000000002,
+  "largestContentfulPaint": 4717.532999999999,
+  "totalBlockingTime": 0,
+  "cumulativeLayoutShift": 0.030846969308858767,
+  "timeToInteractive": 4717.532999999999,
+  "maxPotentialFirstInputDelay": 16,
+  "timeToFirstByte": 37.949,
+  "weight": {
+    "summary": "10 requests • 1.6 MiB",
+    "total": 1640211,
+    "image": 1623593,
+    "imageCount": 5,
+    "script": 0,
+    "scriptCount": 0,
+    "document": 1571,
+    "font": 6691,
+    "fontCount": 1,
+    "stylesheet": 2861,
+    "stylesheetCount": 2,
+    "thirdParty": 7471,
+    "thirdPartyCount": 1
+  },
+  "run": {
+    "number": 1,
+    "total": 1
+  },
+  "sidequests": {
+    "-weight.total": 6,
+    "+weight.total": 2,
+    "-weight.document": 5,
+    "+weight.document": 3,
+    "-weight.script": 1,
+    "+weight.script": 1,
+    "-weight.image": 6,
+    "+weight.image": 2,
+    "-weight.font": 1,
+    "+weight.font": 1,
+    "+weight.fontCount": 1,
+    "-timeToFirstByte": 5,
+    "-totalBlockingTime": 1,
+    "-largestContentfulPaint": 6
+  },
+  "axe": {
+    "passes": 131,
+    "violations": 3
+  }
+}

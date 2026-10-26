@@ -1,0 +1,66 @@
+{
+  "url": "https://coda-school.github.io/25-html-g4/themes/pokemon.html",
+  "requestedUrl": "https://coda-school.github.io/25-html-g4/themes/pokemon.html",
+  "timestamp": 1762939145534,
+  "ranks": {
+    "hundos": 4,
+    "performance": 4,
+    "accessibility": 1,
+    "cumulative": 4
+  },
+  "lighthouse": {
+    "version": "12.8.2",
+    "performance": 0.65,
+    "accessibility": 1,
+    "bestPractices": 0.96,
+    "seo": 0.91,
+    "total": 352
+  },
+  "firstContentfulPaint": 856.496,
+  "speedIndex": 856.496,
+  "largestContentfulPaint": 3695.496,
+  "totalBlockingTime": 0,
+  "cumulativeLayoutShift": 0.9734338851577299,
+  "timeToInteractive": 3695.496,
+  "maxPotentialFirstInputDelay": 16,
+  "timeToFirstByte": 118.228,
+  "weight": {
+    "summary": "7 requests • 548.3 KiB",
+    "total": 561444,
+    "image": 559822,
+    "imageCount": 4,
+    "script": 0,
+    "scriptCount": 0,
+    "document": 864,
+    "font": 0,
+    "fontCount": 0,
+    "stylesheet": 758,
+    "stylesheetCount": 1,
+    "thirdParty": 0,
+    "thirdPartyCount": 0
+  },
+  "run": {
+    "number": 1,
+    "total": 1
+  },
+  "sidequests": {
+    "-weight.total": 2,
+    "+weight.total": 3,
+    "-weight.document": 3,
+    "+weight.document": 2,
+    "-weight.script": 1,
+    "+weight.script": 1,
+    "-weight.image": 1,
+    "+weight.image": 3,
+    "-weight.font": 1,
+    "+weight.font": 1,
+    "+weight.fontCount": 1,
+    "-timeToFirstByte": 4,
+    "-totalBlockingTime": 1,
+    "-largestContentfulPaint": 2
+  },
+  "axe": {
+    "passes": 53,
+    "violations": 1
+  }
+}

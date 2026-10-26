@@ -1,0 +1,66 @@
+{
+  "url": "https://coda-school.github.io/25-html-g7/restaurants/",
+  "requestedUrl": "https://coda-school.github.io/25-html-g7/restaurants/",
+  "timestamp": 1763128332116,
+  "ranks": {
+    "hundos": 5,
+    "performance": 5,
+    "accessibility": 2,
+    "cumulative": 5
+  },
+  "lighthouse": {
+    "version": "12.8.2",
+    "performance": 0.75,
+    "accessibility": 0.98,
+    "bestPractices": 1,
+    "seo": 0.91,
+    "total": 364
+  },
+  "firstContentfulPaint": 909.1990000000001,
+  "speedIndex": 909.1990000000001,
+  "largestContentfulPaint": 8681.199,
+  "totalBlockingTime": 0,
+  "cumulativeLayoutShift": 0,
+  "timeToInteractive": 8681.199,
+  "maxPotentialFirstInputDelay": 16,
+  "timeToFirstByte": 137.461,
+  "weight": {
+    "summary": "13 requests • 6.4 MiB",
+    "total": 6701745,
+    "image": 6694894,
+    "imageCount": 9,
+    "script": 0,
+    "scriptCount": 0,
+    "document": 3388,
+    "font": 0,
+    "fontCount": 0,
+    "stylesheet": 3463,
+    "stylesheetCount": 2,
+    "thirdParty": 0,
+    "thirdPartyCount": 0
+  },
+  "run": {
+    "number": 1,
+    "total": 1
+  },
+  "sidequests": {
+    "-weight.total": 4,
+    "+weight.total": 2,
+    "-weight.document": 3,
+    "+weight.document": 3,
+    "-weight.script": 1,
+    "+weight.script": 1,
+    "-weight.image": 3,
+    "+weight.image": 2,
+    "-weight.font": 1,
+    "+weight.font": 1,
+    "+weight.fontCount": 1,
+    "-timeToFirstByte": 5,
+    "-totalBlockingTime": 1,
+    "-largestContentfulPaint": 5
+  },
+  "axe": {
+    "passes": 341,
+    "violations": 6
+  }
+}
