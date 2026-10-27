@@ -29,7 +29,8 @@
     "chrome-launcher": "^1.2.1",
     "lighthouse": "^13.4.1",
     "lightningcss": "^1.33.0",
-    "puppeteer-core": "^25.7.0"
+    "puppeteer-core": "^25.7.0",
+    "cross-zip": "^4.0.1"
   },
   "dependencies": {
     "@11ty/font-awesome": "^1.0.1",
