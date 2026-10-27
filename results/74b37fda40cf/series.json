@@ -1,0 +1,3 @@
+{"version":1,"url":"https://www.11ty.dev/","updated":"2026-10-27T21:39:52.241Z","points":[
+{"t":1793137137594,"gen":"Eleventy (Build Awesome) v4.0.0","performance":100,"accessibility":100,"best-practices":100,"seo":100,"lcp":1335,"cls":0,"tbt":56,"fcp":1229,"si":1229,"ttfb":614,"total":91911,"requests":11,"bytes":0,"mainThreadMs":0,"unusedJsBytes":0,"unusedCssBytes":0,"mainThreadTotal":597.3,"longTasks":1,"elements":1476,"failingCount":0,"failingNodes":0,"axeViolations":0,"axePasses":2262,"bench":1908,"runs":3,"reqRuns":3,"ms":54555,"spread":0}
+]}
