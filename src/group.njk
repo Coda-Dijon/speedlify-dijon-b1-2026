@@ -1,0 +1,361 @@
+---
+layout: base.njk
+pagination:
+  data: sites.groups
+  size: 1
+  alias: group
+permalink: "/group/{{ group.id }}/"
+eleventyComputed:
+  title: "{{ group.name }}"
+---
+
+{% from "statbar.njk" import statbar %}
+{% from "stacks.njk" import technology %}
+
+<header class="detail-head">
+	{#
+		The heading and the way in, on one row. Right-aligned rather than under
+		the description, because it is the one thing on this page a reader might
+		have come to *do* — everything else here is something to read.
+	#}
+	<div class="group-title">
+		{#
+			The category's health beside its name: the share of its measured sites
+			showing no red ring, which is the same question the leaderboard's first
+			step asks of a single site.
+
+			A proportion, so a curated dozen and a community list of a thousand are
+			judged on the same terms — a category cannot look healthy by being small.
+		#}
+		<h2 class="page-hed">{{ group.name }}{% if group.health %}<span class="health-pill health-{{ group.health.band }}" title="{{ group.health.clean | num }} of {{ group.health.measured | num }} measured {{ group.health.measured | plural('site') }} in {{ group.name }} show no red ring ({{ group.health.pct }}%). Good is 50% or more, Warn 28% or more.">{{ "Good" if group.health.band == "good" else ("Warn" if group.health.band == "average" else "Bad") }}</span>{% endif %}</h2>
+		{% if group.submitUrl %}
+		<a class="cta" href="{{ group.submitUrl }}">{{ group.submitLabel }}</a>
+		{% endif %}
+	</div>
+	{#
+		`safe` because a description may carry a link — the community list names
+		the repository it comes from, and that is worth being clickable. These
+		strings are ours, written in config/sites.js, not anything a measured site
+		supplies.
+	#}
+	{% if group.description %}<p class="lede">{{ group.description | safe }}</p>{% endif %}
+	{#
+		Coverage, then cadence. Measurement is rolling and invisible from the
+		page, so "1,143 of 1,235 measured" reads as a gap to be closed rather than
+		as a schedule doing its job — the second half says which it is.
+	#}
+	<p class="muted">
+		{{ group.measured | num }} of {{ group.entries.length | countOf("site") }} measured
+		{%- if group.freshnessHours %} · each site {{ group.freshnessHours | cadence }}
+		{%- if group.lastMeasured %}, most recently <time datetime="{{ group.lastMeasured | iso }}">{{ group.lastMeasured | since }}</time> ago{% endif %}
+		{%- endif %}
+	</p>
+	{#
+		The other half of the note on the home page's Perfect scores board. Said
+		here too because this is where someone notices the absence: a starter with
+		full marks that is not on that board looks like an oversight unless the
+		page it *is* on explains itself.
+
+		Read from the category rather than counted from its rows, so it still says
+		so before anything here has been measured.
+	#}
+	{% if group.excludeFromPerfectScores %}
+	<p class="muted small">
+		Perfect scores here are kept off the <a href="/#leaderboard">home page's board</a>,
+		unless the site is also listed in another category.
+		{% if group.excludeFromPerfectScoresNote %}{{ group.excludeFromPerfectScoresNote }}{% endif %}
+		They rank normally on this page and in the overall leaderboard.
+	</p>
+	{% endif %}
+</header>
+
+{# The same tiles as the home page, over this category alone. #}
+{% if group.stats.measured %}{{ statbar(group.stats, metrics) }}{% endif %}
+
+{% if not group.entries.length %}
+<div class="empty"><p>No sites in this group.</p></div>
+{% else %}
+
+{#
+	Computed before the section so the section itself can be skipped. An empty
+	"Biggest movers" heading followed by an apology is worse than no heading:
+	most groups have nothing significant to report most of the time, and a
+	permanent empty panel trains you to scroll past it.
+#}
+{#
+	The four sites whose performance score improved most since the run before.
+	Improvements only — regressions are deliberately left out, see lib/report.js,
+	which also does the ordering a template cannot.
+#}
+{% if group.topMovers.length %}
+<section class="panel">
+	<h2>Biggest movers</h2>
+	<p class="muted small">
+		Sites whose performance score improved by more than this group's normal
+		run-to-run noise. Everything else is jitter and is deliberately hidden.
+	</p>
+	<ul class="mover-cards">
+		{% for m in group.topMovers %}
+		<li class="mover-card {{ m.vsPrevious | deltaClass }}">
+			<a class="site-link" href="/site/{{ m.slug }}/">
+				{% set avatar = m.url | avatar(meta.avatarService) %}
+				{% if avatar %}<img class="favicon" src="{{ avatar }}" width="32" height="32" alt="" loading="lazy" decoding="async">{% endif %}
+				<span title="{{ m.displayUrl }}">{{ m.displayUrl }}</span>
+			</a>
+			<span class="mover-delta">{{ m.vsPrevious | deltaArrow }} {{ m.vsPrevious | deltaText }}</span>
+			<span class="mover-scores">{{ m.previous }} &rarr; {{ m.current }}</span>
+		</li>
+		{% endfor %}
+	</ul>
+</section>
+{% endif %}
+
+{#
+	Past this many entries the table stops being something you read and becomes
+	something you scroll past, so a large category shows only its clean rows and
+	names the rest underneath. The threshold is on entries rather than measured
+	sites: what makes the page unreadable is its length, and an unmeasured row
+	takes up just as much of it.
+
+	A presentation choice and nothing more — every stat on this page, the ranks
+	in the table and the numbers in the bar above are all computed over the whole
+	category. Nothing here filters what is counted.
+#}
+{% set MAX_FULL_ROWS = 500 %}
+{% set filtered = group.entries.length > MAX_FULL_ROWS %}
+
+{#
+	An unranked category is listed alphabetically. Leaving it in score order would
+	still read as a ranking — the order is the claim, whether or not it is
+	numbered — and alphabetical says outright that the order carries no meaning
+	while staying somewhere you can look a site up.
+#}
+{% set source = group.entries if group.ranked else group.entries | sortBy("displayUrl") %}
+
+{% set rows = [] %}
+{% set rest = [] %}
+{#
+	Clean rows only. A site with no figures — never measured, or failing every
+	attempt — has nothing to put in eleven columns, and a run of rows reading "not
+	measured yet" is a worse answer than a name in the list below, which at least
+	does not promise a table's worth of data. The list marks both cases with an
+	icon.
+#}
+{% for entry in source %}
+	{% if not filtered or entry.allGreen %}
+		{% set rows = (rows.push(entry), rows) %}
+	{% else %}
+		{% set rest = (rest.push(entry), rest) %}
+	{% endif %}
+{% endfor %}
+
+<section class="panel">
+	<h2>{{ "Leaderboard" if group.ranked else "Sites" }}</h2>
+	{% if filtered %}
+	<p class="muted small">
+		Of {{ group.entries.length | num }} sites, showing the {{ rows.length | num }} with “good” scores (all green circles): every Lighthouse category at 90 or above, no axe violations, no Core Web Vital failing. The other {{ rest.length | num }} are in an overflow list below.
+	</p>
+	{% endif %}
+	{% if not group.ranked %}
+	<p class="muted small">
+		Not ranked, listed alphabetically. Still measured in case they return!
+	</p>
+	{% else %}
+	<p class="muted small">
+		Ranked by the circle color first: all green beats a row with amber, which beats red. Sites are not penalized for unknown Core Web Vitals. Tiebreakers include: sum of all four Lighthouse categories, fewest failing Core Web Vitals, then fewest axe violations, then Speed Index per KB — a heavy site outranks an empty one.
+	</p>
+	{% endif %}
+	<div class="table-scroll">
+	<table class="grid">
+		<thead>
+			<tr>
+				{% if group.ranked %}<th class="col-rank">#</th>{% endif %}
+				<th class="col-site">Site</th>
+				<th class="col-stack" title="What built the site, detected from its generator tag or presumed from the list it is on">Tool</th>
+				<th class="col-stack col-stack-uses" title="Frameworks and libraries the page loads alongside what built it. What another tool always brings — React on a Next.js site — is left to the site's own page">Uses</th>
+				<th class="col-stack" title="Who serves the site, detected from its response headers on the same page load">Host</th>
+				<th class="col-rings" title="The four Lighthouse categories, then violating nodes from a full axe run and the Core Web Vitals verdict from real users. The ranking breaks ties the other way round: Core Web Vitals first, then axe">Scores</th>
+				<th class="col-trend">Perf trend</th>
+				<th class="col-lcp"><span class="lcp-head">LCP</span></th>
+				<th>CLS</th><th>TBT</th>
+				<th title="Total bytes transferred, with the page's DOM element count beneath it. Element count is only shown where the DOM snapshot looked like a page that actually loaded">Weight</th><th>Req</th>
+				<th class="col-lvf" title="The lab LCP as a multiple of the real-user p75. Above 1x the lab is slower than reality; below 1x the lab number is flattering the site. Only where CrUX has field data">Lab vs field</th>
+				<th class="col-nojs" title="Share of pixels that differ between the page as rendered and the same page with scripts disabled. A shifted layout counts, so a noscript banner alone can account for a large figure. A warning mark means the page drew nothing at all without JavaScript. Only measured where a no-JS capture is stored">No-JS ∆</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for entry in rows %}
+			<tr{% if entry.currentlyFailing %} class="row-failing"{% endif %}>
+				{% if group.ranked %}
+				<td class="col-rank">
+					{% if entry.groupRanks[group.id].overall %}
+					<span class="trophy">{{ entry.groupRanks[group.id].overall | trophy }}</span><span class="hash">#</span>{{ entry.groupRanks[group.id].overall }}{% if entry.groupRanks[group.id].overallClimb %}<span class="rank-climb" title="Up {{ entry.groupRanks[group.id].overallClimb }} {{ "place" if entry.groupRanks[group.id].overallClimb == 1 else "places" }} in this category since the previous measurement, from #{{ entry.groupRanks[group.id].overallPrevious }}">&#9650;{{ entry.groupRanks[group.id].overallClimb }}</span>{% endif %}
+					{% else %}—{% endif %}
+				</td>
+				{% endif %}
+				<td class="col-site">
+					<a class="site-link" href="/site/{{ entry.slug }}/">
+						{% set avatar = entry.url | avatar(meta.avatarService) %}
+						{% if avatar %}<img class="favicon" src="{{ avatar }}" width="32" height="32" alt="" loading="lazy" decoding="async">{% endif %}
+						<span title="{{ entry.displayUrl }}">{{ entry.displayUrl }}</span>
+					</a>
+					{% if entry.hiring %}<span class="badge badge-hiring">{{ entry.hiring.label }}</span>{% endif %}
+					{% if entry.latest %}<span class="updated-tag {{ 'stale-age' if entry.dataStale }}" title="Measured {{ entry.latest.date | date('long') }}"><time datetime="{{ entry.latest.date | iso }}">{{ entry.latest.date | since }}</time></span>{% else %}<span class="updated-tag never">never</span>{% endif %}
+					{% if entry.currentlyFailing %}<span class="badge badge-error" title="{{ entry.lastError }}">failing</span>{% endif %}
+					{% if entry.redirectTo and entry.redirectTo != entry.url %}<span class="badge badge-redirect" title="Measured through a redirect to {{ entry.redirectTo }}{% if entry.redirectConfirmed %} — confirmed, so history will follow it{% else %} — {{ entry.redirectReason }}{% endif %}">&#8618; redirect</span>
+					{% elif entry.canonicalUrl %}<span class="badge badge-redirect" title="Measured through a redirect to {{ entry.canonicalUrl }} — the site's canonical form of this URL">&#8618; redirect</span>{% endif %}
+					{% if entry.unlisted %}<span class="badge badge-unlisted" title="Built with {{ entry.unlisted.generator }} but not in {{ entry.unlisted.groupName }} — nobody has submitted it to the 11ty/11ty-community repository">unlisted</span>{% endif %}
+				</td>
+				{% if entry.latest %}
+					{# 22 rather than the shortcode's 16, in all three stack columns:
+					   these are the row's only pictures, in columns of their own, and
+					   at 16 they read as punctuation beside the numbers. The inline
+					   uses elsewhere — a tally row, a stat, a heading — sit next to
+					   text and keep the default. #}
+					<td class="col-stack">
+						{% if entry.generator %}{% stackIcon entry.generator, 22 %}
+						{% elif entry.presumedGenerator %}{% stackIcon entry.presumedGenerator, 22 %}
+						{% else %}<span class="stack-none" title="No generator detected">·</span>{% endif %}
+					</td>
+					{#- `or []`, since a site measured before the probe was stored has no tool list
+					    at all and the slice cannot read null. -#}
+					{%- set extraTools = entry.tools or [] %}
+					{#- Three, because that is what the column is wide enough to show without
+					    the row turning into a list. The rest stay a count. -#}
+					{%- set shownTools = extraTools.slice(0, 3) %}
+					<td class="col-stack col-stack-uses">
+						<span class="stack-row">
+							{%- if shownTools.length %}
+							{%- for tool in shownTools %}{% stackIcon tool, 22 %}{% endfor %}
+							{%- if extraTools.length > shownTools.length %}<span class="stack-more" title="Also uses {{ extraTools.slice(3) | join(', ', 'name') }}">+{{ extraTools.length - shownTools.length }}</span>{% endif %}
+							{%- else %}<span class="stack-none" title="No framework or library detected">·</span>{% endif %}
+						</span>
+					</td>
+					<td class="col-stack">
+						{% if entry.host %}{% stackIcon entry.host, 22 %}{% else %}<span class="stack-none" title="No host detected">·</span>{% endif %}
+					</td>
+					{#
+						Six rings, in the order <speedlify2-score> draws them: the four
+						Lighthouse categories, then Core Web Vitals and axe — the ranking's
+						two tiebreakers in the order it applies them, and the two things
+						Lighthouse's own categories do not cover. One column rather than
+						three, so a row reads as one picture and matches the embeddable
+						badge exactly.
+					#}
+					<td class="col-rings">
+						<span class="rings">
+						{% for score in metrics.SCORES %}
+							{% scoreRing entry.latest.lab.scores[score.key], score.label, score.short %}
+						{% endfor %}
+						{% axeRing entry.axe %}
+						{% cwvRing entry.cwvFailures, entry.cwv.assessed, entry.cwvWorst %}
+						</span>
+					</td>
+					{#
+						The line is softened, not grayed, on a site whose performance score
+						still bands good — the same treatment the detail page gives a metric
+						inside its threshold. A row scoring 96 after 99 has moved the wrong
+						way, and that is worth a color, but not the red kept for a site that
+						is actually slow.
+					#}
+					{% set perfGood = (entry.latest.lab.scores.performance | scoreClass) == "good" %}
+					<td class="col-trend">{% sparkline entry.trends.performance, { good: perfGood } %}</td>
+					<td class="num col-lcp"><span class="lcp-cell"><span class="lcp-value">{{ entry.latest.lab.timings.lcp | ms }}</span>{% lcpBar entry.latest.lab.lcpBreakdown, entry.latest.lab.timings.lcp %}</span></td>
+					<td class="num">{{ entry.latest.lab.timings.cls | unit("") }}</td>
+					<td class="num">{{ entry.latest.lab.timings.tbt | ms }}</td>
+					<td class="num">{% set domCount = entry.latest.lab.dom.elements %}{{ entry.latest.lab.weight.total | bytes }}{% if domCount %}<span class="weight-dom" title="{{ domCount | num }} DOM elements">{{ domCount | num }} elements</span>{% endif %}</td>
+					<td class="num">{{ entry.latest.lab.weight.requests | num }}</td>
+					<td class="num">{% if entry.labVsField %}<span class="lvf" title="Lab LCP {{ entry.labVsField.lab | ms }}, field p75 {{ entry.labVsField.field | ms }}">{{ entry.labVsField.ratio }}&times;</span>{% else %}<span class="muted">&mdash;</span>{% endif %}</td>
+					<td class="num col-nojs">{% if entry.ownScreenshot and entry.ownScreenshot.difference !== null %}{{ entry.ownScreenshot.difference }}%{% if entry.clientRendered %}<span class="csr-yes" title="only {{ entry.ownScreenshot.noJsText }}% of the no-JS capture is text, so the page said nothing without its scripts"><i class="fa-solid fa-triangle-exclamation csr-icon" width="12" height="12" aria-hidden="true"></i>EMPTY</span>{% endif %}{% else %}<span class="muted">&mdash;</span>{% endif %}</td>
+				{% else %}
+					{# 11 either way: dropping the rank column removes a cell from this row too,
+   so the span covers the same remainder. #}
+				<td colspan="12" class="muted">not measured yet</td>
+				{% endif %}
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+	</div>
+
+	{#
+		Right after the ranked table, for a reader who has finished the leaderboard
+		itself — but only when there is an overflow list below to separate it from
+		the one at the end of the page. Without that list the two would sit a
+		paragraph apart, which reads as a stutter rather than as two exits.
+	#}
+	{% if group.submitUrl and rest.length %}
+	<p class="cta-footer">
+		<a class="cta" href="{{ group.submitUrl }}">{{ group.submitLabel }}</a>
+	</p>
+	{% endif %}
+
+	{% if rest.length %}
+	{#
+		Names, not numbers. These rows were left out because the table was too long
+		to read, so repeating the columns here would undo the point — the link is
+		what is useful, and every figure is on the page it goes to.
+	#}
+	<h3 class="rest-head">
+		The other {{ rest.length | num }}
+		<span class="muted small">— at least one ring amber, red or unmeasured, in no particular order</span>
+	</h3>
+	{#
+		Shuffled, and reshuffled on every build. There is no ranking left to show
+		here — that is what the table above is for — so any fixed order would be
+		read as one anyway, and alphabetical would put the same sites at the top
+		of a 900-name list for ever.
+	#}
+	<ul class="rest-list">
+		{% for entry in rest | shuffle %}
+		<li>
+			<a href="/site/{{ entry.slug }}/">{{ entry.displayUrl }}</a>
+			{#
+				The one thing worth saying here beyond the name: this row is not in
+				the table because the site is down, rather than because its scores
+				are middling. The title carries the error itself.
+			#}
+			{#
+				Two independent marks, because they answer different questions and a
+				site can need both. The hourglass says there are no figures on the
+				page this links to; the triangle says the last attempt errored, and
+				carries the error itself. Most of the sites with no figures have both
+				— nothing to show, and a reason why — but each stands alone: a site
+				measured months ago can be failing today, and a site added this
+				morning has neither been tried nor refused.
+
+				The hourglass first: what is missing, then why. Muted rather than red,
+				since a site nobody has measured yet is a gap in our data and not a
+				verdict on theirs.
+			#}
+			{%- if not entry.latest %}
+			<i class="fa-solid fa-hourglass-start rest-pending" title="No successful measurement yet" width="12" height="12">No results yet</i>
+			{%- endif %}
+			{%- if entry.currentlyFailing %}
+			<i class="fa-solid fa-triangle-exclamation rest-error" title="{{ entry.lastError }}" width="12" height="12">Currently failing</i>
+			{%- endif %}
+		</li>
+		{% endfor %}
+	</ul>
+	{% endif %}
+
+	{#
+		Last on the page, after the overflow list as well as the table. Someone who
+		has read both and still not found their own site is exactly who this is
+		for, and by then the header is a thousand rows away.
+	#}
+	{% if group.submitUrl %}
+	<p class="cta-footer">
+		<a class="cta" href="{{ group.submitUrl }}">{{ group.submitLabel }}</a>
+	</p>
+	{% endif %}
+</section>
+
+{#
+	After the leaderboard, matching the home page's order: the tables are what
+	someone came for, and this is the summary you read once you have looked. Over
+	this category's sites alone, so it answers what a category is usually for —
+	what these particular sites have in common.
+#}
+{{ technology(group.stacks, "stacks") }}
+{% endif %}

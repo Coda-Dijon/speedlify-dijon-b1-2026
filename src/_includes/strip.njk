@@ -1,0 +1,113 @@
+{#
+	The strip plot, drawn twice — JavaScript weight by generator and time to first
+	byte by host. Same picture of different columns, so one definition.
+
+	`strip` is whichever set lib/report.js built and `xTitle` names its scale.
+	`showMedianValues` prints each row's median beside its tick. On by choice at
+	both call sites rather than by default, so a future strip can leave it off:
+	it earns its place where the summary is a number worth reading exactly, and a
+	log axis is not something anyone reads a value off precisely.
+#}
+{% macro stripfigure(strip, xTitle, showMedianValues = false) %}
+	{#
+		`plot-scroll` rather than a second phone layout: the whole SVG scales with
+		its container, so at 375px a 13-unit label renders at 4.5 pixels and the
+		axis ticks go with it — the names are not the only casualty. A minimum
+		width holds the type at a readable size and the frame scrolls to it.
+
+		Scoped to this macro because the scatter's tooltips overflow their frame
+		on purpose, and a scroll container would clip them.
+
+		The frame is focusable so the chart can be panned with arrow keys: a
+		scroll region that only a pointer can move is a piece of the page that
+		keyboard users cannot reach.
+	#}
+	<figure class="plot plot-scroll">
+		<div class="plot-frame" tabindex="0" role="group"
+			aria-label="{{ xTitle }} by {{ strip.label }}, scrollable">
+		<svg viewBox="0 0 {{ strip.box.w }} {{ strip.box.h }}" role="img"
+			aria-label="Median {{ xTitle }} by {{ strip.label }}{% for row in strip.rows %}. {{ row.name }}, {{ row.count }} sites, median {{ row.medianText }}{% endfor %}.">
+			<g class="plot-grid">
+				{%- for tick in strip.xTicks %}
+				<line x1="{{ tick.x }}" x2="{{ tick.x }}" y1="{{ strip.box.top }}" y2="{{ strip.box.top + strip.plot.h }}"/>
+				{%- endfor %}
+			</g>
+			{%- if strip.zero %}
+			<g class="plot-break">
+				<line x1="{{ strip.zero.sep }}" x2="{{ strip.zero.sep }}" y1="{{ strip.box.top }}" y2="{{ strip.box.top + strip.plot.h }}"/>
+			</g>
+			{%- endif %}
+
+			<g class="plot-axis">
+				{%- if strip.zero %}
+				<text x="{{ strip.zero.x }}" y="{{ strip.axis.tickY }}" text-anchor="middle">0</text>
+				{%- endif %}
+				{%- for tick in strip.xTicks %}
+				<text x="{{ tick.x }}" y="{{ strip.axis.tickY }}" text-anchor="middle">{{ tick.label }}</text>
+				{%- endfor %}
+			</g>
+			<g class="plot-axis-title">
+				<text x="{{ strip.axis.xLabel.x }}" y="{{ strip.axis.xLabel.y }}" text-anchor="middle">{{ xTitle }}</text>
+			</g>
+
+			{#
+				Names in the margin rather than a legend: nine rows each need reading
+				against their own label, and a legend would make that a lookup.
+			#}
+			<g class="gen-labels">
+				{%- for row in strip.rows %}
+				<text x="{{ strip.box.left - 12 }}" y="{{ row.y + 4 }}" text-anchor="end">{{ row.name }} <tspan class="gen-count">{{ row.count }}</tspan></text>
+				{%- endfor %}
+			</g>
+
+			{#
+				Sites first and faint, the median over them: the dots are the
+				evidence and the median is the summary, so the summary must not be
+				lost among them.
+			#}
+			<g class="gen-dots">
+				{#
+					One circle per occupied position, sized by how many sites share it
+					— see `stack` in lib/report.js. The title is the only way to read a
+					count off a circle, and costs one element per position rather than
+					one per site.
+				#}
+				{%- for row in strip.rows %}{% for dot in row.dots %}<circle cx="{{ dot.x }}" cy="{{ row.y }}" r="{{ dot.r }}">{% if dot.n > 1 %}<title>{{ dot.n }} sites</title>{% endif %}</circle>{% endfor %}{% endfor %}
+			</g>
+			<g class="gen-medians">
+				{%- for row in strip.rows %}<line x1="{{ row.medianX }}" x2="{{ row.medianX }}" y1="{{ row.y - 9 }}" y2="{{ row.y + 9 }}"/>{% endfor %}
+			</g>
+			{%- if showMedianValues %}
+			{#
+				The number beside its own tick, in the tick's color so the two read as
+				one mark. Beside rather than above: a row is a drift of overlapping
+				dots and the space above the tick belongs to the row above it.
+
+				Flipped to the left of the tick near the right edge, where a label
+				drawn outward would run off the frame — 70 units is wider than any
+				value this formats to.
+
+				Haloed in the page background (see .gen-median-values) because it is
+				drawn over the dots by definition: the tick sits in the thick of the
+				distribution, which is the whole reason for printing it there.
+			#}
+			<g class="gen-median-values">
+				{%- for row in strip.rows %}
+				{%- set flip = row.medianX > strip.box.w - strip.box.right - 70 %}
+				<text x="{{ row.medianX - 7 if flip else row.medianX + 7 }}" y="{{ row.y + 4 }}" text-anchor="{{ "end" if flip else "start" }}">{{ row.medianText }}</text>
+				{%- endfor %}
+			</g>
+			{%- endif %}
+		</svg>
+		</div>
+
+		{#
+			Shown only at the widths where the chart actually overflows, which CSS
+			can answer and the template cannot — see `.plot-scroll-note`. macOS
+			hides its scrollbars until something moves, so on the machines most
+			likely to be reading this there is otherwise no sign the chart
+			continues past the edge.
+		#}
+		<figcaption class="plot-scroll-note">Scroll sideways for the rest of the scale.</figcaption>
+	</figure>
+{% endmacro %}

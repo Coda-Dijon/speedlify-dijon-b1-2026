@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en" data-theme-default="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Matches `color-scheme` on :root, read by the UA before the CSS arrives. -->
+<meta name="color-scheme" content="dark light">
+<!-- Safari tints its toolbar with this; the script below keeps it on the masthead's `--surface`. -->
+<meta name="theme-color" content="#383838">
+<title>{% if title %}{{ title }} · {% endif %}{{ meta.title }}</title>
+<meta name="description" content="{{ description or meta.description }}">
+<meta name="generator" content="{{ buildawesome.generator }}">
+{#
+	The card a site page unfurls as, rendered by 11ty's screenshot service from
+	the generator at /opengraph/. Site pages only — `entry` is that template's
+	pagination alias, and it is the only page whose card is about one thing.
+
+	Built against `meta.url` rather than the page's own address: the service
+	fetches a public URL, so a localhost one would resolve to nothing. That means
+	the tag points at the deployed card even in dev, which is the right answer —
+	there is no other card to point at.
+#}
+{%- if entry %}
+{%- set ogCard = (meta.url + "/opengraph/?site=" + entry.slug) | urlencode %}
+<meta property="og:image" content="https://v1.screenshot.11ty.dev/{{ ogCard }}/opengraph/">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Lighthouse, Axe and Core Web Vitals scores for {{ entry.displayUrl }}">
+<meta name="twitter:card" content="summary_large_image">
+{%- endif %}
+{% if buildawesome.env.runMode == "build" %}
+<style>{{ styleCss | safe }}</style>
+{% else %}
+<link rel="stylesheet" href="/css/style.css">
+{% endif %}
+<style>{{ solarEclipseToggleCss | safe }}</style>
+<script type="module" src="/js/solar-eclipse-toggle.js"></script>
+<script type="module" src="/js/table-of-contents.js"></script>
+<!-- The project's mark by default — Font Awesome's forward-fast, built from the
+     package's own path data in buildawesome.config.js so it cannot drift from
+     the version installed.
+
+     A site page overrides it with that site's own favicon, which is the one
+     place the distinction is useful: several of these open at once is a row of
+     identical tabs otherwise. -->
+<link rel="icon" href="{{ pageFavicon or favicon }}">
+<script>
+/* A saved theme override, applied before first paint. */
+try {
+	var savedTheme = localStorage.getItem("speedlify-theme");
+	if (savedTheme === "light" || savedTheme === "dark") document.documentElement.dataset.theme = savedTheme;
+} catch (e) {}
+/* Resolved through a probe element: the raw custom property is an unresolved light-dark(). */
+function speedlifyThemeColor() {
+	try {
+		var meta = document.querySelector('meta[name="theme-color"]');
+		var probe = document.createElement("meta");
+		probe.style.color = "var(--surface)";
+		document.head.appendChild(probe);
+		var surface = getComputedStyle(probe).color;
+		probe.remove();
+		if (meta && surface) meta.setAttribute("content", surface);
+	} catch (e) {}
+}
+speedlifyThemeColor();
+/* Re-resolved whenever the toggle or another tab changes the theme. */
+try {
+	new MutationObserver(speedlifyThemeColor).observe(document.documentElement, { attributeFilter: ["data-theme"] });
+} catch (e) {}
+</script>
+{%- if meta.goatcounter %}
+<script data-goatcounter="{{ meta.goatcounter }}" async src="//gc.zgo.at/count.js"></script>
+{%- endif %}
+</head>
+<body>
+
+<header class="masthead">
+	<div class="wrap">
+		{#
+			The same mark as the tab icon, through the Font Awesome transform rather
+			than inlined — it becomes a `<use>` against the page's spritesheet, and
+			the favicon's copy is built separately in the config because a data URI
+			cannot reference one.
+
+			Empty and aria-hidden: the transform turns element content into a
+			`<title>`, and the site's name is the text right beside it.
+		#}
+		<h1 class="masthead-hed">
+			<a href="/">
+				<i class="fa-solid fa-forward-fast masthead-mark" width="32" height="32" aria-hidden="true"></i>
+				{{ meta.title }}
+			</a>
+		</h1>
+		{#
+			The tagline, and nothing else. How much of the corpus has data is a fact
+			about the instance rather than about the page you are on, so it reads as
+			a colophon — see the footer.
+		#}
+		<p class="masthead-subhed">
+			{#
+				Trailing full stop trimmed: the sentence continues into the clause
+				below, where `<meta name="description">` above wants it whole.
+			#}
+			{{ meta.description }}
+			Follow us on <a href="https://mastodon.social/@speedlify" rel="me"><i class="fa-brands fa-mastodon" aria-hidden="true"></i>Mastodon</a> or <a href="https://bsky.app/profile/speedlify.dev" rel="me"><i class="fa-brands fa-bluesky" aria-hidden="true"></i>Bluesky</a>.
+		</p>
+		<div class="masthead-subhed masthead-tools">
+			<a href="/charts/">Charts</a>
+			<a href="/compare/">Compare</a>
+			<a href="/runs/">Measurement runs</a>
+			<a href="/embed/">Embed a score</a>
+			<a href="/open-to-work/">Open to Work</a>
+		{#
+			Jump to a category, from any page.
+
+			`method="get"` with nowhere to get to: this is a static site, so nothing
+			turns `?group=hosts` into `/group/hosts/`. The action is the home page's
+			Categories list, which is the honest destination for an unscripted
+			submit — you asked to change category and you land on the list of them.
+			The script below upgrades that to going straight there. The fragment
+			survives because submission mutates only the query.
+
+			Labeled by `aria-label` rather than a visible <label>: the control sits
+			in a row of links where a word in front of it would read as another one.
+
+			Disabled until scripted. Submitting it unscripted lands on the home
+			page's Categories list rather than the category you picked — a static
+			host cannot turn `?group=hosts` into `/group/hosts/` — and offering a
+			control that answers a different question than the one asked is worse
+			than offering none. The list it would have sent you to is on that page
+			anyway, in full, as links.
+		#}
+		<form class="cat-switch" method="get" action="/#categories">
+		{#
+			A fieldset, purely to carry `disabled` for everything inside it. A form
+			has no disabled attribute; this is the mechanism HTML gives for turning
+			off a whole group of controls at once, and it means the script has one
+			attribute to remove rather than one per control.
+		#}
+		<fieldset disabled
+			title="Jumping to a category needs JavaScript. Every category is linked from the list on the home page.">
+			<select id="cat-switch" name="group" aria-label="Jump to a category">
+				{#
+					A prompt only where nothing is selected. On a category page the
+					current one is, so the control never opens claiming the reader is
+					somewhere they are not.
+				#}
+				{% if not group %}<option value="" selected>Categories&hellip;</option>{% endif %}
+				{#
+					Two passes over the same list rather than one.
+
+					A category kept off the home page's list is still reachable
+					here — that is the point of the flag — but it belongs after the
+					ones a reader arrived expecting, not interleaved with them. Two
+					loops is the whole mechanism: Nunjucks has no sort-by-field that
+					can be trusted for this (its `selectattr` ignores the test it is
+					given), so anything cleverer would have to happen in the report.
+				#}
+				{#
+					Counts alongside the names, so the menu says how much is behind each
+					one. `measured` rather than the entry count — the same figure the
+					home page's Categories list shows, so a reader cannot be told two
+					different numbers for the same category.
+				#}
+				{% for g in sites.groups %}
+					{% if g.showOnHomePageCategoryList %}
+				<option value="{{ g.id }}"{% if group and g.id == group.id %} selected{% endif %}>{{ g.name }} ({{ g.measured | num }})</option>
+					{% endif %}
+				{% endfor %}
+				{#
+					A separator, not a label. `<hr>` in a `<select>` is in the spec and
+					current browsers draw it as a rule; older ones ignore it, which is
+					the right failure — the list still reads in the same order, just
+					without the line.
+
+					An `<optgroup>` was the alternative and says too much: these are not
+					a kind of category, they are the ones kept off the front page, and
+					naming that in the control would be explaining an editorial decision
+					to someone who only wants to go somewhere.
+				#}
+				{% if sites.hasSecondaryCategories %}<hr>{% endif %}
+				{% for g in sites.groups %}
+					{% if not g.showOnHomePageCategoryList %}
+				<option value="{{ g.id }}"{% if group and g.id == group.id %} selected{% endif %}>{{ g.name }} ({{ g.measured | num }})</option>
+					{% endif %}
+				{% endfor %}
+			</select>
+		</fieldset>
+		</form>
+		</div>
+		<script>
+		/* Turn the select into navigation, and switch it on.
+		
+		   There is no unscripted path to upgrade any more: a GET form cannot turn
+		   `?group=hosts` into `/group/hosts/` on a static host, so the form is
+		   shipped disabled and this is what makes it a control rather than a
+		   decoration. The home page's Categories list is the no-JS route, and the
+		   disabled select says so in its title.
+		
+		   `submit` as well as `change`: change covers the mouse in one action, and
+		   submit catches Enter from the keyboard. */
+		(function () {
+			var form = document.querySelector(".cat-switch");
+			if (!form) return;
+			var select = form.elements.group;
+
+			/* Now it can do what it says. Enabled here rather than in CSS, so a
+			   reader the script never reached is never shown a live control that
+			   would take them somewhere they did not ask for. */
+			var fieldset = form.querySelector("fieldset");
+			if (fieldset) {
+				fieldset.disabled = false;
+				fieldset.removeAttribute("title");
+			}
+			function go(event) {
+				var value = select.value;
+				if (!value) return;
+				event.preventDefault();
+				location.href = "/group/" + encodeURIComponent(value) + "/";
+			}
+			form.addEventListener("submit", go);
+			select.addEventListener("change", go);
+
+			/* Nothing left for it to do once change navigates.
+
+			   `visibility`, not `hidden`: the button is 40px wide and taller than
+			   the select beside it, so removing it from the layout reflowed the
+			   masthead row the moment this ran — and left the unscripted row 4px
+			   taller than the scripted one, which is a difference readers can see
+			   between two pages. Reserving the space keeps both identical and
+			   makes the upgrade invisible.
+
+			   Still gone for every other purpose: `visibility: hidden` takes an
+			   element out of the tab order and out of the accessibility tree, so
+			   nobody can reach a control that no longer does anything.
+
+			   Set here rather than in CSS so it survives for anyone the script did
+			   not reach — they get a working button, as they should. */
+		})();
+		</script>
+	</div>
+</header>
+
+<main class="wrap">
+	{{ content | safe }}
+</main>
+
+<footer class="footer">
+	<div class="wrap footer-wrap">
+		{# The masthead's links again, for readers who reach the bottom of the page. #}
+		<nav class="footer-nav" aria-label="Footer">
+			<ul>
+				<li><a href="/charts/">Charts</a></li>
+				<li><a href="/compare/">Compare</a></li>
+				<li><a href="/runs/">Measurement runs</a></li>
+				<li><a href="/embed/">Embed a score</a></li>
+				<li><a href="/open-to-work/">Open to Work</a></li>
+			</ul>
+		</nav>
+		<div class="footer-body">
+			{#
+				Build stamp and coverage in one line. Coverage moved down from the
+				masthead: it is a status line about this instance, which belongs with
+				the stamp and the source link rather than above every page's content.
+			#}
+			<p>
+				This website was built with <a href="https://build.awesome.me/"><i class="fa-brands fa-build-awesome"></i>Build Awesome {{ buildawesome.version }}</a> on <time datetime="{{ sites.generated | iso }}">{{ sites.generated | date("long") }}</time>{% if meta.repo %} ·
+				<a href="{{ meta.repo }}">Source on <i class="fa-brands fa-github"></i>GitHub</a>{% endif %} ·
+				Follow us on <a href="https://mastodon.social/@speedlify" rel="me"><i class="fa-brands fa-mastodon"></i>Mastodon</a> or <a href="https://bsky.app/profile/speedlify.dev" rel="me"><i class="fa-brands fa-bluesky"></i>Bluesky</a> ·
+				{#
+					The Open Graph card this page gets when it is shared. `entry` is
+					only in scope on a site page — it is that template's pagination
+					alias — so this is the site's own card there and the generator's
+					front door everywhere else.
+				#}
+				<a href="/opengraph/{% if entry %}?site={{ entry.slug }}{% endif %}">{% if entry %}Open Graph for this site{% else %}Open Graph{% endif %}</a>
+				{%- if sites.coverage.measured %} ·
+				<strong>{{ sites.coverage.measured | num }}/{{ sites.coverage.total | num }}</strong>
+				{{ sites.coverage.measured | plural("site") }} measured
+				{#- The running total, which used to head its own line above. It is a
+				    fact about the same set of sites, so it reads as a gloss on the
+				    coverage fraction rather than as a separate statistic. #}
+				{%- if sites.stats.totalMeasurements %} ({{ sites.stats.totalMeasurements | num }} {{ sites.stats.totalMeasurements | plural("measurement") }}){% endif %}
+				{%- if sites.coverage.medianAgeHours %}, median age
+				{{ sites.coverage.medianAgeHours | duration }}
+				{%- endif %}.
+				{% if sites.coverage.stale %}<span class="worse">{{ sites.coverage.stale }} stale</span>.{% endif %}
+				{% if sites.coverage.never %}<span class="muted">{{ sites.coverage.never }} not yet measured.</span>{% endif %}
+				{% if sites.stats.failing %}<span class="failing-note"><em>{{ sites.stats.failing | num }} currently failing.</em></span>{% endif %}
+				{%- endif %}
+				Lab data from Lighthouse{% if sites.hasFieldData %}, field data from the Chrome UX Report (28-day trailing p75){% endif %}.
+				Lab numbers are simulated on one machine and will vary from real user data.
+			</p>
+			{# https://github.com/zachleat/solar-eclipse-toggle — dark until overridden, via data-theme-default on <html>. #}
+			<solar-eclipse-toggle class="theme-toggle" storage-key="speedlify-theme">
+				<button type="button" disabled>
+					<span class="se-label-dark"><i class="fa-regular fa-moon"></i>Use dark theme</span>
+					<span class="se-label-light"><i class="fa-regular fa-sun"></i>Use light theme</span>
+					<span class="se-label-unknown"><i class="fa-solid fa-circle-half-stroke"></i>Theme</span>
+					<span class="se-system">Default</span>
+				</button>
+			</solar-eclipse-toggle>
+		</div>
+	</div>
+</footer>
+
+{#
+	The Font Awesome spritesheet: one <symbol> for each mark this page actually
+	uses, and nothing for the ones it does not. Last in the body because it is
+	inert markup — the <use> references above resolve against it wherever it
+	sits, and putting hundreds of path definitions ahead of the content would
+	delay the content for no gain.
+
+	Emitted unconditionally: the bundle is empty on a page with no icons, so
+	there is nothing to branch on.
+#}
+{% getBundle "fontawesome" %}
+
+</body>
+</html>

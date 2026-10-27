@@ -1,0 +1,23 @@
+---
+pagination:
+  data: sites.entries
+  size: 1
+  alias: entry
+permalink: "/api/site/{{ entry.slug }}.json"
+eleventyExcludeFromCollections: true
+---
+{#
+  One small JSON document per site, so a widget can look up a single URL
+  without downloading the whole report. The full report.json is megabytes; each
+  of these is under a kilobyte.
+
+  Keyed by the same slug as the site's page. A consumer needs only the site
+  URL: the slug is derived from it with string operations alone, so the embed
+  component finds this file without an index to download and without
+  crypto.subtle — which means it also works on a page served over plain http.
+
+  Stored history is still keyed by hash under results/, and a slug that
+  collides falls back to one, so this filename is presentation and the hash
+  remains the identity.
+-#}
+{{ entry | siteApi | json | safe }}

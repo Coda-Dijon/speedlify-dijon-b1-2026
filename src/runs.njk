@@ -1,0 +1,172 @@
+---
+layout: base.njk
+permalink: /runs/index.html
+title: Runs
+---
+
+<header class="detail-head">
+	<h2 class="page-hed">Measurement runs</h2>
+	<p class="lede">
+		Every measurement pass, read from the NDJSON run log. When a number looks
+		wrong, the first question is whether that run actually finished — this
+		answers it without shell access to the build machine.
+	</p>
+</header>
+
+{% from "contents.njk" import contents %}
+{% set toc = [] %}
+{% if sites.recentlyMeasured.length %}{% set toc = (toc.push({ id: "recently-measured", label: "Recently measured" }), toc) %}{% endif %}
+{% if sites.benchmark %}{% set toc = (toc.push({ id: "machines", label: "Measuring machines" }), toc) %}{% endif %}
+{% if runs.recent.length %}
+	{% set toc = (toc.push({ id: "runs", label: "Runs" }), toc) %}
+	{% set toc = (toc.push({ id: "reading-logs", label: "Reading the logs" }), toc) %}
+{% endif %}
+{{ contents(toc) }}
+
+{% if sites.recentlyMeasured.length %}
+<section class="panel" id="recently-measured">
+	{#
+		The same rows as the stat bar's card on the home page — the link, the six
+		band colors, the age — laid out across columns rather than down one.
+
+		This page is about the measurement loop, so the list earns more room here
+		than it gets in a card that has to share a scrolling row with five others.
+		Columns rather than a longer single list: sixty rows in one column is a
+		screen of scrolling to learn something a reader takes in at a glance.
+	#}
+	<h2>Recently measured <span class="tag">{{ sites.recentlyMeasured | length }} sites</span></h2>
+	<p class="muted small">
+		Newest first, across the whole corpus. The dots are the four Lighthouse
+		categories, then axe and Core Web Vitals, in the colors that run carried.
+	</p>
+	<ol class="recents recents-wide">
+		{% for site in sites.recentlyMeasured %}
+		<li>
+			<a href="/site/{{ site.slug }}/">{{ site.displayUrl }}</a>
+			<span class="recents-dots" aria-hidden="true">
+				{% for band in site.bands %}<span class="recents-dot recents-dot-{{ band }}"></span>{% endfor %}
+			</span>
+			<span class="recents-age"><time datetime="{{ site.timestamp | iso }}">{{ site.timestamp | since }}</time></span>
+		</li>
+		{% endfor %}
+	</ol>
+</section>
+{% endif %}
+
+{#
+	The machines, before the runs on them.
+
+	This belongs here rather than on a site page because it is a fact about the
+	instrument, not about any site: every CPU-bound number published — TBT, the
+	performance score, anything derived from them — was produced on one of these,
+	and a run on a slow one reports a worse site having measured nothing
+	different.
+#}
+{% if sites.benchmark %}
+<section class="panel" id="machines">
+	<h2>The measuring machines <span class="tag">Lighthouse benchmark index</span></h2>
+	<p class="muted small">
+		Recorded once per measurement, from the run whose numbers were kept.
+		Higher is faster.
+	</p>
+
+	<dl class="bench-stats">
+		<div>
+			<dt>Median</dt>
+			<dd>{{ sites.benchmark.median | num }}</dd>
+		</div>
+		<div>
+			{#
+				Second, against the median it is drawn from: the pair reads as one
+				statement about which machines count as ordinary here.
+			#}
+			<dt>&plusmn;{{ sites.benchmark.driftBand.pct }}% Median</dt>
+			<dd>{{ sites.benchmark.driftBand.low | num }}&ndash;{{ sites.benchmark.driftBand.high | num }}</dd>
+		</div>
+		<div>
+			<dt>Mean</dt>
+			<dd>{{ sites.benchmark.mean | num }}</dd>
+		</div>
+		<div>
+			<dt>Range</dt>
+			<dd>{{ sites.benchmark.min | num }}&ndash;{{ sites.benchmark.max | num }}</dd>
+		</div>
+	</dl>
+
+	<p class="muted small">
+		{#
+			Both averages, because they disagree: the mean sits above the median
+			because a thin tail of fast runners pulls it there, while most runs
+			cluster within a few percent of each other. Saying so is the difference
+			between a statistic and a number.
+		#}
+		From {{ sites.benchmark.count | num }} {{ sites.benchmark.count | plural("measurement") }}.
+		The mean sits above the median because a few unusually fast machines pull it
+		there; most runs land close together. A site is told
+		<em>&ldquo;the measuring machine was faster than most in this project&rdquo;</em>
+		when its run lands outside that band.
+		That is a distance rather than a percentile because the notice claims the
+		CPU-bound numbers moved, and how far off the machine was decides that; how
+		rare it was does not. These machines vary by running fast rather than slow,
+		so in practice the notice is a fast-machine one.
+	</p>
+</section>
+{% endif %}
+
+{% if not runs.recent.length %}
+<div class="empty">
+	<p>No runs logged yet. Run <code>npm run measure</code> to create one.</p>
+</div>
+{% else %}
+
+<section class="panel" id="runs">
+	<div class="table-scroll">
+	<table class="grid">
+		<thead>
+			<tr>
+				<th class="col-site">Started</th>
+				<th>Duration</th>
+				<th>Measured</th>
+				<th>Skipped</th>
+				<th>Failed</th>
+				<th>Warnings</th>
+				<th>Form factor</th>
+				<th>Log file</th>
+			</tr>
+		</thead>
+		<tbody>
+		{% for run in runs.recent %}
+			<tr{% if run.failed %} class="row-failing"{% endif %}>
+				<td class="col-site">{{ run.startedAt | date("long") }}</td>
+				<td class="num">{{ (run.durationMs / 1000) | round(1) }}s</td>
+				<td class="num">{{ run.measured or run.written or 0 }}</td>
+				<td class="num muted">{{ run.skipped or 0 }}</td>
+				<td class="num {{ 'worse' if run.failed }}">{{ run.failed or 0 }}</td>
+				<td class="num muted">{{ run.counts.warn or 0 }}</td>
+				<td class="muted">{{ run.formFactor or "—" }}</td>
+				<td class="muted"><code>{{ run.logFile }}</code></td>
+			</tr>
+		{% endfor %}
+		</tbody>
+	</table>
+	</div>
+</section>
+
+<section class="panel" id="reading-logs">
+	<h2>Reading the logs</h2>
+	<p class="muted small">
+		Each run writes a full NDJSON log to <code>logs/&lt;runId&gt;.ndjson</code>,
+		one JSON object per line, plus a summary line appended to
+		<code>logs/runs.ndjson</code>. Both are greppable:
+	</p>
+	<pre><code># Every warning and error across all runs
+grep -h '"level":"warn"\|"level":"error"' logs/*.ndjson | jq .
+
+# What happened to one site in one run
+jq 'select(.data.url == "https://example.com/")' logs/2026-01-01*.ndjson
+
+# Run history at a glance
+npx speedlify runs</code></pre>
+</section>
+
+{% endif %}

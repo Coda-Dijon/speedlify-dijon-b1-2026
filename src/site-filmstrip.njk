@@ -1,0 +1,56 @@
+---
+permalink: "/site/{{ entry.slug }}/filmstrip/"
+eleventyExcludeFromCollections: true
+---
+{# The site page's filmstrip player alone, for an iframe; `?theme=light|dark` overrides the system theme. #}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="robots" content="noindex">
+<title>{{ entry.displayUrl }} filmstrip · {{ meta.title }}</title>
+<link rel="canonical" href="{{ meta.url }}/site/{{ entry.slug }}/">
+<script>
+try {
+	var theme = new URLSearchParams(location.search).get("theme");
+	if (theme === "light" || theme === "dark") document.documentElement.dataset.theme = theme;
+} catch (e) {}
+</script>
+{% if buildawesome.env.runMode == "build" %}
+<style>{{ styleCss | safe }}</style>
+{% else %}
+<link rel="stylesheet" href="/css/style.css">
+{% endif %}
+{%- if meta.goatcounter %}
+<script data-goatcounter="{{ meta.goatcounter }}" data-goatcounter-settings='{"allow_frame": true}' async src="//gc.zgo.at/count.js"></script>
+{%- endif %}
+</head>
+<body class="filmstrip-embed">
+<p class="filmstrip-embed-head">
+	<a class="site-link" href="/site/{{ entry.slug }}/" target="_blank">
+		{% set avatar = entry.url | avatar(meta.avatarService) %}
+		{% if avatar %}<img class="favicon" src="{{ avatar }}" width="32" height="32" alt="" decoding="async">{% endif %}
+		<span>{{ entry.displayUrl }}</span>
+	</a>
+	<span class="recents-dots" aria-hidden="true">
+		{% for band in entry | ringBands %}<span class="recents-dot recents-dot-{{ band }}"></span>{% endfor %}
+	</span>
+	{% if entry.latest %}<span class="age-pill{{ ' stale' if entry.dataStale }}" title="Measured {{ entry.latest.date | date('long') }}"><time datetime="{{ entry.latest.date | iso }}">{{ entry.latest.date | since }}</time> old</span>{% endif %}
+	<a class="small filmstrip-embed-credit" href="/" target="_blank"><i class="fa-solid fa-forward-fast filmstrip-embed-mark" width="16" height="16" aria-hidden="true"></i><span class="filmstrip-embed-credit-name">{{ meta.title }}</span></a>
+</p>
+{% if entry.filmstrip and entry.filmstrip.distinct > 1 %}
+{% set filmstripNoSpeed = true %}
+{% include "filmstrip-player.njk" %}
+{% else %}
+<div class="filmstrip-empty">
+	<ol class="filmstrip" aria-hidden="true">
+		{% for i in range(0, 8) %}<li class="filmstrip-frame"><span class="filmstrip-skeleton"></span><span class="filmstrip-timing">&nbsp;</span></li>{% endfor %}
+	</ol>
+	<p class="filmstrip-empty-message">No filmstrip data captured</p>
+</div>
+{% endif %}
+{% getBundle "fontawesome" %}
+</body>
+</html>

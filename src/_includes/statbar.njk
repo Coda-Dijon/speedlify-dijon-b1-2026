@@ -1,0 +1,419 @@
+{#
+	The stat bar, shared by the home page and every category page.
+
+	A macro rather than a copy in each: the two show the same figures over
+	different sets, and a second copy is how one of them ends up a release
+	behind. `stats` is whatever set is being summarized — `sites.stats` for the
+	whole fleet, `group.stats` for one category.
+
+	Everything here degrades on its own: the perfect-score trend only exists for
+	the whole fleet, the Eleventy share only appears when there is one, and the
+	Core Web Vitals tile only appears where CrUX has sampled anything. So a
+	category page shows fewer tiles than the home page without the caller
+	deciding which.
+#}
+{#
+	Note the arguments. This is imported without `with context`, so the macro
+	sees nothing of the page's own data — `meta` in particular is not in scope
+	here, and reaching for it silently yields undefined rather than failing.
+	Everything the bar needs is therefore passed in.
+#}
+{% macro statbar(stats, metrics, siteOfTheWeek=null, screenshotService=null) %}
+<section class="statbar">
+	{#
+		One of the perfect scores, held for the whole UTC week. Every eligible site
+		is featured once before any is featured twice — see siteOfTheWeek in
+		lib/report.js. A picture rather than a row, because the leaderboard below
+		already lists every one of them and the point of pulling one out is to
+		show what it looks like.
+
+		Cropped to the top of the page: at this size the whole screenshot would be
+		a gray smudge, and the masthead is the recognizable part.
+	#}
+	{% if siteOfTheWeek %}
+	{% set sotw = siteOfTheWeek.entry %}
+	<div class="stat stat-sotw">
+		<span class="stat-label">Perfect site of the week</span>
+		{#
+			Our own capture first: the same page load that produced the scores under
+			it, taken at Lighthouse's own pixel ratio because this site scored a
+			straight 400 — see isPerfectLighthouse in lib/runner.js, which exists so
+			that the one screenshot shown this large is the sharp one.
+
+			The service is the fallback, for a site that has not been re-measured
+			since captures were introduced. Guarded on it being configured: with
+			none, the filter returns an empty string, and `src=""` does not render
+			nothing — it resolves to the current page and fetches this whole
+			document as an image.
+		#}
+		{% if sotw.ownScreenshot %}
+		<a class="sotw-shot" href="/site/{{ sotw.slug }}/" tabindex="-1" aria-hidden="true">
+			<img src="{{ sotw.ownScreenshot.src }}"
+				width="{{ sotw.ownScreenshot.width }}" height="{{ sotw.ownScreenshot.height }}"
+				alt="" loading="lazy" decoding="async">
+		</a>
+		{% elif screenshotService %}
+		<a class="sotw-shot" href="/site/{{ sotw.slug }}/" tabindex="-1" aria-hidden="true">
+			<img src="{{ sotw.url | screenshot(screenshotService) }}" width="650" height="650"
+				alt="" loading="lazy" decoding="async">
+		</a>
+		{% endif %}
+		<p class="sotw-name"><a href="/site/{{ sotw.slug }}/">{{ sotw.displayUrl }}</a></p>
+		<span class="rings">
+			{% for score in metrics.SCORES %}
+			{% scoreRing sotw.latest.lab.scores[score.key], score.label, score.short %}
+			{% endfor %}
+			{% axeRing sotw.axe %}
+			{% cwvRing sotw.cwvFailures, sotw.cwv.assessed, sotw.cwvWorst %}
+		</span>
+	</div>
+	{% endif %}
+
+	{% if stats.recentlyMeasured.length or stats.newlyPerfect.length %}
+	<div class="stat">
+		{#
+			What the measurement loop has just done. Everything else on this bar is
+			a state of the corpus; this is the only thing that shows it moving.
+
+			Gives up its rows to the newly-perfect list below when that one is long,
+			and drops out entirely rather than printing a heading over nothing — so
+			the card is gated on either list having something to say, not on this one.
+		#}
+		{% if stats.recentlyMeasured.length %}
+		<span class="stat-label">Recently measured</span>
+		<ol class="recents">
+			{% for site in stats.recentlyMeasured %}
+			<li>
+				<a href="/site/{{ site.slug }}/">{{ site.displayUrl }}</a>
+				{#
+					The six rings reduced to their colors — the shape of that run at a
+					glance, in the width a number would need. Decorative on purpose:
+					the link beside it goes to the page with the actual figures, and
+					six unlabeled colors read aloud would be noise.
+				#}
+				{#
+					The span stays even when a run produced no bands at all. The row is
+					a three-column grid, and dropping a child moves the age into the
+					middle column, where the gap before the empty third one holds it
+					half a rem off the right edge — so that row would sit out of line
+					with the rest.
+				#}
+				<span class="recents-dots" aria-hidden="true">
+					{% for band in site.bands %}<span class="recents-dot recents-dot-{{ band }}"></span>{% endfor %}
+				</span>
+				<span class="recents-age"><time datetime="{{ site.timestamp | iso }}">{{ site.timestamp | since }}</time></span>
+			</li>
+			{% endfor %}
+		</ol>
+		{% endif %}
+
+		{#
+			The other half of the same story. The list above says what was measured;
+			this says what changed — a site that was a point short and now is not.
+
+			Every site that qualifies, however many that is — a site whose scores just
+			went green should be able to find itself here, and a cap ordered by recency
+			meant that on a busy day it silently missed the cut. On a quiet day this is
+			a footnote under a list of twelve; on a busy one it is the whole card, and
+			the list above stands down. Absent entirely where nothing has flipped, which
+			is most category pages most days.
+		#}
+		{% if stats.newlyPerfect.length %}
+		{#- Count and window in one pill: two chips said one thing twice, and the
+		    window is what the count is counting over. The number comes from the
+		    report so it cannot drift. -#}
+		<span class="stat-label">Newly perfect <span class="tag stat-count" title="{{ stats.newlyPerfect | length }} {{ "site" if stats.newlyPerfect | length == 1 else "sites" }} reached perfect scores in the last {{ stats.newlyPerfectWindowHours }} hours">&times;{{ stats.newlyPerfect | length }} in {{ stats.newlyPerfectWindowHours }}h</span></span>
+		<ol class="recents recents-flipped">
+			{% for site in stats.newlyPerfect %}
+			<li>
+				<a href="/site/{{ site.slug }}/">{{ site.displayUrl }}</a>
+				<span class="recents-dots" aria-hidden="true">
+					{% for band in site.bands %}<span class="recents-dot recents-dot-{{ band }}"></span>{% endfor %}
+				</span>
+				<span class="recents-age"><time datetime="{{ site.timestamp | iso }}">{{ site.timestamp | since }}</time></span>
+			</li>
+			{% endfor %}
+		</ol>
+		{% endif %}
+	</div>
+	{% endif %}
+
+	{#
+		Six medians, each computed on its own column — so this is a summary of the
+		fleet rather than a portrait of any one site, and no site necessarily has
+		this exact row.
+
+		The Core Web Vitals ring rests on far fewer sites than the other five,
+		since most of this corpus is too small for CrUX to sample. Its own tooltip
+		says how many rather than letting the row imply they are all equally
+		grounded.
+	#}
+	{#
+		Two verdicts on the same fleet, in one card. They answer the same question
+		from opposite ends — how many sites clear every bar, and how the rest
+		divide on the one bar real users set — and reading them side by side is
+		the point: 155 perfect against 1,261 CrUX has never heard of.
+	#}
+	{#
+		Two thumbnails of the charts on /charts/, over this set's own sites.
+
+		A macro because they are the same picture of different columns — no axes,
+		no labels, no hit targets, none of which survive at 240px. The shape is the
+		whole point: a smear that turns amber as it climbs, or one that falls away
+		as it runs right.
+	#}
+	{#
+		The two thumbnails share one card rather than taking a tile each.
+
+		They are one thought — what a page's own weight costs it, and what other
+		people's code costs it — and they link to the same place. Two tiles would
+		have spent two of the bar's slots saying "there are charts over there".
+
+		Each keeps its own heading, and they stack rather than sitting side by side
+		— two 240px charts in a row need a card twice the width of every other tile
+		on the bar, and one of them would have been the odd shape out.
+	#}
+	{#
+		A banded distribution: one bar per verdict, over the sites that have one.
+
+		Three of these now — performance, axe, Core Web Vitals — so it is a macro
+		rather than a fourth copy of the same twenty lines. A bar may carry
+		`segments`, in which case it is one column divided rather than several
+		stacked beside each other; the segment heights are shares of that bar and
+		the bar's height is its share of the tallest.
+	#}
+	{% macro tierbars(tiers, label) %}
+	{% if tiers and tiers.rated %}
+	<span class="stat-label">{{ label }} <span class="tag stat-count">&times;{{ tiers.rated | num }}</span></span>
+	{% set tierMax = tiers.bars | maxValue("count") %}
+	<span class="histogram histogram-tiers" role="img"
+		aria-label="{{ label }} across {{ tiers.rated | num }} sites{% for b in tiers.bars %}. {{ b.tick }}, {{ b.label }}: {{ b.count | num }}{% endfor %}">
+		{% for b in tiers.bars %}
+		<span class="histogram-col" title="{{ b.tick }} — {{ b.label }}: {{ b.count | num }} {{ b.count | plural('site') }} ({{ b.share }}%)">
+			<span class="histogram-track">
+				<span class="histogram-bar histogram-bar-{{ b.key }}" style="height:{{ (b.count / tierMax * 100) | round(1) }}%">
+					{%- for seg in b.segments %}
+					<span class="histogram-seg histogram-bar-{{ seg.key }}" style="height:{{ seg.height }}%"
+						title="{{ seg.label }}: {{ seg.count | num }} {{ seg.count | plural('site') }}"></span>
+					{%- endfor %}
+				</span>
+			</span>
+			<span class="histogram-tick">{{ b.tick }}</span>
+		</span>
+		{% endfor %}
+	</span>
+	{% endif %}
+	{% endmacro %}
+
+	{% macro minichart(mini, label, anchor, xTitle, yTitle) %}
+	<div class="stat-chart-item">
+	<span class="stat-label stat-chart-label">{{ label }}</span>
+	{#
+		Straight to its own section rather than the top of the page. There are
+		eight charts there, and landing on the first one leaves a reader who
+		clicked the second thumbnail to go looking for what they just pointed at.
+	#}
+	<a class="stat-chart" href="/charts/#{{ anchor }}"
+		aria-label="{{ mini.count | num }} {{ mini.count | plural('site') }} by {{ xTitle | lower }} and {{ yTitle | lower }} — see the full chart">
+		<svg viewBox="0 0 {{ mini.w }} {{ mini.h }}" aria-hidden="true" focusable="false">
+			{%- for band in ["poor", "average", "good"] %}
+			<g class="plot-{{ band }}">
+				{%- for dot in mini.dots[band] %}<circle cx="{{ dot.x }}" cy="{{ dot.y }}" r="1.6"/>{% endfor %}
+			</g>
+			{%- endfor %}
+			{#
+				Names only, no numbers: at this size tick values are illegible, but
+				which scale is which still has to be said — the more so with two
+				charts side by side whose vertical axes run opposite ways.
+			#}
+			<g class="mini-axis">
+				<text x="{{ mini.axis.xLabel.x }}" y="{{ mini.axis.xLabel.y }}" text-anchor="middle">{{ xTitle }}</text>
+				<text x="{{ mini.axis.yLabel.x }}" y="{{ mini.axis.yLabel.y }}" text-anchor="middle"
+					transform="rotate(-90 {{ mini.axis.yLabel.x }} {{ mini.axis.yLabel.y }})">{{ yTitle }}</text>
+			</g>
+		</svg>
+	</a>
+	</div>
+	{% endmacro %}
+
+	{% if stats.scatterPreview or stats.thirdPartyPreview %}
+	<div class="stat stat-plot">
+		<div class="stat-charts">
+			{% if stats.scatterPreview %}{{ minichart(stats.scatterPreview, "Page weight vs LCP", "weight-lcp", "Page Weight", "LCP") }}{% endif %}
+			{% if stats.thirdPartyPreview %}{{ minichart(stats.thirdPartyPreview, "Third party vs performance", "third-party", "Third Party", "Score") }}{% endif %}
+		</div>
+	</div>
+	{% endif %}
+	<div class="stat">
+		{#
+			Label and figure on one line, the figure pushed to the right edge — the
+			card carries four sections now, and a heading that owns a line of its
+			own before its own number made the first of them the tallest.
+		#}
+		<span class="stat-headline stat-headline-inline">
+			<span class="stat-label">Perfect {{ stats.perfect | plural("score") }}</span>
+			{#
+				How the count has moved. Every site, judged on its most recent
+				measurement as of each day — the same rule as the number beside it,
+				so the last point of the line is that number. Absent until there are
+				enough days to be a trend — see MIN_HISTORY_DAYS in lib/report.js.
+
+				Left of the number rather than right of it: the line ends where the
+				figure begins, so the two read as one sentence about the same count
+				rather than as a number with a decoration after it.
+			#}
+			{% if stats.perfectHistory.length %}
+			{% set perfectTrend = { values: [] } %}
+			{% for point in stats.perfectHistory %}
+				{% set perfectTrend = (perfectTrend.values.push(point.perfect), perfectTrend) %}
+			{% endfor %}
+			<span class="stat-spark" title="Perfect scores from {{ stats.perfectHistory[0].date }} to {{ stats.perfectHistory[stats.perfectHistory.length - 1].date }}">
+				{% sparkline perfectTrend, { width: 64, height: 14 } %}
+			</span>
+			{% endif %}
+			<span class="stat-value">{{ stats.perfect | num }}<span class="stat-suffix">/{{ stats.measured | num }}</span></span>
+		</span>
+		{#
+			What built them, rather than one figure for Eleventy and nothing about
+			the rest. The rows sum to the number above — a site with no generator
+			tag is counted under its own row instead of being dropped, which is
+			what would make the two disagree.
+
+			A presumption counts the same as a detection, as it does everywhere
+			else on this site: most static sites emit no generator tag, so
+			detections alone would credit the wrong thing.
+		#}
+		{% if stats.perfectGenerators.length %}
+		{#
+			The same pill list the Technology section uses, over the generators that
+			produced a perfect score. A row of pills rather than a two-column table:
+			this is three or four short names and their counts, which reads as a set
+			rather than as a ranking, and it wraps where a table would not.
+		#}
+		<ul class="tally-list">
+			{% for g in stats.perfectGenerators %}
+			<li class="tally-item" title="{{ g.count | num }} of the {{ stats.perfect | num }} perfect {{ stats.perfect | plural('score') }} ({{ (g.count / stats.perfect * 100) | round }}%)">
+				{% for mark in g.marks %}{% stackIcon mark, 14 %}{% endfor %}
+				{#- No generator at all is the absence of a value, not a brand called
+				    "None" — italics say so without a second column. #}
+				<span class="tally-name">{% if g.id %}{{ g.name }}{% else %}<em>{{ g.name }}</em>{% endif %}</span>
+				<span class="tally-count">{{ g.count | num }}</span>
+			</li>
+			{% endfor %}
+		</ul>
+		{% endif %}
+
+		{#
+			Each Lighthouse circle as a distribution, banded the way the ring beside
+			every row is banded — so a bar here cannot disagree with the circle it
+			summarizes. Built in lib/report.js.
+		#}
+
+		{% if stats.measured %}
+		<div class="ring-row">
+			<span class="stat-label">Median Score <span class="tag stat-count">&times;{{ stats.medians.counts.scores | num }}</span></span>
+			<span class="rings">
+				{% for score in metrics.SCORES %}
+				{% scoreRing stats.medians.scores[score.key], "Median " + score.label, score.short %}
+				{% endfor %}
+				{% axeRing stats.medians.axe, 37, "Median axe violations: " + (stats.medians.axe | default("no data")) + ", across " + (stats.medians.counts.axe | num) + " sites" %}
+				{% cwvRing stats.medians.cwvFailures, null, "poor", 37, "Median Core Web Vitals: " + (stats.medians.cwvFailures | default("no data")) + " failing, across " + (stats.medians.counts.cwv | num) + " sites with real-user data" %}
+			</span>
+		</div>
+
+		{{ tierbars(stats.ringTiers, "Performance") }}
+		{#
+			"Axe", not "Accessibility". Lighthouse has an accessibility category of
+			its own, and its ring is in the median row a few lines above — labelling
+			this one "Accessibility" would put two different measurements under one
+			word inside a single card. The scores are a sampled subset of the rules;
+			this is the full violation count.
+		#}
+		{{ tierbars(stats.axeTiers, "Axe") }}
+
+		{{ tierbars(stats.cwvVerdicts, "Core Web Vitals") }}
+		{% endif %}
+	</div>
+	<div class="stat">
+		{#
+			A distribution rather than an average. The mean here is 1.11 MB and the
+			median 256 kB — four times apart, because a handful of sites in the tens
+			of megabytes drag the average somewhere almost no site actually sits. A
+			single number could not say that; the shape does, at a glance.
+		#}
+		<span class="stat-label">Page weight</span>
+		{% set weightMax = stats.weightBuckets | maxValue("count") %}
+		<span class="histogram" role="img"
+			aria-label="Page weight distribution across {{ stats.measured | num }} sites{% for b in stats.weightBuckets %}. {{ b.label }}: {{ b.count | num }}{% endfor %}">
+			{% for b in stats.weightBuckets %}
+			<span class="histogram-col" title="{{ b.label }} — {{ b.count | num }} {{ b.count | plural("site") }} ({{ b.share }}%)">
+				<span class="histogram-track">
+					<span class="histogram-bar" style="height:{{ (b.count / weightMax * 100) | round(1) }}%"></span>
+				</span>
+				<span class="histogram-tick">{{ b.tick }}</span>
+			</span>
+			{% endfor %}
+		</span>
+		{#
+			JavaScript on its own, under the total. Its own bucket edges, because it
+			is an order of magnitude smaller than the page around it — see
+			SCRIPT_BUCKETS in lib/report.js — and its own leading bucket for the
+			sites that ship none at all.
+		#}
+		{% if stats.scriptBuckets.length %}
+		{% set scriptMax = stats.scriptBuckets | maxValue("count") %}
+		<span class="stat-label stat-label-sub">JavaScript Weight</span>
+		<span class="histogram" role="img"
+			aria-label="JavaScript weight distribution across {{ stats.measured | num }} sites{% for b in stats.scriptBuckets %}. {{ b.label }}: {{ b.count | num }}{% endfor %}">
+			{% for b in stats.scriptBuckets %}
+			<span class="histogram-col" title="{{ b.label }} — {{ b.count | num }} {{ b.count | plural("site") }} ({{ b.share }}%)">
+				<span class="histogram-track">
+					<span class="histogram-bar histogram-bar-script" style="height:{{ (b.count / scriptMax * 100) | round(1) }}%"></span>
+				</span>
+				<span class="histogram-tick">{{ b.tick }}</span>
+			</span>
+			{% endfor %}
+		</span>
+
+		{#
+			Bytes from somebody else's domain, on the same scale as the two above it.
+			The zero bucket is a real answer here — a third of these sites load
+			nothing third-party at all — rather than a rounding of something small.
+		#}
+		<span class="stat-label stat-label-sub">Third Party Weight</span>
+		{% set thirdPartyMax = stats.thirdPartyBuckets | maxValue("count") %}
+		<span class="histogram" role="img"
+			aria-label="Third party weight distribution across {{ stats.measured | num }} sites{% for b in stats.thirdPartyBuckets %}. {{ b.label }}: {{ b.count | num }}{% endfor %}">
+			{% for b in stats.thirdPartyBuckets %}
+			<span class="histogram-col" title="{{ b.label }} — {{ b.count | num }} {{ b.count | plural("site") }} ({{ b.share }}%)">
+				<span class="histogram-track">
+					<span class="histogram-bar histogram-bar-thirdparty" style="height:{{ (b.count / thirdPartyMax * 100) | round(1) }}%"></span>
+				</span>
+				<span class="histogram-tick">{{ b.tick }}</span>
+			</span>
+			{% endfor %}
+		</span>
+		{% endif %}
+		{#
+			Largest Contentful Paint, on the time scale rather than the byte one —
+			its ladder carries 2.5s and 4s, Google's good and poor boundaries, so
+			the thresholds land on the axis instead of inside a bar.
+		#}
+		{% if stats.lcpBuckets.length %}
+		{% set lcpMax = stats.lcpBuckets | maxValue("count") %}
+		<span class="stat-label stat-label-sub">LCP</span>
+		<span class="histogram" role="img"
+			aria-label="Largest Contentful Paint distribution across {{ stats.measured | num }} sites{% for b in stats.lcpBuckets %}. {{ b.label }}: {{ b.count | num }}{% endfor %}">
+			{% for b in stats.lcpBuckets %}
+			<span class="histogram-col" title="{{ b.label }} — {{ b.count | num }} {{ b.count | plural("site") }} ({{ b.share }}%)">
+				<span class="histogram-track">
+					<span class="histogram-bar histogram-bar-lcp" style="height:{{ (b.count / lcpMax * 100) | round(1) }}%"></span>
+				</span>
+				<span class="histogram-tick">{{ b.tick }}</span>
+			</span>
+			{% endfor %}
+		</span>
+		{% endif %}
+	</div>
+</section>
+{% endmacro %}

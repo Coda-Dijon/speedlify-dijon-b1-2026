@@ -1,0 +1,41 @@
+---
+pagination:
+  data: sites.compatRoutes
+  size: 1
+  alias: route
+permalink: "/api/{{ route.hash }}.json"
+eleventyExcludeFromCollections: true
+---
+{#
+  Compatibility route for the original Speedlify's API.
+
+  The documented, preferred usage of `<speedlify2-score>` hardcodes a hash in the
+  markup, so pages we do not control request this filename directly. It is the
+  one route whose absence breaks an embed that is already deployed.
+
+  Only the four Lighthouse scores are emitted, because they are the only fields
+  whose absence produces a broken render: with no attributes the component shows
+  exactly these. Everything else it reads — weight.summary, ranks.cumulative,
+  previousRanks.cumulative — sits behind an opt-in attribute and a guard, and
+  renders nothing at all when missing rather than failing.
+
+  Sites with no successful measurement emit an empty object: the component
+  reads through optional chaining, so it draws nothing instead of erroring.
+
+  Paginated over `compatRoutes` rather than over entries, because this is not
+  one file per site: only the URLs the original instance published get one, from
+  the frozen snapshot in config/legacy-api-urls.json. The hash is computed over
+  the URL as that config wrote it, trailing slash and all.
+-#}
+{% if route.lighthouse -%}
+{
+  "lighthouse": {
+    "performance": {{ route.lighthouse.performance | dump | safe }},
+    "accessibility": {{ route.lighthouse.accessibility | dump | safe }},
+    "bestPractices": {{ route.lighthouse.bestPractices | dump | safe }},
+    "seo": {{ route.lighthouse.seo | dump | safe }}
+  }
+}
+{%- else -%}
+{}
+{%- endif %}

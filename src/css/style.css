@@ -1,0 +1,4292 @@
+/* speedlify — one stylesheet, no build step, no client JS. */
+
+/*
+ * Dark by default, ignoring the system preference. A saved light override sets data-theme="light" on <html>.
+ * Each color token is light-dark(light, dark), resolved by color-scheme.
+ */
+:root {
+	color-scheme: dark;
+}
+:root[data-theme="light"] { color-scheme: light; }
+
+:root {
+	--bg: light-dark(#fbfbfd, #2e2e2e);
+	--surface: light-dark(#ffffff, #383838);
+	--border: light-dark(#e3e5ea, #4a4a4a);
+	--border-strong: light-dark(#cdd1da, #5c5c5c);
+	--text: light-dark(#14161a, #ffffff);
+	--text-muted: light-dark(#666d7a, #b0b0b0);
+	/* For muted text sitting on a *tinted* surface rather than on the page.
+	   Several components here tint their own background from --text-muted — a
+	   pill 15-25% of its own text color — which pulls the two together and
+	   drops the pair under 4.5:1 no matter how legible each looks alone. This is
+	   the same gray, far enough along to clear the contrast floor on every one
+	   of those surfaces (worst case the 25% chip, at 4.52:1 dark; on a #d6d8dc
+	   light surface, where #606060 missed at 4.41:1). */
+	--text-muted-strong: light-dark(#585858, #cbcbcb);
+
+	/* Lighthouse's own score banding, used for the rings and the numbers.
+	   Darkened for contrast on white in light mode. */
+	--good: light-dark(#0a7c42, #0cce6b);
+	--good-bg: light-dark(#e6f5ec, #143a28);
+	--average: light-dark(#9a6200, #ffa400);
+	--average-bg: light-dark(#fdf3e0, #3d2f14);
+	--poor: light-dark(#c02026, #ff4e42);
+	--poor-bg: light-dark(#fdeaea, #3d1f1d);
+	/* --poor is a ring stroke first, where contrast rules do not apply. As text
+	   it fails in dark: 4.15:1 on the page and 3.58:1 on a card. This is the same
+	   hue lightened until it passes on both. The light value already passes —
+	   5.22:1 on the failing-row tint, its worst case. */
+	--poor-text: light-dark(#c02026, #ff8078);
+	/* Softer than --poor, for a count that is context rather than a verdict on
+	   any one row. Pink rather than red: still clearly the bad news, without
+	   competing with the failing rows themselves. Deeper in light: a pale pink
+	   on white is unreadable, so the hue carries the softness and the value
+	   carries the contrast. */
+	--poor-soft: light-dark(#c2185b, #ff9fb0);
+	/* Softer again, for a move in the wrong direction on a metric still rated
+	   good. Half the pink of --poor-soft and half the muted gray, which is the
+	   weight this deserves: visible as a direction, not as a verdict. 6.56:1 on
+	   the page, 5.67:1 on a card (6.26:1 and 6.47:1 in light). */
+	--poor-faint: light-dark(#94426a, #d8a8b0);
+
+	--accent: light-dark(#1a5fd0, #7cc0ff);
+
+	/* The four phases of LCP. Four hues rather than four shades of one, because
+	   the segments sit side by side in a 4px bar and shades of a single color
+	   are not separable at that size.
+
+	   Chosen away from the score palette on purpose: a large amber or red
+	   segment would read as a verdict, and no phase of LCP is good or bad in
+	   itself — a page dominated by render delay is not failing, it is telling
+	   you where its time goes. Darkened in light mode, where the pastels are
+	   invisible. */
+	--lcp-ttfb: light-dark(#1a5fd0, #7cc0ff);
+	--lcp-load-delay: light-dark(#6b34c9, #b28dff);
+	--lcp-load-duration: light-dark(#0e7c74, #4ecdc4);
+	--lcp-render-delay: light-dark(#c2357f, #ff9ecb);
+
+	--button: light-dark(#eceef2, #444444);
+	--radius: 8px;
+	--pill: 50px;
+	--mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+	--sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+	/* Build Awesome's balloon green, and a near-black from the same family for
+	   text sitting on it. Identical in both themes: it is a brand color, not a
+	   surface, so it should not shift when the page does. */
+	--brand: #00a776;
+	--brand-bright: #00b880;
+	--brand-text: #052b20;
+
+	/* TTFB, FCP and LCP flags on filmstrip lanes; a shade deeper in light mode so the pole shows on white. */
+	--metric-flag: light-dark(#b49cf5, #c9b3ff);
+	--metric-flag-text: #2a1454;
+}
+
+* { box-sizing: border-box; }
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--sans);
+	font-size: 15px;
+	line-height: 1.55;
+	-webkit-text-size-adjust: 100%;
+}
+
+/*
+ * Wide enough that the leaderboard fits without horizontal scrolling — the
+ * table needs ~1195px with the current columns, so this leaves headroom for
+ * another one or two before it starts scrolling again.
+ */
+/* The page gutter, named so anything bleeding to the viewport edge can cancel
+   it by reference rather than by repeating the number. */
+:root {
+	--page-gutter: 1.25rem;
+	--page-gutter-padding: 0.7rem;
+}
+
+/* 1600px so the stat bar fits inside the column rather than escaping it: five
+   cards at a 19em floor, plus gaps and the row's own padding, come to 1591px on
+   the home page, and every category page fits well under that. Widen the floor
+   or add a sixth card and this has to move with it. */
+.wrap { max-width: 1600px; margin: 0 auto; padding: 0 var(--page-gutter); }
+/* Content only. The masthead and footer share `.wrap` and set their own
+   vertical rhythm, and the masthead is sticky — padding there would deepen the
+   bar that follows you down the page. */
+main.wrap { padding-top: 1.5rem; }
+
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+a:hover { text-decoration-thickness: 2px; }
+
+code { font-family: var(--mono); font-size: 0.88em; }
+
+pre {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 0.9rem 1rem;
+	overflow-x: auto;
+	font-size: 0.85rem;
+	line-height: 1.6;
+}
+pre code { font-size: inherit; }
+
+.muted { color: var(--text-muted); }
+.small { font-size: 0.85rem; }
+.block { display: block; }
+
+/* ------------------------------------------------------------------ header */
+
+.masthead {
+	border-bottom: 1px solid var(--border);
+	background: var(--surface);
+	position: sticky;
+	top: 0;
+	z-index: 10;
+}
+.masthead .wrap {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	min-height: 56px;
+	flex-wrap: wrap;
+}
+.brand {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-weight: 650;
+	font-size: 1.05rem;
+	color: var(--text);
+	text-decoration: none;
+}
+.brand-mark { font-size: 1.15rem; }
+.nav { display: flex; gap: 1.25rem; font-size: 0.9rem; }
+
+/* -------------------------------------------------------------------- hero */
+
+.hero { padding: 2.5rem 0 1.5rem; }
+.hero h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); margin: 0 0 0.4rem; letter-spacing: -0.02em; }
+.lede { color: var(--text-muted); max-width: 62ch; margin: 0; }
+
+/*
+ * One row that scrolls sideways, at every width.
+ *
+ * Eight tiles never fit a line, so wrapping meant two or three rows of cards
+ * above the leaderboard on a desktop and eight of them on a phone. Scrolling is
+ * the same shape at every size, and a card cut off at the right edge says there
+ * is more without needing a control to say so.
+ *
+ * The negative margin cancels the page gutter so the track reaches the viewport
+ * edge; the smaller padding inside sets the cards a little further out than the
+ * text above them, which buys width on the screens that need it.
+ */
+.statbar {
+	display: flex;
+	flex-wrap: nowrap;
+	overflow-x: auto;
+	gap: 0.75rem;
+	margin-bottom: 2.5rem;
+	/* Out to the page gutter, no further. The row is a child of the content
+	   column and stays inside it: where it needs more room than the column has,
+	   the column is widened rather than the row escaping it. */
+	margin-inline: calc(-1 * var(--page-gutter));
+	padding-inline: var(--page-gutter-padding);
+	/* Full height, so the cards read as one row rather than a ragged line of
+	   different-sized boxes. */
+	align-items: stretch;
+}
+.stat {
+	/* Grow and shrink around a 14em basis, so a row of tiles fills the width
+	   rather than leaving a ragged right edge. */
+	flex: 1 1 14em;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 0.9rem 1rem;
+}
+.stat-value { display: block; font-size: 1.5rem; font-weight: 650; letter-spacing: -0.02em; }
+
+/*
+ * The rings tile is six 37px marks rather than one number, so it needs more
+ * width than the other tiles and does not want their vertical rhythm — the
+ * rings carry their own.
+ */
+.ring-row .rings { margin-bottom: 0.2rem; }
+
+/* Six rings do not fit a narrow card in one line. Targeted at the row itself
+   rather than the tile that used to hold it — the rings moved into the Perfect
+   scores card, and the old `.stat-rings` selector went with the tile. */
+@media (max-width: 32rem) {
+	.ring-row .rings { flex-wrap: wrap; row-gap: 0.3rem; }
+}
+/* The margin gives whatever follows — a sub-figure, a sparkline, the mean row —
+   room to sit apart from the label rather than crowding under it. Harmless on
+   the tiles where the label is last: nothing follows it to push down. */
+.stat-label {
+	display: block;
+	margin-bottom: 0.35rem;
+	font-size: 0.78rem;
+	color: var(--text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+/* A second figure under a stat: the share of that number attributable to one
+   thing, with the marks standing in for naming it twice. */
+.stat-sub {
+	display: flex;
+	align-items: center;
+	gap: 0.3rem;
+	margin: 0.5rem 0 0;
+	font-size: 0.95rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted);
+}
+.stat-sub .stack-icon { flex: none; }
+/* A shape under a stat, not a chart in its own right: no axes, no labels, and
+   the value above it is the number that matters. */
+/* No top margin: the only sparkline left sits inline in .stat-headline, where
+   a flex row centers it against the number and any margin only pushes it off
+   that line. */
+.stat-spark { display: block; }
+.stat-sub-pct { font-weight: 400; font-size: 0.85rem; }
+
+/* ------------------------------------------------------------------ groups */
+
+
+.group { margin-bottom: 3rem; }
+.group-head { margin-bottom: 0.9rem; }
+/*
+ * One size for every top-level section heading on the home page. The three on
+ * the right had no rule at all and were taking the browser's default 1.5em,
+ * which read a size larger than the ones that had been designed.
+ */
+.group-head h2,
+.redirects > h2,
+.orphans > h2 { margin: 0 0 0.15rem; font-size: 1.2rem; letter-spacing: -0.01em; }
+.group-head h2 a { color: var(--text); text-decoration: none; }
+.group-head h2 a:hover { color: var(--accent); }
+
+/* ------------------------------------------------------------------ tables */
+
+/* Pulled out by one cell's padding each side, so the table's outer columns sit
+   flush with the surrounding text rather than indented by their own padding.
+   On the scroller rather than the table: a negative margin inside an
+   overflow-x container is clipped, not pulled out. */
+.table-scroll {
+	overflow-x: auto;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	margin-inline: calc(-1 * var(--page-gutter-padding));
+}
+
+table.grid { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+table.grid th {
+	text-align: right;
+	font-size: 0.72rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-muted);
+	font-weight: 600;
+	padding: 0.6rem var(--page-gutter-padding);
+	border-bottom: 1px solid var(--border);
+	white-space: nowrap;
+}
+table.grid td { padding: 0.6rem var(--page-gutter-padding); border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+table.grid tbody tr:last-child td { border-bottom: 0; }
+table.grid tbody tr:hover { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+table.grid.compact td, table.grid.compact th { padding: 0.4rem var(--page-gutter-padding); font-size: 0.82rem; }
+
+/* A two-row header, for the one table that reports the same metric twice. The
+   group row names Lab and Field; the row under it names the columns inside
+   each. Centered because the label spans its group rather than sitting over one
+   column, and given a rule underneath so the span is visible as a span. */
+table.grid.grid-grouped thead .group-head th {
+	text-align: center;
+	border-bottom: 1px solid var(--border);
+	padding-bottom: 0.35rem;
+}
+table.grid.grid-grouped thead .group-head th.col-site {
+	text-align: left;
+	vertical-align: bottom;
+}
+table.grid.grid-grouped thead tr:not(.group-head) th { padding-top: 0.35rem; }
+
+/* Where the field half starts. Without it the two groups run together and the
+   header rule above is the only thing saying which column belongs to which. */
+.col-group-start { border-left: 1px solid var(--border); }
+
+/* A figure over the context for it, stacked in one cell — the same treatment
+   `.weight-dom` gives the DOM count under the byte total, for the same reason:
+   the second number is read once you have stopped on a row, not scanned down a
+   column of its own. */
+.cell-flag { display: block; margin-block: 0.15rem; }
+.cell-main { display: block; }
+.cell-sub {
+	display: block;
+	font-size: 0.72em;
+	line-height: 1.3;
+	color: var(--text-muted);
+}
+
+/* A measurement and its rating, in one cell. Wraps rather than widening the
+   column past the table on a narrow screen, and the pill keeps its own baseline
+   instead of stretching the row. */
+.metric-pair {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.4rem;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+}
+
+.col-site { text-align: left !important; white-space: normal !important; min-width: 150px; }
+
+/*
+ * Leaderboard site cells only — scoped with :has() so the same class stays
+ * narrow where it holds a metric name or a date. Wide enough that the CWV and
+ * failing badges sit beside the URL instead of wrapping onto their own line.
+ * Older browsers without :has() just get the wrap, which is still readable.
+ */
+.col-site:has(.site-link) { min-width: 260px; }
+.col-rank { text-align: right !important; width: 2.5rem; }
+.col-trend { text-align: right !important; width: 130px; }
+/* Left, unlike every other numeric column: the cell is a number plus a chart
+   that grows rightwards, so its natural origin is the left edge. */
+.col-lcp { text-align: left !important; }
+/* The sparkline fills its cell, so the heading centers over the chart rather
+   than sitting against one end of it. */
+th.col-trend { text-align: center !important; }
+/* Narrower than it was: the heading is one word now and the bar's legend sits
+   under it rather than beside it, so the column is as wide as the bar and no
+   wider. */
+.col-dist { text-align: left !important; min-width: 108px; }
+.col-tpbar { text-align: left !important; width: 50%; min-width: 8rem; }
+.table-narrow { max-width: 54em; }
+table.grid tfoot td { border-top: 1px solid var(--border); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* The DOM element count under the byte total. Two ways of measuring how much
+   page there is, so they share a cell rather than the second one earning a
+   column of its own — the table is already twelve columns wide.
+
+   Muted and smaller because the byte total is what the column is scanned for;
+   the element count is context for a row you have already stopped on. Absent
+   rather than zero where the DOM snapshot failed, so a blank second line means
+   "not known", never "no elements". */
+.weight-dom {
+	display: block;
+	font-size: 0.72em;
+	line-height: 1.3;
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+.row-failing { background: var(--poor-bg); }
+/* The row's tint lifts the background under every cell, which takes plain muted
+   text to 4.49:1 — under the line by a hundredth. */
+.row-failing .muted { color: var(--text-muted-strong); }
+
+/*
+ * An event between two measurements rather than a measurement: no numbers, so
+ * it spans the table and reads as a rule across it. Quiet by default — the row
+ * beneath is still the data — with the badge carrying whatever weight it needs.
+ */
+.row-change td {
+	text-align: left !important;
+	white-space: normal !important;
+	font-size: 0.82rem;
+	color: var(--text-muted);
+	background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+.row-change strong { color: var(--text); font-weight: 650; }
+.change-mark { color: var(--accent); font-weight: 700; padding-right: 0.15rem; }
+
+/* ------------------------------------------------------------------ scores */
+
+.score { font-variant-numeric: tabular-nums; font-weight: 650; }
+.score-good { color: var(--good); }
+.score-average { color: var(--average); }
+.score-poor { color: var(--poor-text); }
+.score-none { color: var(--text-muted); }
+
+/* ------------------------------------------------------------------ panels */
+
+.panel {
+	margin-bottom: 2.5rem;
+}
+.panel > h2 {
+	font-size: 1.1rem;
+	margin: 0 0 0.5rem;
+	letter-spacing: -0.01em;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+}
+.panel h3 { font-size: 0.95rem; margin: 1.5rem 0 0.5rem; }
+
+.detail-head { padding: 2rem 0 1.25rem; }
+
+/*
+ * Category heading, with the way in beside it. Wraps on a narrow screen, where
+ * the button lands under the heading rather than squeezing it.
+ */
+.group-title {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 0.75rem 1rem;
+	margin-block-end: 1em;
+}
+
+/*
+ * The one thing on a category page that is an action rather than a reading.
+ * Solid rather than outlined, because it is competing with a table of a
+ * thousand rows for attention and an outline loses.
+ *
+ * Build Awesome's own green, from BRAND_COLORS in buildawesome.config.js — the
+ * same value the balloon is drawn in, so the page's one loud element is loud in
+ * the project's color rather than an invented one.
+ *
+ * The text is near-black rather than white, which is the reflex for a colored
+ * button and would be wrong here: white on this green is 3.09:1, and at
+ * 0.9rem/650 the label is not large text, so it needs 4.5. The dark green-black
+ * below reaches 4.95:1 and belongs to the same family.
+ *
+ * One thing to know if the green is ever lightened: it sits at 2.99:1 against
+ * the light theme's #fbfbfd, a hair under the 3:1 that non-text contrast wants
+ * for a control's own edge. The label inside carries the accessible contrast;
+ * the shape is helped by its size and position rather than by its edge.
+ */
+.cta {
+	flex: none;
+	display: inline-block;
+	padding: 0.75rem 1.75rem;
+	border-radius: var(--pill);
+	background: var(--brand);
+	color: var(--brand-text);
+	font-size: 0.9rem;
+	font-weight: 650;
+	text-decoration: none;
+	white-space: nowrap;
+
+	&:hover,
+	&:focus-visible {
+		/* Lighter, not darker: darkening this green closes on the text sitting on
+		   it — #00805b would drop the label to 3.09:1. Going up keeps the pair
+		   legible and still reads as a response. */
+		background: var(--brand-bright);
+		color: var(--brand-text);
+		text-decoration: none;
+	}
+}
+
+/* After the table, centered — there is nothing beside it to align to. */
+.cta-footer {
+	margin-block: 1.5rem 0;
+	text-align: center;
+}
+
+/*
+ * `.panel > p` caps prose at 90ch and this is a direct child of a panel, so the
+ * button would center inside that measure rather than inside the panel — left
+ * of center on a wide screen.
+ *
+ * Qualified by the parent rather than declared on `.cta-footer` alone: that is
+ * one class against `.panel > p`'s class-plus-element, which wins on specificity
+ * whatever the source order. Two classes beats it.
+ */
+.panel > .cta-footer {
+	max-width: none;
+}
+
+/*
+ * Category switcher, above the heading it changes.
+ *
+ * Baseline-aligned rather than centered so the label, the control and the button
+ * sit on one line with the text around them. `accent-color` and `color-scheme`
+ * hand the select's own chrome to the theme — a UA-styled dropdown otherwise
+ * arrives light on a dark page, which is the one control on this site that
+ * would.
+ */
+/*
+ * In the masthead now, on the row of tool links, so it is inline-flex
+ * rather than a block of its own — it has to sit in the middle of a line of
+ * links without breaking it.
+ */
+.cat-switch {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.35rem;
+	font-size: inherit;
+}
+
+/*
+ * That row holds a form now, so it is a div rather than a p — a <form> is flow
+ * content and cannot live in a paragraph. Flex keeps the links, the button and
+ * the select on one baseline, and lets the row wrap on a phone instead of
+ * pushing the masthead wide.
+ *
+ * The gap does the separating. It used to be interpuncts typed between the
+ * items, which a flex row turns into children of their own — so they wrapped
+ * onto lines by themselves and were read out as "middle dot" by a screen
+ * reader. Space says the same thing to everyone.
+ */
+.masthead-tools {
+	display: flex;
+	/*
+	 * Center, not baseline. The row is links, a button and a select — and two of
+	 * those have no usable baseline: a flex container takes its baseline from its
+	 * first item that has one, and the toggle's first item is a 14px icon, so its
+	 * baseline is synthesised from that icon's bottom edge and lands below the
+	 * text beside it. Centring aligns the boxes, which is what a row of controls
+	 * wants anyway.
+	 */
+	align-items: center;
+	/* Centered under a centered masthead, at every width — the row is short enough
+	   that packing it left reads as a stray edge rather than as alignment. */
+	justify-content: center;
+	flex-wrap: wrap;
+	/* The column gap is wide enough to read as separation on its own; the row
+	   gap only has to keep wrapped lines from touching. */
+	gap: 0.5rem 1.1rem;
+
+	/* The form and any other block child bring their own margins, which would
+	   fight the gap and offset one item from the rest of the row. */
+	& > * {
+		margin: 0;
+	}
+}
+
+.cat-switch select {
+	font: inherit;
+	color: var(--text);
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	/* 24px minimum target, from the block padding rather than a min-height. */
+	padding: 0.2rem 0.4rem;
+}
+
+/* The fieldset exists only to carry `disabled`, so it must not look like one:
+   browsers give it a border, margin and padding by default. `display: contents`
+   would be tidier still, but it is unreliable for form controls, so it becomes a
+   flex row with the same gap the form itself uses. */
+.cat-switch fieldset {
+	display: inline-flex;
+	align-items: baseline;
+	gap: 0.35rem;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	min-width: 0;
+}
+
+/*
+ * A control that is off should say so before it is clicked.
+ *
+ * Three signals rather than one: the cursor on contact, the reduced opacity at a
+ * glance, and — where a control is colored like a link — a muted color, because
+ * accent blue reads as "click me" however dead the control is.
+ *
+ * The inherited case needs naming separately: a control inside a disabled
+ * fieldset is disabled for every purpose except matching `[disabled]`, which
+ * reads the attribute and nothing else.
+ *
+ * 0.55 rather than something fainter: these sit in a masthead against a
+ * low-contrast background, and a disabled control still has to be readable —
+ * the title attribute on it explains why it is off, which is no use to someone
+ * who cannot make out the label to hover it.
+ */
+[disabled],
+fieldset[disabled] select {
+	cursor: not-allowed;
+	opacity: 0.55;
+}
+
+.cat-switch select { color-scheme: inherit; accent-color: var(--accent, currentColor); }
+.detail-head h1 { margin: 0 0 0.25rem; font-size: clamp(1.5rem, 4vw, 2rem); letter-spacing: -0.02em; }
+/* The site's place in a category, beside that category's name. A pill, matching
+   the counts elsewhere, so it reads as a label on the link rather than as part
+   of the sentence around it. */
+.cat-rank {
+	display: inline-block;
+	margin-left: 0.15rem;
+	padding: 0.05rem 0.4rem;
+	border-radius: var(--pill);
+	background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+	color: var(--text-muted-strong);
+	font-size: 0.72rem;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	/* Baseline, not middle: `middle` puts the box's center at the baseline plus
+	   half an x-height, which for a padded pill lands visibly below the text it
+	   sits in and grows the line box to make room. Same as .age-pill, which is
+	   the pill directly above it on this page. */
+	vertical-align: baseline;
+	white-space: nowrap;
+}
+
+.detail-url { margin: 0 0 0.35rem; font-family: var(--mono); font-size: 0.85rem; word-break: break-all; }
+
+/* A second opinion on the site, offered at the size of an aside rather than of
+   a call to action — the page's own numbers are the subject here. Not mono, and
+   not break-all: unlike the URL above it this is a sentence. */
+.detail-actions { margin: 0.75rem 0 0.35rem; font-size: 0.85rem; }
+/* Keeps each mark on the same line as its name. */
+.detail-actions a { white-space: nowrap; }
+/* Sized in em, like .page-hed-mark: these sit inside a line of text and should
+   scale with it rather than hold a pixel size against it. */
+.action-mark {
+	inline-size: 0.95em;
+	block-size: 0.95em;
+	border-radius: 2px;
+	vertical-align: -0.1em;
+	margin-right: 0.3em;
+}
+
+/* The measurement log's archive column. `nowrap` so the mark never separates
+   from the word it labels. */
+.col-archive { white-space: nowrap; }
+
+/* line-height: 0 so the row of rings contributes no descender space of its own
+   — the margins here are the whole spacing. */
+.detail-rings {
+	margin: 0.6rem 0 0.75rem;
+	line-height: 0;
+}
+
+/*
+ * A quarter again the size they are in a table row — enough to read as the
+ * page's own summary rather than a row lifted out of a table, without becoming
+ * the loudest thing in the header.
+ *
+ * Scaled here rather than by passing a bigger `size` to the shortcode: that
+ * argument sets the viewBox as well as the box, so a larger number would leave
+ * the stroke and the text at their old absolute values and draw a thin ring
+ * with small numbers in it. Overriding width and height scales everything
+ * inside the viewBox together, which is what a multiplier should mean.
+ */
+.detail-rings .ring {
+	width: 46.25px;
+	height: 46.25px;
+}
+/*
+ * Six rings at a quarter again their table size overflow a narrow header, and
+ * a header that scrolls sideways is worse than one two rows deep. Scoped to
+ * this block rather than set on `.rings`: everywhere else they sit in a table
+ * cell whose column is sized for one row of them, where wrapping would push the
+ * row taller instead of the page wider.
+ *
+ * The `gap` is shared by both axes, so the wrapped row is already spaced.
+ */
+.detail-rings .rings { gap: 0.4rem; flex-wrap: wrap; }
+
+/*
+ * With a screenshot the header becomes two columns: the text keeping its own
+ * measure, the image at a fixed width on the right. Grid rather than float so
+ * the image cannot end up taller than the text beside it and drag the rule
+ * underneath down with it.
+ *
+ * The text is wrapped in its own element because a grid places every child in a
+ * cell — four loose paragraphs would flow into the columns one by one instead
+ * of stacking beside the image.
+ */
+.detail-head.has-shot {
+	display: grid;
+	/* One number for the column and the image inside it. They have to agree —
+	   a wider image than its track overflows the grid — and having said it
+	   twice is how they stop agreeing. */
+	--shot-width: 300px;
+	grid-template-columns: minmax(0, 1fr) var(--shot-width);
+	gap: 1.25rem;
+	align-items: start;
+}
+/* The link is only a wrapper — it must not add a box of its own, or the grid
+   column becomes a link-colored rectangle around the image. */
+.detail-shot-link { display: block; line-height: 0; }
+.detail-shot-link:hover .detail-shot { border-color: var(--border-strong); }
+
+.detail-shot {
+	width: var(--shot-width, 300px);
+	/* Square, and stated rather than inherited so the space is reserved before
+	   the image arrives rather than after.
+
+	   Not the capture's own ratio: those are 412x823 portrait now, matching the
+	   phone Lighthouse measures on, and a thumbnail that tall would push the
+	   rings and the URL beside it down the page. `cover` with a top anchor crops
+	   to the masthead instead, which is the part that identifies a site — and it
+	   handles the older 1:1 pictures from the screenshot service unchanged. */
+	height: auto;
+	aspect-ratio: 1;
+	object-fit: cover;
+	object-position: top center;
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+}
+
+/* One column on a narrow screen: 200px of image beside a 100px column of
+   wrapped URL is worse than either on its own. Source order puts the text
+   first, so it stacks heading-then-image without any reordering. */
+@media (max-width: 34rem) {
+	.detail-head.has-shot { grid-template-columns: minmax(0, 1fr); }
+	.detail-shot { width: 100%; max-width: var(--shot-width, 300px); }
+}
+
+/* ------------------------------------------------------------------- cards */
+
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; }
+.card {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 0.9rem 1rem;
+}
+.card-value { font-size: 2rem; font-weight: 650; line-height: 1.1; letter-spacing: -0.03em; }
+.card-label { font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.4rem; }
+.card-spark { margin-top: 0.3rem; }
+.card-delta { font-size: 0.78rem; font-variant-numeric: tabular-nums; }
+
+.better { color: var(--good); }
+.worse { color: var(--poor-text); }
+/* Only the coverage line's failing count — `.worse` is shared with the stale
+   count beside it and with the mover cards, which stay red. */
+.failing-note { color: var(--poor-soft); }
+.flat { color: var(--text-muted); }
+/* Worse, on a row whose rating still says good. A dusty pink rather than red:
+   the move went the wrong way and the reader should see that, but the metric is
+   inside its threshold and red would argue with the pill beside it. */
+.worse-soft { color: var(--poor-faint); }
+
+/* --------------------------------------------------------------- filmstrip */
+
+/* A row, always — see the note in the template. `.table-scroll` around it
+   supplies the scrolling and the negative inline margin, so the strip runs to
+   the edge of the page the way the wide tables do. */
+.filmstrip {
+	display: flex;
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.filmstrip-frame {
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	align-items: center;
+}
+
+/* Sized down from the capture. Lighthouse renders these at the emulated
+   viewport width, which is wider than eight of them across a page. */
+.filmstrip-frame img {
+	display: block;
+	width: auto;
+	height: 180px;
+	border: 1px solid var(--border);
+	border-radius: 3px;
+	background: var(--surface);
+}
+
+.filmstrip-timing {
+	font-size: 0.75rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------- sparkline */
+
+.spark { display: block; overflow: visible; }
+.spark-line { fill: none; stroke-width: 1.5; stroke-linejoin: round; stroke-linecap: round; }
+.spark-area { stroke: none; opacity: 0.12; }
+.spark-dot { stroke: none; }
+
+.spark-better .spark-line, .spark-better .spark-dot { stroke: var(--good); fill: var(--good); }
+.spark-better .spark-area { fill: var(--good); }
+.spark-worse .spark-line, .spark-worse .spark-dot { stroke: var(--poor); fill: var(--poor); }
+.spark-worse .spark-area { fill: var(--poor); }
+.spark-flat .spark-line, .spark-flat .spark-dot { stroke: var(--text-muted); fill: var(--text-muted); }
+.spark-flat .spark-area { fill: var(--text-muted); }
+/* The softened decline — see `.worse-soft`. The fill is lighter than the other
+   three: this pink sits closer to the page than red does, and at 12% it read as
+   a smudge rather than as a tint. */
+.spark-worse-soft .spark-line, .spark-worse-soft .spark-dot { stroke: var(--poor-faint); fill: var(--poor-faint); }
+.spark-worse-soft .spark-area { fill: var(--poor-faint); opacity: 0.08; }
+
+/* --------------------------------------------------------------------- cwv */
+
+/* The verdict, over the table that holds the numbers behind it. One line
+   rather than three cards: the per-metric figures are rows now, and repeating
+   them above the table was the reason the panel was worth folding in. */
+.cwv-verdict {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.25rem 0.6rem;
+	border: 1px solid var(--border);
+	border-left-width: 3px;
+	border-radius: var(--radius);
+	padding: 0.7rem 1rem;
+	margin-bottom: 1rem;
+	background: var(--surface);
+}
+.cwv-verdict-pass { border-left-color: var(--good); background: var(--good-bg); }
+.cwv-verdict-fail { border-left-color: var(--poor); background: var(--poor-bg); }
+.cwv-verdict-none { border-left-color: var(--border-strong); }
+
+/* --------------------------------------------------------------- breakdown */
+
+/* Capped to match .lvf-compare, so a bar stays short enough to read against its label. */
+.breakdown { display: flex; flex-direction: column; gap: 0.3rem; max-width: 44em; }
+.breakdown-row { display: grid; grid-template-columns: minmax(90px, 190px) 1fr minmax(110px, auto); gap: 0.75rem; align-items: center; font-size: 0.85rem; }
+.breakdown-label { color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Data keys as Title Case. Done here rather than in the template so a copy-paste
+   yields ordinary words, and so it never reaches third-party entity names, which
+   are real names rather than keys. `capitalize` leaves the rest of each word
+   alone, so the acronym in "parse HTML" survives. */
+.breakdown-key { text-transform: capitalize; }
+.breakdown-value { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.bar { display: block; height: 8px; background: color-mix(in srgb, var(--border) 70%, transparent); border-radius: 4px; overflow: hidden; }
+.bar-fill { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
+.bar-warn .bar-fill { background: var(--average); }
+
+/*
+ * Lab against field, as two bars on one scale.
+ *
+ * The same three-column shape as .breakdown-row above — label, track, figure —
+ * because it is the same kind of statement and the page should not invent a
+ * second way to say it. Narrower label column: "Lab" and "Field p75" are short
+ * where a resource type is not.
+ */
+.lvf-compare {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	margin-block: 0.6rem 0.75rem;
+	max-width: 44em;
+}
+
+.lvf-row {
+	display: grid;
+	grid-template-columns: minmax(60px, 96px) 1fr minmax(64px, auto);
+	gap: 0.75rem;
+	align-items: center;
+	font-size: 0.85rem;
+
+	& .bar {
+		/* Taller than the resource breakdown's: there are two of these rather
+		   than a dozen, and the whole point is comparing their lengths. */
+		height: 12px;
+	}
+}
+
+.lvf-name { color: var(--text-muted); white-space: nowrap; }
+.lvf-ms { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/*
+ * The lab bar is deliberately colorless. It is a simulation of one mid-range
+ * phone, and coloring it good or poor would dress a test condition up as a
+ * verdict — the rating belongs to the field number underneath it, which is the
+ * one real users produced and Google grades.
+ */
+.lvf-fill-lab { background: var(--text-muted); }
+.lvf-fill-good { background: var(--good); }
+.lvf-fill-average { background: var(--average); }
+.lvf-fill-poor { background: var(--poor); }
+/* ratingClass falls back to "none" for a rating CrUX did not supply. Without a
+   rule the fill would inherit nothing and the bar would read as zero-length. */
+.lvf-fill-none { background: var(--border-strong); }
+
+/* ------------------------------------------------------------------- plot */
+
+/*
+ * The weight-against-LCP scatter. Everything about a dot except where it sits
+ * lives here rather than in the markup: with 1,490 of them, a fill or a radius
+ * repeated per element would cost more than the coordinates do.
+ */
+.plot {
+	margin: 1.25rem 0 0;
+}
+
+.plot svg {
+	display: block;
+	width: 100%;
+	height: auto;
+	/* The plot is wider than it is tall and stays readable down to a phone, but
+	   below this it stops being worth the vertical space it takes. */
+	min-height: 0;
+}
+
+/*
+ * The strip plots, which do not survive being scaled to a phone.
+ *
+ * Every chart here is one SVG sized to its container, so its 13-unit type is
+ * rendered at 13 * width / 1000 pixels — about four and a half at 375px. The
+ * scatters lose only their tick labels that way and still read as a shape; a
+ * strip plot is a list of named rows, so losing the type loses the chart.
+ *
+ * A floor on the width and a scroll on the frame, rather than a second layout
+ * built for narrow screens: the plot stays the plot, and the reader pans it.
+ * 50rem holds the row names at about 10.4px, which is small but legible, and is
+ * narrow enough that most tablets and every desktop never scroll at all.
+ */
+.plot-scroll .plot-frame {
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+}
+
+.plot-scroll .plot-frame svg {
+	min-width: 50rem;
+}
+
+.plot-scroll .plot-frame:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 3px;
+	border-radius: var(--radius);
+}
+
+/* Hidden wherever the chart fits, which is the only place the advice would be
+   wrong. The breakpoint is the min-width above plus room for the page's own
+   gutters — below it the frame is guaranteed to be scrolling. */
+.plot-scroll-note {
+	display: none;
+	margin-top: 0.5rem;
+	color: var(--text-muted);
+	font-size: 0.8125rem;
+}
+
+@media (max-width: 56rem) {
+	.plot-scroll-note {
+		display: block;
+	}
+}
+
+.plot-grid line {
+	stroke: var(--border);
+	stroke-width: 1;
+}
+
+/* The 2.5 s and 4 s boundaries. Dashed so they read as reference lines rather
+   than as data, and drawn under the dots so no point is hidden by one. */
+.plot-threshold line {
+	stroke: var(--border-strong);
+	stroke-width: 1;
+	stroke-dasharray: 4 4;
+}
+
+/* The break between the zero column and the log scale. Dashed and vertical so
+   it reads as a discontinuity in the axis rather than as a threshold line like
+   the horizontal ones. */
+.plot-break line {
+	stroke: var(--border-strong);
+	stroke-width: 1;
+	stroke-dasharray: 2 3;
+}
+
+/* y = x. Solid but faint — a reference the eye can follow the length of the
+   plot without it competing with the dots sitting on it. */
+/*
+ * The lab/field pairs. The link is drawn first and neutral: it is the distance
+ * between two readings, not a reading itself, and coloring it would imply the
+ * gap has a verdict of its own.
+ */
+.pair-links line {
+	stroke: var(--border-strong);
+	stroke-width: 1;
+}
+
+/* The unsorted end, deliberately plain. The verdict belongs to the end the rows
+   are ordered by, and a second colored end would leave the eye reading whichever
+   sits further right. */
+.pair-secondary circle {
+	fill: var(--text-muted);
+	fill-opacity: 0.55;
+}
+
+.pair-primary circle {
+	fill-opacity: 0.95;
+}
+
+/*
+ * A whole row, not a dot: the pair is the unit being read, and a 4px row is
+ * already the smallest thing on this chart worth aiming at.
+ *
+ * Written as `.plot-hit.pair-hit` rather than `.pair-hit`. Both carry the same
+ * single-class weight, and `.plot-hit` is declared further down the file, so the
+ * bare selector lost every property the two share — the rows came out as 8px
+ * circles pinned to the left edge, which is to say unhittable. Qualifying it
+ * settles the question by weight rather than by which rule happens to be lower
+ * in the file.
+ */
+.plot-hit.pair-hit {
+	left: 0;
+	width: 100%;
+	/* Height comes from the template as a percentage of the frame, so one target
+	   is exactly one row however wide the chart is drawn. */
+	border-radius: 0;
+	transform: translateY(-50%);
+}
+
+.plot-hit.pair-hit .plot-tip {
+	left: 1rem;
+}
+
+.pair-key-secondary {
+	color: var(--text-muted);
+}
+
+.plot-identity line {
+	stroke: var(--text-muted);
+	stroke-width: 1;
+	opacity: 0.45;
+}
+
+.plot-threshold text {
+	fill: var(--text-muted);
+	font-size: 13px;
+	font-variant-numeric: tabular-nums;
+}
+
+.plot-axis text {
+	fill: var(--text-muted);
+	font-size: 13px;
+	font-variant-numeric: tabular-nums;
+}
+
+/* The name of each scale, set apart from its numbers: same size, more weight,
+   so it reads as a heading for the ticks rather than as another one of them. */
+.plot-axis-title text {
+	fill: var(--text-muted);
+	font-size: 13px;
+	font-weight: 600;
+}
+
+/*
+ * Partly transparent because the dots overlap heavily — nine hundred of them
+ * land in the same corner. Opacity turns that pile-up into shading that shows
+ * where the corpus actually sits, which a solid fill would flatten into one
+ * undifferentiated blob.
+ */
+.plot-dots circle {
+	fill-opacity: 0.55;
+}
+
+/*
+ * The outlier tooltips: HTML over the SVG rather than an SVG `<title>`.
+ *
+ * A `<title>` waits about a second, cannot be styled, cannot be reached from
+ * the keyboard, and cannot hold a link. This is a real hit target with a real
+ * card, and no JavaScript — the positions are percentages of the same box the
+ * viewBox uses, so the overlay tracks the plot at every width.
+ */
+.plot-frame {
+	position: relative;
+}
+
+.plot-hits {
+	position: absolute;
+	inset: 0;
+	/* The layer is only a coordinate space; the links inside it take the
+	   pointer, so the rest of the plot stays inert. */
+	pointer-events: none;
+}
+
+/*
+ * Sized to the dot, not to the finger. Nine hundred of these sit in the cloud,
+ * and at a 24px target twenty of them overlap any given point — the hover would
+ * land on whichever the DOM happened to paint last rather than the one under the
+ * cursor. At 8px the average overlap is three, which is as low as it goes while
+ * the data itself overplots.
+ */
+.plot-hit {
+	position: absolute;
+	width: 0.5rem;
+	height: 0.5rem;
+	/* Centered on its dot rather than starting at it. */
+	transform: translate(-50%, -50%);
+	border-radius: 50%;
+	pointer-events: auto;
+}
+
+/* Only the sampled ten can take focus, and the ring has to be findable against
+   a thousand dots — offset far enough to sit clear of the neighbors the dot is
+   buried among. */
+.plot-hit:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 3px;
+	border-radius: 50%;
+}
+
+.plot-tip {
+	position: absolute;
+	bottom: 100%;
+	left: 50%;
+	z-index: 2;
+	/*
+	 * Out of the layout until it is wanted.
+	 *
+	 * These cards are absolutely positioned but were still being laid out, and
+	 * there are 1,304 of them on /charts/. The ones anchored to dots on the right
+	 * of a plot stick out past their frame, which at 375px made the page itself
+	 * 492px wide and scrollable sideways — an overflow with no visible cause,
+	 * since every card producing it was at zero opacity.
+	 *
+	 * Only one is ever shown, so only one ever needs a box.
+	 */
+	display: none;
+	gap: 0.1rem;
+	width: max-content;
+	/* Narrow screens get a narrower card: the flip to the left edge is decided
+	   at build time as a fraction of the plot, and a card that is 19% of the
+	   plot's width on a desktop is half of it on a phone. */
+	max-width: min(15rem, 70vw);
+	margin-bottom: 0.2rem;
+	padding: 0.35rem 0.5rem;
+	/* Green, because only green dots are named — the card is recognizably
+	   attached to the mark it describes rather than floating free. */
+	border: 1px solid var(--good);
+	border-radius: var(--radius);
+	background: var(--surface);
+	box-shadow: 0 4px 14px rgb(0 0 0 / 0.18);
+	color: var(--text);
+	font-size: 0.8rem;
+	line-height: 1.3;
+	/* Hidden from the pointer as well as the eye, so a card cannot sit between
+	   the cursor and the dot underneath it. */
+	opacity: 0;
+	pointer-events: none;
+	/* `display` is transitioned rather than simply swapped, so the fade survives
+	   being taken out of the layout. Browsers without `allow-discrete` fall back
+	   to the card appearing at once — a fade lost, not a card lost. */
+	transition: opacity 0.12s ease, display 0.12s allow-discrete;
+}
+
+.plot-hit:hover .plot-tip,
+.plot-hit:focus-visible .plot-tip {
+	display: grid;
+	opacity: 1;
+}
+
+/* The value the fade starts from. An element that was `display: none` a moment
+   ago has no previous opacity to animate out of without this. */
+@starting-style {
+	.plot-hit:hover .plot-tip,
+	.plot-hit:focus-visible .plot-tip {
+		opacity: 0;
+	}
+}
+
+/* Near the right edge the card would run off the plot, and near the top it
+   would open above it. Which edge a dot is close to is decided when the
+   coordinates are, in lib/report.js — CSS cannot ask. */
+.plot-hit.is-right .plot-tip {
+	left: auto;
+	right: 50%;
+}
+
+.plot-hit.is-low .plot-tip {
+	top: 100%;
+	bottom: auto;
+	margin-top: 0.2rem;
+	margin-bottom: 0;
+}
+
+.plot-tip-name {
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+.plot-tip-stats {
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+
+.plot-good circle {
+	fill: var(--good);
+}
+
+.plot-average circle {
+	fill: var(--average);
+}
+
+.plot-poor circle {
+	fill: var(--poor);
+}
+
+.plot-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem 1rem;
+	margin-top: 0.5rem;
+	color: var(--text-muted);
+	font-size: 0.85rem;
+}
+
+.plot-key {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+
+.plot-key::before {
+	content: "";
+	width: 0.6rem;
+	height: 0.6rem;
+	border-radius: 50%;
+	background: currentcolor;
+}
+
+.plot-legend .plot-good {
+	color: var(--good);
+}
+
+.plot-legend .plot-average {
+	color: var(--average);
+}
+
+.plot-legend .plot-poor {
+	color: var(--poor);
+}
+
+
+/*
+ * Four figures about the measuring machines. A description list because that is
+ * what it is — a label and its value, four times — rather than a table, which
+ * would imply rows worth comparing across.
+ */
+.bench-stats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 2rem;
+	margin-block: 0.75rem 1rem;
+}
+
+.bench-stats div {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+}
+
+.bench-stats dt {
+	font-size: 0.78rem;
+	color: var(--text-muted);
+}
+
+.bench-stats dd {
+	margin: 0;
+	font-size: 1.35rem;
+	font-weight: 650;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: -0.02em;
+}
+
+/* ------------------------------------------------------ site of the week */
+
+/* Inside a stat tile now, so it stacks rather than sitting beside its facts.
+   The screenshot is a banner crop: the tile is a few hundred pixels wide, and a
+   whole page scaled into that is a gray rectangle — the top of the page is the
+   part anyone recognizes. */
+/*
+ * The screenshot takes whatever height the card has left.
+ *
+ * Cards in the bar stretch to the tallest of them, and this one is shorter than
+ * the Perfect scores card beside it — so a fixed 10rem image left a band of
+ * empty tile below the rings. A flex column with the shot as the growing child
+ * hands that space to the only thing here that can use it.
+ *
+ * The floor matters: on a narrow viewport this card is the tallest, nothing is
+ * left over to grow into, and without a minimum the image would collapse to
+ * whatever `object-fit` could get away with.
+ */
+.stat-sotw {
+	display: flex;
+	flex-direction: column;
+}
+
+.sotw-shot {
+	display: block;
+	line-height: 0;
+	margin: 0.15rem 0 0.5rem;
+	min-height: 10rem;
+}
+
+.sotw-shot img {
+	width: 100%;
+	height: 100%;
+	/* A ceiling as well as a floor. Growing without one made this card the tallest
+	   in the bar, so the image was setting the height it was meant to be filling
+	   and every other card gained a hundred pixels of empty space to match. */
+	max-height: 17.5em;
+	object-fit: cover;
+	object-position: top center;
+	border-radius: 5px;
+	border: 1px solid var(--border);
+	background: var(--bg);
+}
+
+.sotw-name { margin: 0 0 0.45rem; font-size: 1.05rem; font-weight: 600; }
+.sotw-name a { color: var(--text); text-decoration: none; }
+.sotw-name a:hover { text-decoration: underline; }
+
+/* ------------------------------------------------------------------- tally */
+
+/* A short name-and-count list inside a stat tile — what built the perfect
+   scores. Same shape as .verdicts below, but the label carries brand marks and
+   the rows are data rather than fixed states, so it stays its own thing.
+
+   Not `.tally`, which is already the Technology section's bordered card. */
+/* Auto layout, not fixed. `table-layout: fixed` splits the columns evenly and
+   ignores `width: min-content` on a cell, so the count column got half the tile
+   for three digits. Auto plus the `width: 1%` below is the idiom that actually
+   shrinks a column to its contents. */
+
+/* A number and its trend on one line, so the sparkline reads as belonging to
+   the figure rather than as a second statistic under it. */
+.stat-headline {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.6rem;
+	/* The figure is the card's opening statement; whatever follows should not
+	   start against it. */
+	margin-bottom: 0.35rem;
+}
+
+/*
+ * A headline whose label shares the line with its figure.
+ *
+ * Top-aligned rather than on the baseline: the figure is twice the label's size,
+ * so sharing a baseline dropped the label to the bottom of a tall row and left
+ * it looking like a caption under nothing. Aligned to the top it reads as the
+ * heading it is.
+ */
+.stat-headline-inline {
+	align-items: start;
+}
+
+/* The bottom margin is for the block layout this label normally sits in; on a
+   single row it only adds height below the text. */
+.stat-headline-inline .stat-label {
+	margin-bottom: 0;
+}
+
+/*
+ * Pushed right, and set as one unbreakable figure so "147" and "/1,516" cannot
+ * land on different lines when the card is narrow.
+ *
+ * `line-height: 1` is what actually top-aligns it. Both boxes already started at
+ * the same y, but the figure's inherited 1.5 line-height left a band of empty
+ * space above its digits, so the number read as sitting lower than the label
+ * beside it. Hugging the glyphs puts the two at the same height rather than
+ * merely in the same box.
+ */
+.stat-headline-inline .stat-value {
+	margin-left: auto;
+	white-space: nowrap;
+	line-height: 1;
+}
+.stat-headline .stat-spark { flex: none; align-self: center; }
+/* The sparkline sits immediately left of the figure, and the pair is pushed to
+   the right edge together. The auto margin has to move onto whichever of them
+   comes first — two auto margins would split the free space between them and
+   leave a gap in the middle of the pair — so the value gives its up whenever a
+   sparkline precedes it, and keeps it on the cards that have none. */
+.stat-headline-inline .stat-spark { margin-left: auto; }
+.stat-headline-inline .stat-spark + .stat-value { margin-left: 0; }
+
+/* The benchmark step, beside the index it belongs to. A pill, like the other
+   small qualifying figures on these pages — it is a note on the number next to
+   it rather than a column of its own.
+
+   Quiet by default, because most runs barely move, and colored only when the
+   machine got slower: that is the direction that inflates CPU-bound metrics and
+   invents regressions. A faster machine is not a problem to flag. */
+.bench-change {
+	display: inline-block;
+	margin-left: 0.25rem;
+	padding: 0.05rem 0.35rem;
+	border-radius: var(--pill);
+	background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+	color: var(--text-muted-strong);
+	font-size: 0.85em;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+/* Outside the band the drift notice draws — in either direction, because a
+   machine that ran fast distorts the CPU-bound numbers just as one that ran
+   slow does. Not a "worse" state: the site did nothing, the runner did. */
+.bench-change.outside {
+	background: color-mix(in srgb, var(--average) 16%, transparent);
+	color: var(--average);
+}
+
+/*
+ * The tile holding the scatter thumbnail. Wider than the rest, because a scatter
+ * squeezed below this stops being a shape and becomes a blob — the 14em basis
+ * every other tile shrinks to is not enough for it.
+ *
+ * `min()` rather than a bare 260px: on a viewport narrower than that, a hard
+ * floor is the one thing here that would push the row off the side.
+ */
+/*
+ * The card holding both scatter thumbnails. Wide enough for the pair, because
+ * a scatter squeezed much below 240px stops being a shape and becomes a blob.
+ *
+ * `min()` rather than a bare width: on a viewport narrower than the card, a hard
+ * floor is the one thing on this row that would push the page sideways.
+ */
+.stat-plot {
+	min-width: min(260px, 100%);
+}
+
+/* Stacked, one above the other. Side by side would need a card twice the width
+   of every other tile on the bar; this way the card is an ordinary width and
+   simply taller, which a wrapping flex row absorbs without trouble. */
+.stat-charts {
+	display: grid;
+	gap: 0.6rem;
+}
+
+.stat-charts .stat-chart {
+	margin-top: 0.2rem;
+}
+
+/*
+ * Headings for the two charts. Their own class rather than `.stat-label-sub`:
+ * that one belongs to the histograms further down the bar, where it sets a top
+ * margin and a smaller size for a label sitting under a figure. These sit at the
+ * top of their own block and want neither, and sharing the class would mean any
+ * change made for one silently moved the other.
+ */
+.stat-chart-label {
+	margin-bottom: 0.15rem;
+}
+
+/* The second chart's heading is covered by the shared rule above, via the
+   `.stat-chart-item` selector — it is the first child of its own wrapper, so the
+   label-level `:not(:first-child)` alone would never match it. */
+
+/* The scatter thumbnail in the stat bar. The link wraps both the picture and
+   its note so the whole tile is one target, and the dots take their colors from
+   the same .plot-good/.plot-average/.plot-poor rules the full chart uses. */
+.stat-chart {
+	display: block;
+	margin-top: 0.35rem;
+	color: var(--text-muted);
+	text-decoration: none;
+}
+
+/* A fixed width so the thumbnail is the size it was laid out for rather than
+   whatever the card happens to be. These cards inherit a 15px font-size, so 16em
+   lands on the viewBox's own 240px and the plot renders 1:1 — no resampling of a
+   drawing whose dots are 1.6 units across. Capped at the card's width so a narrow
+   card shrinks it rather than clipping. */
+.stat-chart svg {
+	display: block;
+	width: 16em;
+	max-width: 100%;
+	height: auto;
+}
+
+.stat-chart circle {
+	fill-opacity: 0.7;
+}
+
+/* The only thing left to react to a pointer, now that the caption is gone. */
+.stat-chart:hover circle {
+	fill-opacity: 1;
+}
+
+/* 9px in a 240-wide viewBox, which renders at 9px: small, but the tile is
+   capped at its own width so it never scales down from there. */
+.mini-axis text {
+	fill: var(--text-muted);
+	font-size: 9px;
+}
+
+.stat-chart:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 3px;
+	border-radius: var(--radius);
+}
+
+/* ------------------------------------------------- charts by generator */
+
+/* Row labels in the plot's left margin. The count is set quieter than the name
+   so the eye reads the list of generators first and the sample size second —
+   but it is right there, because the samples are lopsided. */
+.gen-labels text {
+	fill: var(--text);
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.gen-count {
+	fill: var(--text-muted);
+	font-weight: 400;
+	font-variant-numeric: tabular-nums;
+}
+
+/* Faint, because a row is hundreds of them overlapping and the shape is what is
+   being read, not any single site. */
+.gen-dots circle {
+	fill: var(--text-muted);
+	fill-opacity: 0.35;
+}
+
+.gen-medians line {
+	stroke: var(--accent);
+	stroke-width: 2.5;
+	stroke-linecap: round;
+}
+
+/* The median's value, in the median's color — one mark in two parts, not a
+   second thing to interpret. Haloed in the page background and painted
+   stroke-first so the ring sits behind the glyphs: this text is drawn over the
+   dot cloud on purpose, and without the halo it reads as a smudge in it. */
+.gen-median-values text {
+	fill: var(--accent);
+	font-size: 11px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	paint-order: stroke;
+	stroke: var(--bg);
+	stroke-width: 3px;
+	stroke-linejoin: round;
+}
+
+/* ------------------------------------------------- weight by resource type */
+
+/*
+ * One bar, divided into shares. Colors are categorical here rather than the
+ * good/average/poor scale used everywhere else on the site — a resource type is
+ * not a verdict, and painting scripts red would say something the chart does not
+ * mean. Mid-tone hues so the same values carry on both themes.
+ */
+:root {
+	--type-image: #4f9d8f;
+	--type-script: #c98b3a;
+	--type-stylesheet: #7b6bc4;
+	--type-font: #b5638f;
+	--type-document: #4a7fb5;
+	--type-media: #5d8f4f;
+	--type-other: #7c8189;
+}
+
+/* No gaps between segments: they are parts of one quantity, and a gap would be
+   width the bar claims but does not account for. */
+.stackbar-part {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 2px;
+	height: 100%;
+	/* A label the template judged wide enough can still be too wide on a narrow
+	   viewport. Clipping is the backstop; the threshold is the intent. */
+	overflow: hidden;
+}
+
+/*
+ * The type's name, inside its own segment.
+ *
+ * White on every segment rather than a per-type text color: these fills are
+ * chosen to be told apart from each other, not to carry text, and the light
+ * ones are still dark enough for white to clear contrast while a matched dark
+ * text would fail on the darker fills. One color that works everywhere beats
+ * seven that each need checking.
+ */
+.stackbar-name {
+	font-size: 0.62rem;
+	font-weight: 600;
+	letter-spacing: 0.01em;
+	color: #fff;
+	white-space: nowrap;
+	padding-inline: 0.35em;
+	/* The fills are mid-tone; a faint shadow keeps the text legible on the
+	   lightest of them without darkening the bar itself. */
+	text-shadow: 0 1px 1px rgb(0 0 0 / 0.25);
+}
+
+.type-image { background: var(--type-image); }
+.type-script { background: var(--type-script); }
+.type-stylesheet { background: var(--type-stylesheet); }
+.type-font { background: var(--type-font); }
+.type-document { background: var(--type-document); }
+.type-media { background: var(--type-media); }
+.type-other { background: var(--type-other); }
+
+/* A bar in a table cell, split into `.stackbar-part` segments and sized by its row's inline width. */
+.tpbar {
+	display: flex;
+	/* Tall enough to hold the type name the segments now carry. */
+	height: 1.15rem;
+	border-radius: 3px;
+	overflow: hidden;
+	/* Never nothing: a third party too small to round up to a pixel is still a
+	   third party, and an empty cell would read as missing data. */
+	min-width: 3px;
+	background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+}
+
+/*
+ * Each card as wide as its contents want, between bounds — not all of them
+ * pinned to one width.
+ *
+ * Measured: the sparkline and histogram tiles ask for about 10em, while
+ * Recently Measured and the score rings ask for over 20em. One width for all of
+ * them meant either squeezing the URLs to a single letter or giving a lone
+ * histogram twice the room it uses, and across eight cards the waste is most of
+ * a screen of scrolling.
+ *
+ * The floor keeps a narrow card from becoming a sliver; the ceiling stops a
+ * greedy one taking the whole viewport and hiding that there are others.
+ */
+.statbar > .stat {
+	/* Grow, but never shrink. Where the cards do not fill the row they share the
+	   slack out instead of leaving a gap at the end; where they overflow, growth
+	   has nothing to give and the row scrolls as before. */
+	flex: 1 0 auto;
+	/* A wide floor, deliberately: the cards carry lists and histograms, and a
+	   narrow one wraps its labels rather than reading as a card. The cost is that
+	   the row needs a wider window before it fits without scrolling — 1475px at
+	   14em against 1625px here — below which it scrolls, which it is built to do.
+	   Kept a hair under the 20em ceiling so the two never cross. */
+	min-width: 19em;
+	max-width: min(20em, 78vw);
+}
+
+/* The chart card sizes to its contents, which runs wider than a tile. */
+.statbar > .stat-plot {
+	flex: 0 0 auto;
+	max-width: 18em;
+}
+
+/*
+ * Quantity queries, so a short row still spans the width.
+ *
+ * The 20em ceiling above stops one greedy card filling the viewport and hiding
+ * that there are others. At four cards it does the wrong job: four times 20em
+ * stops well short of the content column, leaving 269px of dead space at
+ * 1700px wide.
+ *
+ * These raise the ceiling as the count falls. They are ceilings, not widths —
+ * `flex-grow` still decides the actual sizes and fills the row exactly, and
+ * these only stop any one card running away with the slack. Which is why they
+ * are not simply `100% / N`: the chart card is `flex: 0 0 auto` and sizes to
+ * its contents, so it never takes its share, and the cards that do grow have to
+ * be allowed past a strict fraction to cover for it.
+ */
+.statbar:has(> .stat:nth-child(2):last-child) > .stat {
+	max-width: 75%;
+}
+.statbar:has(> .stat:nth-child(3):last-child) > .stat {
+	max-width: 55%;
+}
+.statbar:has(> .stat:nth-child(4):last-child) > .stat {
+	max-width: 42%;
+}
+.statbar:has(> .stat:nth-child(5):last-child) > .stat {
+	max-width: 34%;
+}
+
+
+/* The line under a histogram naming its denominator. Quieter than the ticks,
+   which are labels for the bars; this is a note about the whole chart. */
+.stat-sub {
+	margin: 0.1rem 0 0;
+	color: var(--text-muted);
+	font-size: 0.72rem;
+	line-height: 1.4;
+}
+
+/*
+ * The verdict histograms are shorter than the distribution ones.
+ *
+ * Three of them stack in the Perfect scores card, under the rings and the
+ * generator pills — at the full 52px they made that card the tallest in the bar
+ * and every other card grew to match. Three or four bars need less height than a
+ * seven-bucket distribution to be read anyway: the comparison is between a
+ * handful of columns, not across a curve.
+ *
+ * Qualified with `.histogram` so this wins on weight rather than on being lower
+ * in the file than the rule it overrides.
+ */
+.histogram.histogram-tiers {
+	height: 28px;
+}
+
+/* 16px of bar. Three or four columns whose heights differ by tens of percent
+   are still legible at this size — the shortest bar in either chart is Bad at
+   4% of the tallest, and 1px of it still reads as "almost none". */
+.histogram-tiers .histogram-track {
+	height: 16px;
+}
+
+/*
+ * The four quality bars, colored by the verdict each stands for rather than by
+ * the accent the other histograms use — these are the same green, amber and red
+ * as the rings, and painting them one color would throw away the only thing
+ * that makes the shape readable at a glance.
+ *
+ * Perfect is green too, one step deeper: it is a subset of all-green, not a
+ * different kind of result, and a fifth hue would imply otherwise.
+ *
+ * Written as `.histogram-bar.histogram-bar-*` rather than the modifier alone.
+ * Both carry one class's weight and `.histogram-bar` is declared further down
+ * the file, so the bare selector lost every one of these to the accent it sets —
+ * four bars, all blue. Qualifying settles it by weight instead of by which rule
+ * happens to sit lower.
+ */
+/*
+ * A bar that is divided rather than solid. Its own background is dropped so the
+ * segments show through, and the rounded top is clipped from the container so
+ * the topmost segment inherits it rather than poking out square.
+ */
+.histogram-bar.histogram-bar-green {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	/* Qualified, like the color rules below: `.histogram-bar` sets an accent
+	   background further down the file, and an unqualified selector here loses to
+	   it — the container kept its own fill and showed through as blue. */
+	background: none;
+}
+
+.histogram-seg {
+	display: block;
+	width: 100%;
+}
+
+/*
+ * Perfect carries a faint noise over its green.
+ *
+ * The two greens in the stacked bar are close by design — perfect is a subset of
+ * passing, not a different verdict — but close colors are hard to tell apart in
+ * a 27px segment. Texture separates them without introducing a hue that would
+ * imply a different kind of result.
+ *
+ * An inline SVG turbulence rather than an image file: it costs no request, and
+ * the alternative of a repeating gradient reads as stripes at this size rather
+ * than as grain. `background-color` and `background-image` are set separately so
+ * the color still comes from the same `color-mix` and the noise sits over it.
+ */
+.histogram-bar.histogram-bar-perfect,
+.histogram-seg.histogram-bar-perfect {
+	background-color: color-mix(in srgb, var(--good) 78%, var(--text));
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='60' height='60' filter='url(%23n)' opacity='0.28'/%3E%3C/svg%3E");
+}
+
+.histogram-bar.histogram-bar-good,
+.histogram-seg.histogram-bar-good {
+	background: var(--good);
+}
+
+.histogram-bar.histogram-bar-warn {
+	background: var(--average);
+}
+
+.histogram-bar.histogram-bar-bad {
+	background: var(--poor);
+}
+
+/* No verdict, so no color from the scale — the same neutral the gray rings use
+   for a Core Web Vital CrUX has never sampled. It sits at the end of the row
+   rather than among the four, because it is not a worse result than red; it is
+   not a result. */
+.histogram-bar.histogram-bar-unknown {
+	background: color-mix(in srgb, var(--text-muted) 45%, transparent);
+}
+
+/* ----------------------------------------------------------------- recents */
+
+/* Ten URLs and their ages, in a stat tile. Each row is one line — the URLs run
+   long and wrapping them would make the tile taller than the rest of the row by
+   an unpredictable amount. */
+.recents {
+	list-style: none;
+	margin: 0.15rem 0 0;
+	padding: 0;
+	font-size: 0.76rem;
+	line-height: 1.5;
+}
+
+/* Three columns: the URL takes what is left, the dots and the age are fixed, so
+   the two right-hand columns line up down the list however long the URLs run. */
+.recents li {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+/* Block padding sized to clear 24px — WCAG 2.2's minimum target size — rather
+   than a min-height. The text is 0.76rem on a 1.5 line box, so 18.2px of
+   content; 0.2rem top and bottom brings the box to 24.6px and centers the label
+   in it, which a min-height would not do. */
+.recents a {
+	padding: 0.2rem 0.15rem;
+	color: var(--text-muted);
+	text-decoration: none;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.recents a:hover, .recents a:focus-visible { color: var(--text); text-decoration: underline; }
+
+/*
+ * The same list, across columns, where a page has the width a card does not.
+ *
+ * CSS columns rather than a grid: every row is one line and they are ordered by
+ * time, so column flow — down the first column, then the second — keeps the
+ * newest rows together at the top left. A grid with `auto-fill` would order
+ * them across the rows instead, and "newest first" would zigzag.
+ *
+ * `break-inside: avoid` because a row is a three-column grid of its own, and a
+ * column break through the middle of one would strand its dots.
+ *
+ * The floor is 18em rather than something narrower: below that the URL column
+ * gets squeezed to nothing by the two fixed columns beside it, and long domains
+ * end up clipped in every row at once.
+ */
+.recents-wide {
+	columns: 18em;
+	column-gap: 2rem;
+	margin-top: 0.5rem;
+}
+.recents-wide li {
+	break-inside: avoid;
+}
+
+/* The log's copy of the six circles. Left-aligned against the numeric columns
+   beside it: the dots start at the cell's left edge, so they line up down the
+   column however wide the timestamps beside them run. */
+.col-logdots { text-align: left !important; width: 1%; white-space: nowrap; }
+.col-logdots .recents-dots { justify-content: flex-start; }
+
+.recents-dots { display: flex; gap: 2px; }
+
+.recents-dot {
+	width: 5px;
+	height: 5px;
+	border-radius: 50%;
+	background: var(--band, var(--border-strong));
+}
+.recents-dot-good { --band: var(--good); }
+.recents-dot-average { --band: var(--average); }
+.recents-dot-poor { --band: var(--poor); }
+/* Nothing measured for that ring — an outline rather than a color, so "no
+   data" cannot be misread as a fourth verdict. */
+.recents-dot-none { background: none; box-shadow: inset 0 0 0 1px var(--border-strong); }
+
+.recents-age {
+	flex: none;
+	min-width: 2.5em;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------- histogram */
+
+/* Page weight across the fleet, as a shape. Small on purpose — it sits in a
+   stat tile beside single numbers, and it is there to be read at a glance
+   rather than measured off. The exact counts are in the tooltips. */
+.histogram {
+	display: flex;
+	align-items: flex-end;
+	gap: 3px;
+	height: 52px;
+	max-width: 30em;
+	margin: 0.1rem 0 0.35rem;
+}
+
+.histogram-col {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 2px;
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+/* The track gives every column the same full height, so the bars grow from a
+   common baseline rather than from wherever their own box happens to end. */
+.histogram-track { display: flex; align-items: flex-end; width: 100%; height: 38px; }
+
+.histogram-bar {
+	display: block;
+	width: 100%;
+	/* A floor, so a bucket with something in it never renders as nothing — but
+	   1px rather than 2, since the tier tracks are only 16px tall and a 2px floor
+	   made a bar worth 4% look like one worth 12%. */
+	min-height: 1px;
+	border-radius: 2px 2px 0 0;
+	background: var(--accent);
+}
+
+/* The second histogram in the same tile, so it reads as a different measure
+   rather than more of the first. */
+.histogram-bar-script { background: var(--lcp-load-delay); }
+/* Third party sits between the script and LCP bars in this card and needs to be
+   told apart from both. Mixing toward the muted gray was not enough — at 55% it
+   still read as the same purple as the scripts above it — so it takes the amber
+   the rest of the site uses for third-party cost. */
+.histogram-bar-thirdparty { background: color-mix(in srgb, var(--average) 70%, var(--text-muted)); }
+/* A third measure in the same card, so a third color — the teal from the LCP
+   phase ramp, since this is the metric those phases add up to. */
+.histogram-bar-lcp { background: var(--lcp-load-duration); }
+
+/* A heading inside a card that already has one. Smaller and spaced above, so it
+   divides the tile instead of competing with the label at the top. */
+/*
+ * A heading that follows other content needs air above it; one that opens a card
+ * does not. The second selector catches the row-wrapped case — the median rings
+ * put their label inside `.ring-row`, so it is the first child of that and the
+ * rule on the label alone would never see it.
+ *
+ * One rule rather than a margin per label class, which is how the sub-headings
+ * and the chart headings ended up with three different values for the same gap.
+ */
+.stat-label:not(:first-child),
+.ring-row:not(:first-child) .stat-label,
+.stat-chart-item:not(:first-child) .stat-label {
+	margin-top: 0.7rem;
+}
+
+.stat-label-sub { font-size: 0.7rem; }
+
+/*
+ * How many things the section below is counting, on the heading itself.
+ *
+ * Each of these three headings sits over a different denominator — 1,516 sites,
+ * 7,811 circles, 254 sites with field data — and reading them stacked in one
+ * card without that stated invites the assumption they share one. Reuses `.tag`
+ * so it matches the pills elsewhere on the site.
+ */
+/*
+ * Leading, not trailing. A trailing multiplication sign already means a ratio on
+ * this site — the lab-versus-field column reads "1.2×" — so "1,516×" here would
+ * read as a comparison rather than a quantity.
+ */
+.stat-count {
+	margin-left: 0.3rem;
+	font-variant-numeric: tabular-nums;
+	/* The heading is uppercase and tracked; the count is a number and should be
+	   neither. */
+	text-transform: none;
+	letter-spacing: 0;
+	vertical-align: 0.05em;
+}
+
+.histogram-tick {
+	font-size: 0.52rem;
+	line-height: 1;
+	color: var(--text-muted);
+	font-variant-numeric: tabular-nums;
+}
+
+/* ---------------------------------------------------------------- lcp bar */
+
+/* The phases of LCP under the number, as proportions — see the lcpBar
+   shortcode for why it is not drawn against the LCP value itself.
+
+   Sized to fit the space a leaderboard row already has: the rings set the row
+   height, and 4px plus its margin lands inside that, so adding this to a
+   thousand-row table costs no vertical space at all. */
+/* One line per 3 seconds, stacked. Each line carries its own track, so the
+   length of the last one is readable against the full scale — a short bar on
+   its own just looks like a short bar. */
+.lcp-bar {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	/* 40px per second at the default root size, against the 3s scale in
+	   eleventy.config.js — so the length is legible as a duration and not just
+	   as a comparison with the row above. */
+	width: 7.5rem;
+	margin: 0;
+}
+
+/* Number then chart, the pair pinned to the right of the cell. Number on the
+   left so the charts all end at the same edge: with the number on the right, a
+   two-digit LCP pushed its bar further left than a one-digit one, and lengths
+   meant to be compared down the column started from a ragged margin.
+
+   A span rather than the cell itself, because a `<td>` set to flex stops
+   behaving as a table cell and no longer stretches to the row's height. */
+.lcp-cell {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+/* The header sits over the same box the numbers do, so its right edge lands on
+   theirs. Same min-width as .lcp-value below — they are one measurement, and
+   changing one without the other visibly breaks the alignment. */
+.lcp-head {
+	display: inline-block;
+	min-width: 3rem;
+	text-align: right;
+}
+
+/* Uniform width so every chart starts at the same x. Without it the number's
+   own width sets where its bar begins — "203.20 s" pushing it further than
+   "420 ms" — and lengths meant to be read down the column start from a ragged
+   margin.
+
+   3rem is 48px, measured against the widest label this corpus produces:
+   "203.20 s" renders at 47.8px and is the only site over 100 seconds, while
+   everything under 100s fits in 40.7px. A longer label grows the box rather
+   than clipping, at the cost of that row's bar starting further right. */
+.lcp-value {
+	flex: 0 0 auto;
+	min-width: 3rem;
+	text-align: right;
+	font-size: 0.8em;
+	font-variant-numeric: tabular-nums;
+}
+
+.lcp-row {
+	display: flex;
+	height: 4px;
+	border-radius: 2px;
+	overflow: hidden;
+	background: color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+/* Ran out of lines rather than finished — the number beside it is the truth. */
+.lcp-bar-clipped .lcp-row:last-child { border-radius: 2px 0 0 2px; }
+
+/* A ramp rather than four unrelated hues: the phases are consecutive, and a
+   sequence of shades reads as a timeline where a set of colors would read as
+   four categories. Mixed from the theme's own tokens so it follows light and
+   dark without a second palette. */
+.lcp-seg { display: block; height: 100%; }
+.lcp-seg-timeToFirstByte { background: var(--lcp-ttfb); }
+.lcp-seg-resourceLoadDelay { background: var(--lcp-load-delay); }
+.lcp-seg-resourceLoadDuration { background: var(--lcp-load-duration); }
+.lcp-seg-elementRenderDelay { background: var(--lcp-render-delay); }
+
+/* ------------------------------------------------------------ distribution */
+
+.dist { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 0.25rem; min-width: 100px; }
+/* The bar's legend: every share with the band it belongs to, named by an icon
+   rather than by a heading that had to spell all three out. Colored and
+   iconned both, so the bands stay apart for a reader who cannot separate the
+   colors. */
+.dist-key {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.1rem 0.4rem;
+	font-size: 0.72rem;
+	font-variant-numeric: tabular-nums;
+}
+.dist-key > span { display: inline-flex; align-items: center; gap: 0.15rem; }
+.dist-key svg { width: 0.72em; height: 0.72em; }
+.dist-key-good { color: var(--good); }
+.dist-key-avg { color: var(--average); }
+.dist-key-poor { color: var(--poor); }
+
+.dist-good { background: var(--good); }
+.dist-avg { background: var(--average); }
+.dist-poor { background: var(--poor); }
+
+/* ----------------------------------------------------- badges, pills, tags */
+
+.badge {
+	display: inline-block;
+	font-size: 0.68rem;
+	font-weight: 650;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	padding: 0.1rem 0.4rem;
+	border-radius: 4px;
+	background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+	color: var(--text-muted-strong);
+	vertical-align: middle;
+}
+.badge-error { background: var(--poor-bg); color: var(--poor); }
+.badge-stale { background: var(--average-bg); color: var(--average); }
+.badge-pass, .badge-cwv { background: var(--good-bg); color: var(--good); }
+/* A qualifier inside a badge, in the badge's color but not its shout. Badges
+   are uppercase and letter-spaced, which is right for a three-letter marker and
+   wrong for a word in parentheses after it. */
+.badge-qualifier { text-transform: none; letter-spacing: 0; font-weight: 500; }
+
+/* Not a warning: a significant change can be an improvement, and the delta it
+   sits beside is already colored good or bad. Neutral, like the base badge. */
+.badge-sig {
+	background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+	color: var(--text-muted-strong);
+}
+/* The measurement went somewhere other than the URL we asked for. Amber rather
+   than red: the numbers are real, they just describe the destination. */
+.badge-redirect { background: var(--average-bg); color: var(--average); }
+/* Built with the thing a register exists for, but missing from it. Accent
+   rather than amber: nothing is wrong here, there is just a submission nobody
+   has made. */
+.badge-unlisted {
+	background: color-mix(in srgb, var(--accent) 15%, transparent);
+	color: var(--accent);
+}
+/* Just turned perfect. Green, like everything else that says this site is
+   doing well, and one of the few badges that is good news rather than a
+   caveat — so it sits first on the row. */
+.badge-new { background: var(--good-bg); color: var(--good); }
+.badge-hiring { background: var(--good-bg); color: var(--good); text-transform: none; letter-spacing: 0; }
+.row-sample { opacity: 0.6; }
+
+.pill {
+	display: inline-block;
+	padding: 0.05rem 0.45rem;
+	border-radius: 10px;
+	font-size: 0.8rem;
+	font-variant-numeric: tabular-nums;
+}
+.pill-good { background: var(--good-bg); color: var(--good); }
+.pill-average { background: var(--average-bg); color: var(--average); }
+.pill-poor { background: var(--poor-bg); color: var(--poor); }
+.pill-none { color: var(--text-muted); }
+
+/* The emoji inside a tag. Nudged down a hair: emoji sit high against a cap
+   height, and against a 0.72rem label the difference reads as a misalignment. */
+.tag-mark {
+	font-size: 0.9em;
+	line-height: 1;
+	position: relative;
+	top: 0.05em;
+}
+
+/* An "unthrottled" filmstrip label and the like: a fact about the capture rather
+   than a claim about the site, so it sits back from the tag beside it. */
+.tag-quiet {
+	background: none;
+	box-shadow: inset 0 0 0 1px var(--border);
+	color: var(--text-muted);
+}
+
+.tag {
+	font-size: 0.72rem;
+	font-weight: 500;
+	text-transform: none;
+	letter-spacing: 0;
+	color: var(--text-muted-strong);
+	background: color-mix(in srgb, var(--text-muted) 12%, transparent);
+	padding: 0.1rem 0.45rem;
+	border-radius: 4px;
+}
+/*
+ * The correlation pill, beside a chart's site count.
+ *
+ * Set apart from the plain `.tag` next to it because the two say different kinds
+ * of thing — one counts what was measured, the other interprets it — and a
+ * reader should not have to work out which is which. Monospaced figures so the
+ * sign and the two decimals line up down the page.
+ */
+.tag-r {
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted);
+	background: transparent;
+	border: 1px solid var(--border);
+	cursor: help;
+}
+
+.chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chip { font-size: 0.8rem; padding: 0.2rem 0.6rem; border-radius: 20px; border: 1px solid var(--border); }
+.chip-good { background: var(--good-bg); color: var(--good); border-color: color-mix(in srgb, var(--good) 30%, transparent); }
+.chip-poor { background: var(--poor-bg); color: var(--poor); border-color: color-mix(in srgb, var(--poor) 30%, transparent); }
+.chip-none { color: var(--text-muted); }
+
+/* ----------------------------------------------------------------- notices */
+
+.notice {
+	border: 1px solid var(--border);
+	border-left-width: 3px;
+	border-radius: var(--radius);
+	padding: 0.9rem 1.1rem;
+	margin-bottom: 1.75rem;
+	font-size: 0.9rem;
+}
+.notice p { margin: 0.4rem 0 0; }
+.notice-error { border-left-color: var(--poor); background: var(--poor-bg); }
+.notice-warn { border-left-color: var(--average); background: var(--average-bg); }
+.notice-info { border-left-color: var(--accent); background: color-mix(in srgb, var(--accent) 7%, transparent); }
+
+.empty {
+	border: 1px dashed var(--border-strong);
+	border-radius: var(--radius);
+	padding: 2rem;
+	text-align: center;
+	margin-bottom: 2rem;
+}
+.empty h2 { margin-top: 0; }
+.empty pre { text-align: left; display: inline-block; }
+
+/* ------------------------------------------------------------------- lists */
+
+.failures { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+.failures li {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 0.5rem 0.8rem;
+	font-size: 0.86rem;
+	display: flex;
+	gap: 0.6rem;
+	align-items: center;
+	flex-wrap: wrap;
+}
+.failure-nodes { flex-basis: 100%; }
+.failure-nodes summary { cursor: pointer; font-size: 0.8rem; color: var(--text-muted); }
+.failure-nodes ol { margin: 0.4rem 0 0; padding-left: 1.4rem; display: flex; flex-direction: column; gap: 0.4rem; }
+.failure-nodes li { display: block; background: none; border: 0; padding: 0; }
+.failure-nodes pre { margin: 0.2rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.78rem; }
+.mover-delta { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/*
+ * Movers as a row of cards above the table rather than a stacked list below it.
+ * Auto-fill so a group with two movers does not stretch them across the page,
+ * and wrapping rather than scrolling so none are hidden off the edge.
+ */
+.mover-cards {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+	gap: 0.6rem;
+}
+.mover-card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-left-width: 3px;
+	border-radius: var(--radius);
+	padding: 0.6rem 0.8rem;
+	font-size: 0.86rem;
+	min-width: 0;
+}
+/* The direction is the point, so it colors the edge and the number both. */
+.mover-card.better { border-left-color: var(--good); }
+.mover-card.better .mover-delta { color: var(--good); }
+.mover-card.worse { border-left-color: var(--poor); }
+.mover-card.worse .mover-delta { color: var(--poor); }
+.mover-card.flat { border-left-color: var(--border-strong); }
+/* The URL is the one thing here that can overrun a fixed-width card. */
+.mover-card .site-link { min-width: 0; }
+.mover-card .site-link span { overflow: hidden; text-overflow: ellipsis; }
+.mover-scores { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+.orphans ul { font-size: 0.86rem; }
+
+/* ------------------------------------------------------------------ footer */
+
+.footer {
+	border-top: 1px solid var(--border);
+	margin-top: 3rem;
+	padding: 1.5rem 0 2.5rem;
+	font-size: 0.83rem;
+	color: var(--text-muted);
+
+	a:has(svg) {
+		white-space: nowrap;
+	}
+
+	svg {
+		height: 1.125em; /* 18px /16 */
+		width: 1.125em; /* 18px /16 */
+		overflow: visible;
+		margin-inline-end: .125em;
+		vertical-align: middle;
+		line-height: 1;
+	}
+}
+.footer p { margin: 0 0 0.35rem; }
+
+/* The nav list beside the footer text, stacked above it on narrow screens. */
+.footer-wrap {
+	display: grid;
+	grid-template-columns: max-content minmax(0, 1fr);
+	gap: 1rem 2.5rem;
+}
+.footer-nav ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 0.35rem;
+}
+@media (max-width: 640px) {
+	.footer-wrap { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 640px) {
+	.breakdown-row { grid-template-columns: 1fr; gap: 0.15rem; }
+	.breakdown-value { text-align: left; }
+	.bar { order: 3; }
+}
+
+/* ------------------------------------------------------------ data age */
+
+.col-updated { text-align: right !important; white-space: nowrap; font-variant-numeric: tabular-nums; color: var(--text-muted); }
+.col-updated.stale-age { color: var(--average); font-weight: 600; }
+
+.data-age { margin: 0.15rem 0 0; font-size: 0.86rem; color: var(--text-muted); }
+.data-age.stale-age { color: var(--average); }
+
+/* How old the numbers are, as a pill — the same treatment the embeddable score
+   component gives it, and the same one the category ranks use, so the small
+   qualifying facts on a page all look like one kind of thing. Carries its own
+   color when stale rather than inheriting the paragraph's, so the pill is
+   what reads as the warning. */
+/*
+ * A category's health, beside its name.
+ *
+ * Sized in `em` so it tracks the heading rather than fighting it, and set on the
+ * baseline rather than centred: it reads as an annotation on the title, not as
+ * part of it. Colored like the rings it summarizes, so a reader who knows what
+ * an amber circle means already knows what an amber badge means.
+ */
+.health-pill {
+	display: inline-block;
+	margin-left: 0.5em;
+	padding: 0.1em 0.55em;
+	border-radius: var(--pill);
+	font-size: 0.42em;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+.health-good { color: var(--good); background: color-mix(in srgb, var(--good) 16%, transparent); }
+.health-average { color: var(--average); background: color-mix(in srgb, var(--average) 16%, transparent); }
+.health-poor { color: var(--poor); background: color-mix(in srgb, var(--poor) 16%, transparent); }
+
+.age-pill {
+	display: inline-block;
+	padding: 0.05rem 0.45rem;
+	border-radius: var(--pill);
+	background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+	color: var(--text-muted-strong);
+	font-size: 0.92em;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+	vertical-align: baseline;
+}
+.age-pill.stale { color: var(--average); background: color-mix(in srgb, var(--average) 16%, transparent); }
+
+/*
+ * How often the site is measured, beside how old the data is.
+ *
+ * Quieter than the age pill next to it: that one is about this site right now
+ * and can turn amber, while this is a fact about the category that does not
+ * change between visits. Same shape so they read as a pair.
+ */
+.cadence-pill {
+	display: inline-block;
+	padding: 0.05rem 0.45rem;
+	border-radius: var(--pill);
+	background: color-mix(in srgb, var(--text-muted) 10%, transparent);
+	color: var(--text-muted);
+	font-size: 0.92em;
+	white-space: nowrap;
+	vertical-align: baseline;
+}
+
+/* --------------------------------------------------- leaderboard columns */
+
+/* ==================================================== leaderboard look ==== */
+
+.masthead { position: static; border-bottom: 1px solid var(--border); background: transparent; }
+.masthead .wrap { display: block; text-align: center; padding-top: 2.5rem; padding-bottom: 1.75rem; min-height: 0; }
+.masthead-hed { margin: 0 0 0.5rem; font-size: clamp(2rem, 6vw, 3rem); font-weight: 700; letter-spacing: -0.02em; }
+
+/* Flex so the mark sits beside the name rather than on its baseline: the glyph
+   is a solid block with no descender, and baseline alignment drops it low
+   against a 3rem word. Centered, and sized in `em` so it tracks the clamp. */
+.masthead-hed a {
+	color: var(--text);
+	text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4em;
+}
+
+.masthead-mark {
+	flex: none;
+	width: 0.8em;
+	height: 0.8em;
+	color: var(--brand);
+}
+/* Block margin so the three lines read as separate statements — the tagline,
+   the links, the coverage — rather than one paragraph that happens to wrap.
+
+   Balanced because the tagline is a single sentence under a large heading, and
+   the shape of two even lines is better than a full line above a stray word.
+   Inert on the tools row, which shares this class but has no text of its own. */
+.masthead-subhed {
+	margin: 0.4rem 0;
+	font-size: 0.95rem;
+	color: var(--text-muted);
+	text-wrap: balance;
+
+	a:has(svg) {
+		white-space: nowrap;
+	}
+
+	a svg {
+		height: 1em;
+		width: 1em;
+		margin-inline-end: 0.25em;
+		vertical-align: -0.125em;
+	}
+}
+
+/* ------------------------------------------------------------ score rings */
+
+/*
+ * `vertical-align: middle` is not cosmetic here. An inline-flex box sits on the
+ * text baseline, so the line box reserves descender space underneath it — about
+ * 8px of nothing under a 37px row of rings, on tables that run to a thousand
+ * rows. Aligning to the middle takes the row from 64px to 57px and moves
+ * nothing visible.
+ */
+.rings { display: inline-flex; gap: 0.3rem; align-items: center; vertical-align: middle; }
+.col-rings { text-align: right !important; white-space: nowrap; }
+/* Two words in a column of one-word headings — left to wrap it would set the
+   whole header row two lines deep for one cell. */
+.col-nojs { white-space: nowrap; }
+
+/*
+ * Under the delta, not beside it: the percentage is the measurement and this is
+ * what it turned out to mean, which is a caption on the number rather than part
+ * of it. Beside it the pair also had to share one line, and a word plus a mark
+ * plus a figure is wider than the column wants to be.
+ *
+ * Only the warning case is marked. A table where most rows carry a symbol says
+ * nothing; the plain percentages are the ordinary outcome this is the exception
+ * to.
+ *
+ * `line-height: 1` for the same reason the rank climb has it — a quarter of
+ * rows at most carry this, and every pixel it adds is a pixel those rows stand
+ * taller than the rest.
+ */
+.csr-yes {
+	display: flex;
+	/* A flex container ignores the cell's `text-align: right`, so the row has to
+	   be pushed to the end explicitly or the note would sit under the left edge
+	   of a right-aligned column. */
+	justify-content: flex-end;
+	align-items: center;
+	line-height: 1;
+	margin-top: 0.25em;
+	font-size: 0.75em;
+	font-weight: 500;
+	color: var(--average);
+	white-space: nowrap;
+}
+/* Sized and aligned like `.rest-error`, the other Font Awesome mark that sits
+   inside a table cell. Baseline rather than the line box, so the rows that
+   carry one do not stand taller than the rest. */
+.csr-icon {
+	width: 12px;
+	height: 12px;
+	vertical-align: baseline;
+	margin-right: 0.15em;
+}
+
+/*
+ * Lab against field, as a multiplier: lab LCP over field p75.
+ *
+ * Uncolored on purpose. Every other colored thing on these rows is a verdict —
+ * a Lighthouse band, a Core Web Vitals pass, an axe count — and this is not one.
+ * A ratio far from 1 says the audience differs from the simulated device, which
+ * is a fact about who visits rather than something the site did well or badly.
+ */
+.col-lvf { white-space: nowrap; }
+.lvf { font-variant-numeric: tabular-nums; color: var(--text-muted-strong); }
+/* The heading sits over the rings, which start at the cell's left edge — the
+   right-aligned numbers below are the total, not the column. */
+th.col-rings { text-align: left !important; }
+
+.ring { display: block; overflow: visible; }
+.ring-track { stroke: var(--border); }
+.ring-arc { stroke: var(--text-muted); }
+.ring-text { font-size: 12px; font-weight: 650; fill: var(--text); font-family: var(--sans); }
+/* Small enough to read as a caption rather than a value, and letter-spaced so
+   three capitals at this size do not run together. Takes the band color from
+   the rules below, same as the value above it — the label is part of the mark,
+   not an annotation beside it. */
+.ring-sublabel {
+	font-size: 6px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	fill: var(--text-muted);
+	font-family: var(--sans);
+}
+
+.ring-good .ring-arc { stroke: var(--good); }
+.ring-good .ring-text,
+.ring-good .ring-sublabel { fill: var(--good); }
+.ring-average .ring-arc { stroke: var(--average); }
+.ring-average .ring-text,
+.ring-average .ring-sublabel { fill: var(--average); }
+.ring-poor .ring-arc { stroke: var(--poor); }
+.ring-poor .ring-text,
+.ring-poor .ring-sublabel { fill: var(--poor); }
+.ring-none .ring-text,
+.ring-none .ring-sublabel { fill: var(--text-muted); }
+
+/* --------------------------------------------------------- rank and title */
+
+.col-rank { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 650; }
+.col-rank .hash { color: var(--text-muted); font-weight: 400; }
+.col-rank .trophy { margin-right: 0.15rem; }
+
+/*
+ * Rank movement, climbs only — see `rankClimb` in lib/report.js for why falls
+ * are not drawn and why a move has to be backed by a changed score.
+ *
+ * Stacked under the rank, sharing its right edge, so the column stays as narrow
+ * as "#1234" no matter how big a move is printed.
+ *
+ * `line-height: 1` rather than the inherited 1.5: only about a quarter of rows
+ * carry a badge, so every pixel it adds is a pixel those rows stand taller than
+ * their neighbors. Tightened, it costs 12px instead of 17px.
+ *
+ * Lighter and smaller than the rank: the position is the number the column is
+ * for, and the movement is an annotation on it.
+ */
+.rank-climb {
+	display: block;
+	line-height: 1;
+	font-size: 0.75em;
+	font-weight: 500;
+	color: var(--good);
+	font-variant-numeric: tabular-nums;
+	margin-top: 0.25em;
+}
+
+/*
+ * An inline-flex box takes its baseline from its first flex item — here the
+ * favicon — which sits well below the text baseline. Any inline sibling (the
+ * CWV and failing badges) then aligns to that and drops. Aligning the link to
+ * `middle` puts it on the same reference the badges already use.
+ */
+.site-link {
+	display: inline-flex;
+	align-items: center;
+	vertical-align: middle;
+	gap: 0.5rem;
+	font-family: var(--mono);
+	font-size: 1rem;
+}
+.favicon { width: 24px; height: 24px; border-radius: 4px; flex: none; background: var(--surface); }
+
+.detail-head .site-link { font-size: inherit; }
+
+.page-hed {
+	margin: 0 0 0.25rem;
+	font-size: clamp(1.5rem, 4vw, 2rem);
+	letter-spacing: -0.02em;
+	font-weight: 700;
+	/* Flex so the mark sits beside the domain rather than on its baseline — a
+	   favicon is a square with no descender, and baseline alignment drops it low
+	   against a 2rem word. Wraps so a long domain does not squeeze it. */
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.4em;
+}
+
+/* Sized in `em` so it tracks the heading's clamp, and given a box of its own:
+   these come from an external service, and a favicon that never arrives should
+   leave the heading where it was rather than closing the gap. */
+.page-hed-mark {
+	flex: none;
+	inline-size: 0.9em;
+	block-size: 0.9em;
+	border-radius: 2px;
+}
+
+.stat-suffix { font-size: 0.9rem; font-weight: 400; color: var(--text-muted); letter-spacing: 0; }
+
+/* ------------------------------------------------------------ theme toggle */
+
+/* <solar-eclipse-toggle>, whose own stylesheet is inlined by the layout. */
+.theme-toggle {
+	margin-top: 0.75rem;
+	--se-focus: var(--accent);
+}
+/* Undoes the footer's icon sizing, which is meant for the icons inline with its text. */
+.footer .theme-toggle svg {
+	width: 1em;
+	height: 1em;
+	margin: 0;
+}
+
+
+/*
+ * Prose does not want the full table width. The wrap is sized for the
+ * leaderboard; running text and the centered intro stay at a readable measure.
+ */
+.masthead-subhed { max-width: 68ch; margin-inline: auto; }
+.panel > p, .group-head p, .detail-head p { max-width: 90ch; }
+
+/* ------------------------------------------------------- built with / host */
+
+/* Wide enough for the 22px mark the leaderboards ask for, plus the cell's own
+   padding — narrower and the column would squeeze the icon it exists to show.
+   The tool and host columns hold one mark each and keep this width; the Uses
+   column widens below to make room for several. */
+.col-stack { text-align: center !important; white-space: nowrap; width: 2.6rem; }
+/* Up to three marks, then the overflow count: three squares, three gaps and a
+   two-character chip. */
+.col-stack-uses { width: 6rem; }
+.col-stack-uses .stack-row {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 3px;
+}
+/* One 22px square per mark, so the marks line up down the column whatever they
+   are: a logo, a two-letter chip for a brand that has none, a lone dot for a
+   site with nothing detected. No object-fit — that applies to replaced elements
+   and these are inline SVG, which scales itself to the box it is given and
+   centers what is left over, which is the same thing. The overflow count is
+   excluded: it is a number at the end of the row, not another mark. */
+.col-stack-uses .stack-row > :not(.stack-more) {
+	width: 22px;
+	height: 22px;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+/* Part of that row now rather than hung off a single centered mark, so the
+   absolute positioning below does not apply here. */
+.col-stack-uses .stack-more { position: static; transform: none; }
+/* The text chip is the fallback when a brand has no mark, so it grows with the
+   icons rather than sitting beside them looking like a different column. */
+.col-stack .stack-chip { font-size: 0.7rem; }
+/* Hung off the right of the 22px mark so the marks stay centered in every row. */
+td.col-stack { position: relative; }
+.stack-more {
+	position: absolute;
+	left: calc(50% + 13px);
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 0.65rem;
+	font-weight: 650;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted);
+	cursor: default;
+}
+.stack-icon { display: inline-block; vertical-align: middle; }
+.stack-chip {
+	display: inline-block;
+	vertical-align: middle;
+	font-size: 0.62rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	line-height: 16px;
+	min-width: 16px;
+	padding: 0 3px;
+	border-radius: 3px;
+	background: color-mix(in srgb, var(--text-muted) 25%, transparent);
+	color: var(--text-muted-strong);
+}
+
+/* Holding a mark rather than letters: center it and drop the text padding.
+   Height is pinned because `inline-flex` ignores the line-height that gives a
+   letter chip its box, and a 16px chip next to an 11px one reads as misaligned. */
+.stack-chip-icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	padding: 0;
+}
+/* Listed as, not detected as. Reduced opacity is the whole signal — same glyph,
+   visibly hedged, and the tooltip says which. */
+.stack-presumed { opacity: 0.65; }
+.stack-none { color: var(--text-muted); opacity: 0.4; }
+
+/* Detected stack on the site detail page. */
+.stack-list { display: flex; flex-wrap: wrap; gap: 1.25rem; }
+.stack-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
+.stack-item .stack-label { color: var(--text-muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.stack-tools { display: flex; flex-wrap: wrap; gap: 0.25rem 0.75rem; }
+.stack-tool { display: inline-flex; align-items: center; gap: 0.3rem; }
+/* Part of the tool above it rather than a find of its own — same treatment as a
+   presumed mark, for the same reason. */
+.stack-tool-implied { opacity: 0.7; }
+
+/* Monochrome marks inherit the theme's text color so they stay visible. */
+.stack-icon-mono { color: var(--text); }
+
+/* ---------------------------------------------------------------- contents */
+
+.contents {
+	/* Mixed into the surface rather than over transparent so it stays opaque when sticky. */
+	background: color-mix(in srgb, var(--accent) 4%, var(--surface));
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 0.7rem 0.9rem;
+	margin: 0 0 2.5rem;
+	display: flex;
+	align-items: baseline;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+/*
+ * Sticky on the site page, which is long enough that the sections are worth
+ * getting back to. A modifier rather than a change to `.contents`: the home
+ * page uses the same component for its category nav, where the page is a
+ * leaderboard and pinning a nav over it would just cost rows.
+ *
+ * `.contents` is already opaque — surface fill, full border — so content
+ * scrolling beneath it is covered without anything extra here.
+ */
+/* Matching .table-scroll, so the card lines up with the panels it scrolls over
+   rather than sitting a few pixels inside their edges. On the sticky one only:
+   the home page's category nav sits in the flow with the text around it, and
+   pulling that out would leave it hanging past its neighbors. */
+.contents-sticky { margin-inline: calc(-1 * var(--page-gutter-padding)); }
+
+
+/*
+ * Only where it fits, in both directions.
+ *
+ * Width, because the nav wraps with the viewport — one row at 1280px, two at
+ * 900, four at 360 — and a pinned nav 163px tall takes a third of a phone
+ * screen to save a scroll. Below the breakpoint it stays in the flow, which is
+ * also what keeps the anchor offset below honest: no fixed offset can clear a
+ * nav whose height triples.
+ *
+ * Height, because width alone lets a landscape phone through: 800 wide and 390
+ * tall passes the width test, and a two-row nav would take a quarter of what
+ * there is to read. 34rem is above a phone on its side and below any laptop.
+ */
+@media (min-width: 40rem) and (min-height: 34rem) {
+	.contents-sticky {
+		position: sticky;
+		/* A gap above rather than flush: the nav reads as a card that has come to
+		   rest near the top, not as a bar welded to the viewport edge. */
+		top: 0.5em;
+		z-index: 5;
+	}
+}
+
+.contents-label {
+	font-size: 0.72rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-muted);
+	font-weight: 600;
+}
+.contents ul {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	/* Wide column gap: each entry is now three pieces — count, name, age — and
+	   without a clear separation between entries they read as one run-on line. */
+	gap: 0.4rem 2rem;
+}
+.contents li { display: inline-flex; align-items: baseline; gap: 0.35rem; font-size: 0.9rem; }
+/* Matches the link padding so the highlight stays inside the card. */
+.contents table-of-contents { margin-inline: 0.65rem; }
+/* Padding offset by margin so the highlight doesn't shift the row. */
+.contents-sticky a { padding: 0.1rem 0.65rem; margin: -0.1rem -0.65rem; border-radius: 4px; }
+/* Set by <table-of-contents> on entries whose section is on screen. */
+.contents .toc-in-view { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+/* The home page's category list is the way into the site rather than a table of
+   contents for the page you are already on, so it reads a size larger. Scoped
+   with its own class rather than by negating the sticky one — the site page's
+   nav should stay quiet. */
+/*
+ * Not a card. The sticky table of contents needs a surface to scroll content
+ * under; this list sits in the flow as the way into the site, so it drops the
+ * fill, the border and the padding and reads as content rather than chrome.
+ */
+.contents-categories {
+	background: none;
+	border: 0;
+	border-radius: 0;
+	padding: 0;
+	/* The heading lives in the section's own `.group-head` now, so the nav is
+	   just the list and needs none of the flex row's label slot. */
+	display: block;
+	margin: 0;
+}
+.contents-categories li { font-size: 1.15rem; }
+.contents-categories .contents-count { font-size: 0.8rem; }
+/* The denominator is context, not the number being reported — dimmed so the
+   measured count is what the eye lands on. */
+/* Freshness beside the coverage count. Same pill treatment as the count, in the
+   contrast-safe muted so it clears 4.5:1 on its own tint — see
+   --text-muted-strong. */
+.contents-age {
+	font-size: 0.72rem;
+	font-variant-numeric: tabular-nums;
+	/* "41h ago" is two words and a pill: broken across lines the background
+	   splits into two boxes and the second one carries a lone "ago". */
+	white-space: nowrap;
+	color: var(--text-muted-strong);
+	background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+	padding: 0.05rem 0.35rem;
+	border-radius: 10px;
+}
+
+/* Plain text, not a pill. Back to --text-muted rather than the strong variant:
+   that exists for text sitting on a tinted background of its own color, and
+   with the tint gone there is nothing eating the contrast — 5.4:1 dark and
+   5.2:1 light against the page. */
+.contents-count {
+	font-size: 0.72rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted);
+}
+
+/*
+ * A count beside a section heading. Same pill as .cat-rank, which is the shape
+ * this site already uses for "a number attached to a label" — sized in `em` so
+ * it tracks whatever heading it is set in rather than fixing itself to one.
+ */
+.head-count {
+	display: inline-block;
+	vertical-align: baseline;
+	margin-left: 0.35em;
+	padding: 0.1em 0.55em;
+	border-radius: var(--pill);
+	background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+	color: var(--text-muted-strong);
+	font-size: 0.5em;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0;
+	white-space: nowrap;
+}
+
+/*
+ * Anchored sections sit clear of the top edge when jumped to.
+ *
+ * Deliberately no `scroll-behavior: smooth`. With the whole address book on one
+ * page the document runs past 100,000px tall, and animating a jump of tens of
+ * thousands of pixels is slow and disorienting — an instant jump is the right
+ * behavior at this length.
+ */
+:target { scroll-margin-top: 1.5rem; }
+
+/*
+ * Clear of the sticky table of contents, not just of the viewport edge: an
+ * anchor that lands a heading underneath the nav that linked to it looks like
+ * the link did nothing.
+ *
+ * Paired with the sticky rule above and sized for the nav at its tallest within
+ * that range — two wrapped rows, 105px, plus the half-em it rests below the top
+ * — so a wide screen gets a generous gap rather than a narrow one getting none.
+ * Outside the query the nav scrolls away and the ordinary offset applies.
+ */
+@media (min-width: 40rem) and (min-height: 34rem) {
+	.detail :target,
+	main.wrap > :target,
+	main.wrap section:target { scroll-margin-top: 8rem; }
+}
+
+.see-all {
+	margin: 0.6rem 0 0;
+	font-size: 0.86rem;
+	color: var(--text-muted);
+}
+.see-all a { margin-left: 0.35rem; }
+
+/* ------------------------------------------------------------ embed demo */
+
+/* The working component, sat above the markup that produces it. */
+.embed-live { margin: 0 0 0.9rem; }
+
+/* The iframe page at /site/<slug>/filmstrip/. */
+.filmstrip-embed { padding: 0.75rem var(--page-gutter); }
+.filmstrip-embed-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.25rem 0.5rem;
+	margin: 0 0 0.5rem;
+}
+.filmstrip-embed-credit {
+	margin-left: auto;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35em;
+	color: var(--text);
+	font-weight: 600;
+	text-decoration: none;
+}
+/* Down to the mark alone on the narrowest screens, still named for screen readers. */
+@media (max-width: 24rem) {
+	.filmstrip-embed-credit-name {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+}
+.filmstrip-embed-mark { flex: none; width: 1em; height: 1em; color: var(--brand); }
+.filmstrip-empty { position: relative; overflow: hidden; }
+/* The frame shape of a mobile capture (412×823), at the strip's 180px height. */
+.filmstrip-skeleton {
+	display: block;
+	height: 180px;
+	aspect-ratio: 412 / 823;
+	border: 1px dashed var(--border);
+	border-radius: 3px;
+	background: var(--surface);
+}
+.filmstrip-empty-message {
+	position: absolute;
+	inset: 0;
+	display: grid;
+	place-items: center;
+	margin: 0;
+	color: var(--text-muted);
+}
+.embed-picker { max-width: 32rem; }
+.embed-picker fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.filmstrip-embed-frame { display: block; width: 100%; height: 420px; border: 1px solid var(--border); border-radius: var(--radius); margin: 0 0 0.9rem; }
+
+/* ------------------------------------------------- built with / hosted by */
+
+.stacks {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	gap: 0.75rem;
+	margin-bottom: 1rem;
+	/* Same pull as .statbar and .table-scroll: every card on the page lines up
+	   on one pair of edges. */
+	margin-inline: calc(-1 * var(--page-gutter-padding));
+}
+/* --------------------------------------------- the rows a big table leaves out */
+
+.rest-head { margin: 2rem 0 0.6rem; font-size: 1rem; font-weight: 650; }
+
+/*
+ * Multi-column rather than a grid: these are a plain alphabetical-ish list, and
+ * columns let the eye run down one before crossing to the next — which is how a
+ * long list of names is read. `break-inside` stops a URL being split across the
+ * column boundary.
+ */
+.rest-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	columns: 4 16rem;
+	column-gap: 1.5rem;
+	font-size: 0.86rem;
+}
+/* Small and red, sitting after the name rather than before it — the name is
+   what is being scanned, and the mark is a note on it. */
+.rest-error {
+	width: 12px;
+	height: 12px;
+	color: var(--poor);
+	vertical-align: baseline;
+	margin-left: 0.15rem;
+}
+
+/* Same size and place as .rest-error, deliberately muted rather than red: this
+   marks a site nothing has been tried on yet, which is a gap in our data and not
+   a verdict on theirs. */
+.rest-pending {
+	width: 12px;
+	height: 12px;
+	color: var(--text-muted);
+	vertical-align: baseline;
+	margin-left: 0.15rem;
+}
+
+.rest-list li {
+	break-inside: avoid;
+	padding: 0.1rem 0;
+	/* A URL too long for its column is trimmed rather than overlapping the next
+	   one. The full name is on the page it links to. */
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* ------------------------------------------------------- version histogram */
+
+/* One flex item holding both marks and the word, so space-between separates
+   the title from the count rather than separating the icons from the label. */
+.version-title { display: inline-flex; align-items: center; gap: 0.3rem; }
+
+.version-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+
+/*
+ * Three columns: the label, the bar taking whatever is left, and the count.
+ * Fixed side columns so the bars all start and end at the same x — a bar chart
+ * whose baseline moves per row is a set of unrelated lines.
+ */
+.version-row {
+	display: grid;
+	/* Four fixed-ish columns: label, bar, count, share. The side columns are
+	   sized for their widest content so the bars keep one baseline and one
+	   length across every row. */
+	grid-template-columns: 2.2rem minmax(0, 1fr) 2.6rem 2.9rem;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.82rem;
+}
+.version-label { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.version-bar {
+	height: 0.7rem;
+	border-radius: var(--pill);
+	background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+	overflow: hidden;
+}
+/* A minimum width so a version with a handful of sites is still a visible mark
+   rather than a rounding error indistinguishable from zero. */
+.version-fill {
+	display: block;
+	height: 100%;
+	min-width: 3px;
+	border-radius: inherit;
+	background: var(--accent);
+}
+.version-count { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* A pill, matching the counts elsewhere on the page: it reads as a label on the
+   number beside it rather than as a second number competing with it. */
+.version-share {
+	/* Filling the column rather than hugging its text: pills of three different
+	   widths ("1%", "9%", "65%") right-aligned leave a ragged left edge, and the
+	   column exists precisely so they line up. */
+	justify-self: stretch;
+	text-align: center;
+	padding: 0.05rem 0.35rem;
+	border-radius: var(--pill);
+	background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+	color: var(--text-muted-strong);
+	font-size: 0.72rem;
+	font-weight: 600;
+}
+
+/* No bar, because there is nothing to draw: these sites named the generator and
+   not the version. */
+.version-rest { color: var(--text-muted); }
+
+.tally {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	padding: 0.8rem 0.95rem;
+}
+.tally-head {
+	margin: 0 0 0.6rem;
+	font-size: 0.72rem;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--text-muted);
+	font-weight: 600;
+	display: flex;
+	justify-content: space-between;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+/* Dimming text with opacity cannot be made accessible — it moves the foreground
+   toward the background by definition. `opacity: 0.8` here measured 4.06:1. */
+.tally-meta { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--text-muted-strong); }
+
+.tally-list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.tally-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-size: 0.85rem;
+	padding: 0.2rem 0.5rem;
+	border: 1px solid var(--border);
+	border-radius: var(--pill);
+	background: var(--bg);
+}
+.tally-name { white-space: nowrap; }
+.tally-count {
+	font-variant-numeric: tabular-nums;
+	font-weight: 650;
+	color: var(--text-muted);
+	font-size: 0.8rem;
+}
+
+/* The folded-up one-offs: present and countable, but not a thing you can click
+   into, so they drop the pill's border and fill and read as a plain note. */
+.tally-rare {
+	border: 0;
+	background: none;
+	padding-left: 0;
+	opacity: 0.7;
+	font-style: italic;
+}
+
+/* ------------------------------------------------------------- redirects */
+
+/* Was sharing `.orphans`, which meant one rename away from styling the wrong
+   thing. Grouped by verdict, so the reason is a heading rather than a badge
+   repeated on every row. */
+.redirects { margin-bottom: 2.5rem; }
+.redirects-head {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.95rem;
+	margin: 1.5rem 0 0.25rem;
+}
+/*
+ * The collapsed group.
+ *
+ * The summary keeps its own display — changing it stops the element being the
+ * disclosure widget, and the details renders permanently open — so the flex row
+ * lives on a span inside it, and the marker is styled rather than replaced.
+ */
+/* The same block rhythm the sections around it use, so a closed <details> does
+   not sit tight against the group above it. */
+.redirects-pending { margin-block: 1.5rem; }
+.redirects-pending > summary { cursor: pointer; }
+.redirects-pending > summary::marker { color: var(--text-muted); }
+.redirects-pending > summary .redirects-head { display: inline-flex; margin: 0; }
+
+.redirects-count {
+	font-size: 0.75rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted-strong);
+	background: color-mix(in srgb, var(--text-muted) 18%, transparent);
+	border-radius: var(--pill);
+	padding: 0.05rem 0.45rem;
+}
+/*
+ * A URL column: left aligned like `.col-site`, but held on one line so a long
+ * pair of URLs scrolls the table inside its box rather than wrapping every row
+ * to three lines. `.col-site` cannot be reused — it forces `white-space:
+ * normal` so metric-name cells in the trend tables can wrap.
+ */
+.col-url { text-align: left !important; white-space: nowrap; }
+/* A wrapping row of chips. Left to wrap rather than held on one line: a site in
+   three categories would otherwise widen the column for every row in the table,
+   and the cell is the last one, where a second line costs nothing.
+
+   Flex rather than inline chips with margins, so the gap applies between the
+   rows as well as along them — the chips are emitted with no whitespace between
+   them, since a newline in the loop would be a space inside the cell. */
+.col-cats { text-align: left !important; }
+
+/* The wrapping row of chips, inside the cell rather than being the cell: a
+   `<td>` set to flex stops behaving as a table cell — it no longer stretches to
+   the row's height, so the row's background and rule stop short of it and leave
+   a visible seam down the table. */
+.cat-chips {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.3rem;
+}
+.col-url + .col-url { padding-left: 0.9rem; }
+.redirects-arrow { color: var(--text-muted); padding: 0 0.15rem; }
+/* Which lists a URL belongs to. Quiet by design — it is context for the row,
+   not a second thing to read. Named for what it is rather than for the first
+   table that used it, now that the perfect-scores board shows them too. */
+/* A link on the home page, plain text elsewhere — the shared look is the point,
+   so the anchor drops its underline and takes the border on hover instead. */
+a.cat-chip { text-decoration: none; }
+a.cat-chip:hover, a.cat-chip:focus-visible { color: var(--text); border-color: var(--border-strong); }
+
+.cat-chip {
+	font-size: 0.72rem;
+	letter-spacing: 0.04em;
+	color: var(--text-muted);
+	border: 1px solid var(--border);
+	border-radius: var(--pill);
+	padding: 0.02rem 0.45rem;
+	white-space: nowrap;
+}
+
+/* ----------------------------------------------------------- updated tag */
+
+/*
+ * Leaderboard site cells keep the URL on one line. `:has()` gives this higher
+ * specificity than the `white-space: normal !important` above, which exists so
+ * metric-name cells in the trend tables can wrap.
+ */
+.col-site:has(.site-link) { white-space: nowrap !important; }
+/*
+ * One line, and a bounded one. A handful of sites carry URLs long enough to
+ * widen the whole column on their own, pushing the scores off the right edge
+ * for every other row — so the URL gets a ceiling and an ellipsis, and the
+ * `title` on the span carries the rest. Not applied to `.site-link` generally:
+ * the site page's own heading is a URL that should be readable in full.
+ */
+.site-link > span { white-space: nowrap; }
+.col-site .site-link > span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 18rem;
+}
+
+.updated-tag {
+	display: inline-block;
+	vertical-align: middle;
+	margin-left: 0.4rem;
+	padding: 0.05rem 0.4rem;
+	border-radius: var(--pill);
+	font-size: 0.72rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted-strong);
+	background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+	white-space: nowrap;
+}
+.updated-tag.stale-age {
+	color: var(--average);
+	background: color-mix(in srgb, var(--average) 18%, transparent);
+}
+/* Same again — 2.02:1 over the failing row's tint. */
+.updated-tag.never { color: var(--text-muted-strong); }
+
+/*
+ * The two screenshots on a site page, as rendered and with scripts disabled.
+ *
+ * Two columns that collapse to one below the breakpoint rather than a scroller:
+ * there are only ever two frames, and the whole point is seeing them at once.
+ * Stacked on a phone still reads as a comparison; a horizontal scroll would
+ * show one at a time, which is the one arrangement that defeats it.
+ */
+.nojs-pair {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 1rem;
+	margin-block: 1rem;
+}
+
+.nojs-shot {
+	margin: 0;
+	min-width: 0;
+}
+
+/*
+ * The figure between the two frames, which is where it belongs: it describes
+ * the distance from one to the other, and reading it in the gap makes that
+ * relationship the sentence rather than a caption above the pair.
+ *
+ * A flex item among the frames, so it takes the middle column and centers
+ * against them. It stays legible when the row wraps on a narrow screen, where
+ * source order puts it between the two stacked pictures.
+ */
+.nojs-diff {
+	margin: 0;
+	/* Allowed to grow, because it does not always share a line with the frames.
+	   Below about 704px the row cannot hold all three and this wraps onto a line
+	   of its own, where without grow it stayed at its 14em basis and left most of
+	   that line empty.
+
+	   Capped, because the same grow would otherwise take every spare pixel on a
+	   wide screen — at 1200px that is 500px of text column shoving the two
+	   frames out to the margins. 30em is a reading measure; past it the space is
+	   better left over. */
+	flex: 1 1 14em;
+	max-width: 30em;
+	min-width: 8em;
+	display: flex;
+	flex-direction: column;
+	text-align: left;
+	gap: 0.25rem;
+	max-width: 26em;
+}
+
+/*
+ * The finding the pair demonstrates, under the heading and ahead of the frames.
+ *
+ * `.notice` supplies the box, and out here it is an ordinary block rather than a
+ * flex item — it used to sit inside the frame row and needed `flex: 1 1 100%` to
+ * stop it standing as a third column beside the two images. As a sibling of the
+ * heading it needs none of that.
+ *
+ * A tighter bottom margin than a standalone notice, because the caption line
+ * follows immediately and the two belong to the same thought.
+ */
+.nojs-verdict {
+	margin-bottom: 0.9rem;
+}
+
+.nojs-diff strong {
+	font-size: 1.5rem;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: -0.02em;
+}
+
+.nojs-shot figcaption {
+	font-size: 0.8em;
+	color: var(--text-muted-strong);
+	margin-block-end: 0.35rem;
+}
+
+
+/*
+ * Sized by height, with the width falling out of the ratio, so the two frames
+ * are always the same size as each other and always the same size from site to
+ * site — a comparison between two pictures only works if neither is scaled.
+ *
+ * 412x823 is the phone Lighthouse measures on, mirrored in lib/axe.js. Stated
+ * here rather than left to the intrinsic ratio so the row reserves its space
+ * before either image arrives.
+ *
+ * The border matters more than it looks: a page that renders nothing without
+ * JavaScript is a white rectangle, and without an edge it reads as a missing
+ * image rather than as the answer.
+ */
+.nojs-shot img {
+	display: block;
+	width: auto;
+	/* Tall enough to read, and capped so a tall window does not turn the pair
+	   into a wall. */
+	height: min(60vh, 26em);
+	aspect-ratio: 412 / 823;
+	/* Only bites if a capture is not the ratio above — a desktop run is 1350x940
+	   — where cropping to the top beats distorting the page. */
+	object-fit: cover;
+	object-position: top center;
+	max-width: 100%;
+	border: 1px solid var(--border);
+	border-radius: 3px;
+	background: var(--surface);
+}
+/*
+ * Under 470px: the two frames stay side by side and the figure drops below.
+ *
+ * Wrapping the frames apart is the one thing that must not happen — the whole
+ * section is a comparison, and a comparison you have to scroll between is two
+ * pictures rather than one point.
+ *
+ * Range syntax rather than `max-width: 469.98px`, because the bound is exactly
+ * "narrower than 470" and writing that as a fraction of a pixel is a fudge.
+ *
+ * A full-width basis on the figure does the work: it is last in the markup, so
+ * giving it a whole row of its own leaves the two frames sharing the one above
+ * rather than splitting the pair across a wrap. Heights are bounded rather than
+ * set here — the frames take the width they can get.
+ */
+@media (width < 470px) {
+	/* Grid, not flex, for this breakpoint only.
+	   The two frames have to shrink to sit side by side, and flexbox decides
+	   wrapping on the basis before any shrinking happens: at `auto` each frame's
+	   basis is the image's own 412px, so the pair overflows a phone and wraps
+	   apart — the one thing this query exists to prevent. Getting flex to
+	   cooperate means pinning the basis to half the row minus half the gap,
+	   which silently breaks the moment the gap changes.
+	   Two `minmax(0, 1fr)` tracks say the same thing without the arithmetic:
+	   equal columns, free to shrink below their content. */
+	.nojs-pair {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		align-items: start;
+		gap: 0.75rem;
+	}
+
+
+	/* Both dimensions auto, bounded rather than set, so the ratio decides the
+	   shape and whichever bound is tighter decides the size. The frame shrinks
+	   with the column instead of keeping its height and losing its sides.
+
+	   `max-height` and not `height`: a fixed height here would force the box to
+	   the column's width at a shape the image does not have, and `contain` would
+	   letterbox it. Bounded, the picture just gets smaller.
+
+	   60vh so the pair never fills a phone screen on its own, and 24em so it
+	   stops growing on a tall narrow window. `contain` rather than the base
+	   rule's `cover` because at this size nothing may be cropped away — a
+	   clipped comparison is a misleading one. */
+	.nojs-shot img {
+		width: auto;
+		height: auto;
+		max-width: 100%;
+		max-height: min(60vh, 24em);
+		object-fit: contain;
+	}
+}
+
+@media (width < 700px) {
+	/* Spanning both columns rather than taking a third: the markup already puts
+	   it after both frames, so a full-width row of its own is all it needs. */
+	.nojs-diff {
+		grid-column: 1 / -1;
+		align-items: flex-start;
+	}
+}
+
+/* A run of weeks CrUX reported nothing for, merged into one row. Quieter than a
+   data row and centered under the columns it spans, so it reads as the gap it is
+   rather than as a value that failed to load. */
+.gap-cell {
+	text-align: center;
+	font-size: 0.9em;
+	font-style: italic;
+}
+
+/* -------------------------------------------------------------------- race */
+
+/*
+ * Two filmstrips replayed against each other on one time axis.
+ *
+ * The whole layout is driven off three custom properties: the frame height,
+ * which a media query changes; the aspect ratio of the widest frame in the
+ * race, which the script sets; and the gap. Column width and the stride between
+ * columns fall out of those, which is what lets a marker sit at an arbitrary
+ * time — `left: calc(var(--race-stride) * var(--at))` — and stay there when the
+ * viewport changes size, without the script measuring anything.
+ */
+.race {
+	/* Pitch between stacked comparison flags. Comfortably more than a label's own
+	   height (0.6rem of text on 1.2, plus 0.2rem of padding, is 0.92rem) so two on
+	   consecutive rows keep a visible gap rather than touching. */
+	--race-flag-row: 1.35rem;
+	/* Frame height is a base times a scale. The base is the viewport's business
+	   and changes in a media query; the scale is the race's, set from the number
+	   of lanes — see renderGrid. Two properties rather than one so a script
+	   setting the count cannot overwrite the phone's smaller base. */
+	--race-frame-base: 170px;
+	--race-lane-scale: 1;
+	/* Capped against the viewport as well as the lane count: a short window makes
+	   even two lanes taller than the screen, and a comparison you have to scroll
+	   vertically to see both halves of is not a comparison. */
+	/* Capped against the viewport as well as the lane count: a short window makes
+	   even two lanes taller than the screen, and a comparison you have to scroll
+	   vertically to see both halves of is not a comparison. */
+	--race-frame-h: min(calc(var(--race-frame-base) * var(--race-lane-scale)), 40vh);
+	--race-aspect: 0.5;
+	/* Clear track between two frames, on top of a frame's own width. */
+	--race-gap: 4px;
+	--race-col-w: calc(var(--race-frame-h) * var(--race-aspect));
+	/*
+	 * Pixels per column step, and so the scale of the whole axis: the ruler's
+	 * ticks, the comparison flags and every frame are placed as a multiple of it.
+	 *
+	 * Floored rather than taken straight from the frame width. Frames butt up
+	 * against each other at `col-w + gap`, which is fine for the pictures and too
+	 * tight for everything measured against them — a 500ms tick on a 375ms grid
+	 * lands 1.33 strides apart, so at a 64px frame the labels have 93px to sit in
+	 * and start colliding. The floor buys the axis room without making the
+	 * pictures bigger; the frames simply stop touching.
+	 */
+	/*
+	 * The axis scale: pixels per column step, and so where every frame, tick and
+	 * comparison flag lands.
+	 *
+	 * One frame plus the gap. Written from the frame width rather than as a pixel
+	 * figure so it holds at every size without arithmetic: the frame width
+	 * already carries the lane count and the viewport cap, so the spacing follows
+	 * both, and there is no fixed floor a small frame can out-compete and end up
+	 * touching its neighbour.
+	 *
+	 * Frames a single sample apart therefore sit `--race-gap` from each other,
+	 * and a lane sampled more coarsely than the finest one in the race spreads
+	 * proportionally — which is the point of placing them by timestamp.
+	 */
+	--race-stride: calc(var(--race-col-w) + var(--race-gap));
+}
+
+@media (width < 700px) {
+	.race { --race-frame-base: 116px; }
+}
+
+.race-fallback p { max-width: 70ch; }
+
+/* ------------------------------------------------------------ race: picker */
+
+.race-picker {
+	border: 1px solid var(--border);
+	border-radius: var(--radius);
+	background: var(--surface);
+	padding: 1rem;
+	margin-bottom: 1rem;
+}
+
+/* Lanes side by side wherever two will fit. `auto-fit` rather than a media
+   query: the number of lanes is what decides this, and it changes at runtime —
+   two rows stacked under a wide picker reads as a form half-filled in. Empty
+   tracks collapse, so two lanes take half the width each rather than a quarter. */
+.race-fields {
+	display: grid;
+	/* `min()` so the track can never ask for more than the picker has: a bare
+	   22rem minimum forced one column wider than a phone and pushed the fields
+	   off the edge. */
+	grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
+	gap: 0.6rem 1rem;
+}
+
+/* One line, always: the field and the two buttons that act on it belong
+   together, and wrapping left a lock or trash can alone on a line under an input
+   it no longer visibly belonged to. The input is the only part that gives —
+   the label and the buttons are fixed width and do not shrink. */
+.race-field {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	flex-wrap: nowrap;
+}
+
+.race-field-label {
+	flex: 0 0 4em;
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--text-muted-strong);
+}
+
+.race-field-input {
+	flex: 1 1 12rem;
+	min-width: 0;
+	font: inherit;
+	font-size: 0.9rem;
+	padding: 0.45rem 0.6rem;
+	color: var(--text);
+	background: var(--bg);
+	border: 1px solid var(--border-strong);
+	border-radius: 6px;
+}
+
+.race-field-input[aria-invalid="true"] { border-color: var(--poor); }
+
+/* Icon-only, so it is square rather than carrying the word's width. The label
+   lives in `aria-label` and `title` — see renderFields. */
+.race-field-remove {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	padding: 0.45rem;
+	line-height: 1;
+	color: var(--text-muted-strong);
+}
+.race-field-remove svg { display: block; width: 14px; height: 14px; }
+
+/* Same square, icon-only treatment as the trash can beside it. */
+.race-field-lock {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	padding: 0.45rem;
+	line-height: 1;
+	font: inherit;
+	color: var(--text-muted);
+	background: var(--button);
+	border: 1px solid var(--border-strong);
+	border-radius: 6px;
+	cursor: pointer;
+}
+.race-field-lock svg { display: block; width: 14px; height: 14px; }
+.race-field-lock:hover { border-color: var(--text-muted); }
+
+/* Pressed reads as pressed: the accent, so a locked lane is findable at a
+   glance in a field of eight. */
+.race-field-lock[aria-pressed="true"] {
+	color: var(--brand-text);
+	background: var(--accent);
+	border-color: var(--accent);
+}
+
+.race-field.is-locked .race-field-input { border-color: var(--accent); }
+.race-field-remove:hover { color: var(--poor-text); }
+
+.race-field-remove,
+.race-picker-actions button,
+.race-shuffle button,
+.race-controls button {
+	font: inherit;
+	font-size: 0.85rem;
+	padding: 0.45rem 0.8rem;
+	color: var(--text);
+	background: var(--button);
+	border: 1px solid var(--border-strong);
+	border-radius: 6px;
+	cursor: pointer;
+}
+
+.race-field-remove:hover,
+.race-picker-actions button:hover:not(:disabled),
+.race-shuffle button:hover:not(:disabled),
+.race-controls button:hover:not(:disabled) { border-color: var(--text-muted); }
+
+.race-picker-actions button:disabled { opacity: 0.5; cursor: default; }
+
+.race-picker-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	margin-top: 0.9rem;
+}
+
+.race-count { margin-left: auto; }
+
+/* Capture and Shuffle share the top row, with a rule under it. */
+.race-picker-top {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem 1.5rem;
+	flex-wrap: wrap;
+	margin: 0 0 0.9rem;
+	padding: 0 0 0.9rem;
+	border-bottom: 1px solid var(--border);
+}
+
+.race-shuffle {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	margin-left: auto;
+}
+
+.race-shuffle button {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+.race-shuffle button svg { display: block; width: 10px; height: 10px; }
+
+/* Secondary to the capture choice beside it, so a size down. */
+.race-shuffle button,
+.race-shuffle .race-category,
+.race-shuffle .race-category select { font-size: 0.75rem; }
+.race-shuffle button { padding: 0.35rem 0.65rem; }
+
+/* ---------------------------------------------------------- race: controls */
+
+.race-controls {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+	margin-bottom: 0.6rem;
+}
+
+.race-play {
+	background: var(--brand) !important;
+	color: var(--brand-text) !important;
+	border-color: var(--brand) !important;
+	font-weight: 600;
+	min-width: 6.5rem;
+}
+.race-play:hover { background: var(--brand-bright) !important; }
+
+.race-speed {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-size: 0.85rem;
+	color: var(--text-muted-strong);
+}
+
+/* The capture switch. A fieldset for the grouping semantics, stripped of the
+   border a fieldset brings so it sits in the row of controls like a label.
+
+   The `[hidden]` rule is not redundant: an author `display` beats the UA
+   stylesheet's `[hidden] { display: none }`, so without it the control renders
+   while the corpus holds one kind of capture — visible, and wired to nothing,
+   because the script binds its listeners only when there is a choice to make.
+   The theme toggle in base.njk hit the same thing. */
+.race-throttle[hidden] { display: none; }
+
+.race-throttle {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	flex-wrap: wrap;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 0.85rem;
+	color: var(--text-muted-strong);
+}
+
+.race-throttle legend {
+	float: left;
+	padding: 0;
+	margin-right: 0.5rem;
+}
+
+.race-throttle label {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+	cursor: pointer;
+}
+
+.race-throttle input { accent-color: var(--brand); margin: 0; }
+
+/* An option with no sites behind it: shown with its zero, not selectable. */
+.race-throttle label.is-empty {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.race-throttle-count {
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted);
+}
+
+.race-category {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-size: 0.85rem;
+	color: var(--text-muted-strong);
+}
+
+.race-category select,
+.race-speed select {
+	font: inherit;
+	font-size: 0.85rem;
+	padding: 0.35rem 0.4rem;
+	color: var(--text);
+	background: var(--button);
+	border: 1px solid var(--border-strong);
+	border-radius: 6px;
+}
+
+/* The clock, which is the point of the page: big, monospaced and fixed-width so
+   the digits do not shuffle the row beside them as they run. */
+.race-clock {
+	margin-left: auto;
+	font-family: var(--mono);
+	font-variant-numeric: tabular-nums;
+	font-size: clamp(1.2rem, 4vw, 1.9rem);
+	font-weight: 600;
+	letter-spacing: -0.02em;
+}
+
+.race-scrub {
+	display: block;
+	width: 100%;
+	margin: 0 0 1rem;
+	accent-color: var(--brand);
+}
+
+/* A fixed stride width, so site pages and embeds share a scale at any viewport; at least the widest frame plus its gap. */
+.race.filmstrip-player { --race-stride: 90px; }
+
+/* The site page's smaller scrubber, inline beside the speed control. */
+.filmstrip-player .race-scrub {
+	display: inline-block;
+	width: min(12rem, 100%);
+	margin: 0;
+}
+/* In the iframe it shrinks to fit rather than wrapping to its own line. */
+.filmstrip-embed .race-scrub {
+	flex: 1 1 0;
+	min-width: 3rem;
+	max-width: 12rem;
+}
+/* Wide enough for "99,999 ms", so the row holds still as the digits grow. */
+.filmstrip-player .race-clock {
+	min-width: 9ch;
+	text-align: right;
+}
+
+/* -------------------------------------------------------------- race: grid */
+
+.race-scroll {
+	overflow-x: auto;
+	overscroll-behavior-x: contain;
+	padding-block: 0.75rem 1rem;
+}
+
+/* One column of full-width rows: a label line, then the lane it names. The
+   frames are the page, so nothing takes width away from them — a name column
+   costs pixels at every viewport where a line of text costs one line. */
+.race-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 0.35rem;
+	width: max-content;
+	/* Lanes fill the width even when the axis is shorter than it. */
+	min-width: 100%;
+}
+
+/* The row spans the lane it names; the run inside it is what sticks. Sticking
+   the row would pin its whole width and never move. */
+.race-name {
+	position: relative;
+	width: calc(var(--race-stride) * var(--cols));
+	min-width: 100%;
+	margin-top: 0.5rem;
+}
+
+.race-sticky {
+	position: sticky;
+	left: 0;
+	z-index: 5;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	max-width: 100%;
+	/* Painted, because it slides over the lane above as the axis scrolls. */
+	background: var(--bg);
+	padding-right: 0.5rem;
+}
+
+.race-name-link {
+	font-weight: 600;
+	font-size: 0.9rem;
+	line-height: 1.25;
+	white-space: nowrap;
+}
+
+/* Beside the name, on its line rather than under it. */
+.race-name .recents-dots { flex: none; align-items: center; }
+
+.race-flag {
+	font-size: 0.9rem;
+	opacity: 0;
+	transition: opacity 0.25s ease;
+}
+.race-flag.is-on { opacity: 1; }
+
+/* --------------------------------------------------------- race: the ruler */
+
+.race-ruler {
+	position: relative;
+	height: 1.1rem;
+	width: calc(var(--race-stride) * var(--cols));
+}
+
+.race-tick {
+	position: absolute;
+	top: 0;
+	left: calc(var(--race-stride) * var(--at));
+	padding-left: 0.25rem;
+	border-left: 1px solid var(--border);
+	height: 100%;
+	font-size: 0.65rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted);
+	white-space: nowrap;
+}
+
+/* --------------------------------------------------------- race: the lanes */
+
+.race-lane {
+	position: relative;
+	height: var(--race-frame-h);
+	width: calc(var(--race-stride) * var(--cols));
+	min-width: 100%;
+	/* Room under the frames for their timestamps, which hang outside the lane so
+	   they take nothing from the pictures. */
+	margin-bottom: 0.85rem;
+}
+
+/* Nothing hangs under the reference row. */
+.race-lane.is-compare { margin-bottom: 0; }
+
+/*
+ * The travelling frame: the one the clock is carrying, as against the ones it
+ * has already left behind.
+ *
+ * Moved by `transform` rather than `left`, so each animation frame skips layout.
+ * No transition on it — a transition would make it chase the clock rather than
+ * keep it. Lifted above the
+ * deposited frames so that at the instant it hands one over the two are not
+ * fighting over the same pixels.
+ */
+/* Both classes in the selector, deliberately. `.race-frame` sets the slot's grey
+   border and is written further down this file, so a single-class rule here loses
+   the cascade on equal specificity and the leading frame renders grey — which is
+   what it did. */
+.race-frame.race-live {
+	left: 0;
+	transform: translateX(calc(var(--race-stride) * var(--at, 0)));
+	will-change: transform;
+	z-index: 3;
+	transition: opacity 0.12s ease;
+	/* Heavier than the slots it is leaving behind: this is the one the clock is
+	   carrying, and at a glance the difference between the leading frame and a
+	   deposited one has to be the first thing read, not the last. */
+	border: 2px solid var(--accent);
+}
+
+.race-live img { box-shadow: 0 0 0 2px var(--accent); }
+
+/* Before the first sample: a blank white page, as a browser shows before it paints, in either theme. */
+.race-live.is-empty { background: #fff; }
+.race-live.is-empty img { display: none; }
+
+/*
+ * A stretch nobody photographed: before a strip's first sample, or between two
+ * samples far enough apart to leave real space.
+ *
+ * Spans edge to edge between the two frames rather than centre to centre, since
+ * each frame is centred on its own instant — hence the half column subtracted at
+ * each end.
+ */
+.race-waiting {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: calc(var(--race-stride) * var(--from) + var(--race-col-w) / 2);
+	/* `--fill` is the clock, clamped to this band — see setTime. The band grows
+	   to it rather than being drawn to `--to`, which would show the length of a
+	   wait before the wait had happened. */
+	width: max(0px, calc(var(--race-stride) * (var(--fill) - var(--from)) - var(--race-col-w)));
+	border: 1px dashed var(--border);
+	border-radius: 3px;
+	background: #e6e6e6;
+	opacity: 0;
+	transition: opacity 0.18s ease;
+}
+
+/*
+ * A gap between two samples, tiled with the frame that opened it — see
+ * renderLane. One tile per column stride, so the repeat lines up with the rhythm
+ * of the photographs either side, and faint enough that it reads as an inference
+ * rather than as more of them.
+ */
+.race-waiting.is-held {
+	/* No fill of its own: the tiled frames are the content, and a grey behind
+	   them showed through the gutters as stripes. */
+	background-color: transparent;
+}
+
+/*
+ * The tiled picture, on its own layer so the band's dashed edge is not masked
+ * with it, and cut every tile by a 4px gutter.
+ *
+ * Masked rather than overpainted: a gutter drawn in the band's colour was only
+ * transparent while the band had a colour, and the point of that gap is to show
+ * the page through it. The gutters double as the tell for a blank frame — 12% of
+ * the frames that open a gap are a near-white page, and tiled edge to edge those
+ * bands were one empty rectangle.
+ */
+.race-waiting.is-held::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	background-image: var(--held-src);
+	background-repeat: repeat-x;
+	background-position: left center;
+	background-size: var(--race-col-w) 100%;
+	-webkit-mask-image: linear-gradient(90deg, transparent 0 4px, #000 4px);
+	mask-image: linear-gradient(90deg, transparent 0 4px, #000 4px);
+	-webkit-mask-size: var(--race-col-w) 100%;
+	mask-size: var(--race-col-w) 100%;
+	-webkit-mask-repeat: repeat-x;
+	mask-repeat: repeat-x;
+}
+.race-waiting.is-held.is-on { opacity: 0.2; }
+
+
+
+/*
+ * The head of a lane starts at the axis rather than at a frame, so only the far
+ * end pulls back by half a column.
+ *
+ * Hatched rather than flat. A held band tiled with a near-blank frame — 12% of
+ * them are — is a pale rectangle, and so was this, which made "nothing had
+ * rendered" and "a white page had rendered" the same picture. Diagonals cannot
+ * be mistaken for a screenshot of anything.
+ */
+.race-waiting.is-lead {
+	left: 0;
+	width: max(0px, calc(var(--race-stride) * var(--fill) - var(--race-col-w) / 2));
+	background-image: repeating-linear-gradient(
+		-45deg,
+		transparent 0 4px,
+		rgba(0, 0, 0, 0.14) 4px 5px
+	);
+}
+
+.race-waiting.is-on { opacity: 0.2; }
+
+/*
+ * A frame sits where its own timestamp falls, not in a column: `--at` is that
+ * moment in stride units, the same currency the ruler ticks and the comparison
+ * flags use. Centred on the instant rather than starting at it, so the picture
+ * straddles the moment it was taken.
+ */
+.race-frame {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: calc(var(--race-stride) * var(--at));
+	width: var(--race-col-w);
+	margin-left: calc(var(--race-col-w) / -2);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	/* The slot the frame occupies on the axis, marked as well as the picture
+	   inside it. Where a strip's aspect does not fill the column the two edges
+	   come apart, which is the honest reading: the slot is the moment, the
+	   picture is what was in it. */
+	border: 1px solid var(--border);
+	border-radius: 4px;
+	/* Over the playhead and the winner's wash, under the leading frame. */
+	z-index: 2;
+	opacity: 0;
+	transition: opacity 0.18s ease;
+}
+
+/* Hung under the slot rather than placed inside it: in the flow it cost the
+   picture its own height, and the picture is the thing being compared. The lane
+   carries a bottom margin to land in — see .race-lane. */
+.race-frame-time {
+	position: absolute;
+	top: 100%;
+	left: 50%;
+	transform: translateX(-50%);
+	margin-top: 3px;
+	font-size: 0.55rem;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+	color: var(--text-muted);
+	white-space: nowrap;
+}
+.race-frame.is-on { opacity: 1; }
+
+/* A frame after the lane settled, on the site page: shown, since it was measured, but faint. */
+.race-frame.is-settled img,
+.race-frame.is-settled .race-frame-time { opacity: 0.2; }
+.race-frame.is-settled { border-color: transparent; }
+
+/* Marks the frame a lane settles on. */
+.race-frame-finish {
+	position: absolute;
+	top: 4px;
+	left: 4px;
+	z-index: 1;
+	display: inline-flex;
+	padding: 3px;
+	border-radius: 50%;
+	color: var(--brand-text);
+	background: var(--good);
+	line-height: 1;
+}
+.race-frame-finish svg { display: block; width: 10px; height: 10px; }
+
+/* Bordered so each frame reads as its own photograph. `--border-strong` rather
+   than `--border`: these sit on the page background now instead of inside a
+   panel, and screenshots are mostly white, so the softer rule disappeared into
+   the edge of the picture it was meant to define. */
+.race-frame img {
+	display: block;
+	height: 100%;
+	width: auto;
+	border: 1px solid var(--border-strong);
+	border-radius: 3px;
+	background: var(--surface);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.race-frame,
+	.race-flag { transition: none; }
+}
+
+/* The clock's own position in the lane. */
+.race-playhead {
+	position: absolute;
+	top: -0.35rem;
+	bottom: -0.35rem;
+	left: 0;
+	transform: translateX(calc(var(--race-stride) * var(--now, 0)));
+	will-change: transform;
+	width: 2px;
+	background: var(--text);
+	/* Behind the pictures. It is appended last, so without this it painted a rule
+	   across whichever frame it happened to be passing. */
+	z-index: 0;
+	opacity: 0;
+	transition: opacity 0.25s ease;
+	pointer-events: none;
+}
+
+/* Shown from the moment the clock starts — see setTime. */
+.race-playhead.is-on { opacity: 0.55; }
+
+/* Past this lane's finish: still tracking the clock, but nothing is happening
+   here any more, so it stops competing with the lanes that are still running. */
+.race-playhead.is-done { opacity: 0.12; }
+
+@media (prefers-reduced-motion: reduce) {
+	.race-playhead { transition: none; }
+}
+
+
+/*
+ * The corpus median, drawn as a lane with no frames — there is no filmstrip to
+ * show because no single site is being shown. It is a reference the racers are
+ * read against, so it is quieter than they are and short enough not to compete
+ * with them: tall enough for three stacked marker labels and nothing more.
+ */
+/* ----------------------------------------------------- race: the comparison */
+
+/*
+ * A row of flags at real-world durations — a blink, light crossing from the
+ * Moon, Bolt's 100m. Wall-clock seconds, same as the recorded load the frames
+ * come from, which is what earns them a place on the axis.
+ */
+/* Only as tall as the flags actually need — `--rows` is set per race, since how
+   many stack depends on which of them fall inside this axis and how close the
+   column step puts them. */
+.race-lane.is-compare {
+	height: calc(var(--rows, 1) * var(--race-flag-row) + 1.1rem);
+	border-bottom: 1px solid var(--border);
+}
+
+.race-name.is-compare { margin-top: 0.5rem; }
+
+.race-name.is-compare .race-name-link {
+	color: var(--text-muted-strong);
+	font-weight: 600;
+}
+
+/*
+ * A pole and a label: the rule marks the instant, the pill says what it was.
+ *
+ * The wrapper positions the pair and nothing else — no z-index, no opacity —
+ * because either would make it a stacking context, and a label sealed inside one
+ * cannot lift above the poles of the flags drawn after it. The two children
+ * carry the fade and the layering instead: every label at 3, every pole at auto,
+ * so labels always win however the flags are ordered.
+ */
+.race-flagpost {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: calc(var(--race-stride) * var(--at));
+	width: 0;
+	pointer-events: none;
+}
+
+.race-flagpost-pole {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	border-left: 2px solid var(--accent);
+	/* A hairline of page color either side, so the rule stays visible where it
+	   crosses something the same hue. */
+	box-shadow: -1px 0 0 var(--bg), 1px 0 0 var(--bg);
+	opacity: 0;
+	transition: opacity 0.25s ease;
+}
+.race-flagpost.is-on .race-flagpost-pole { opacity: 1; }
+
+.race-flagpost-label {
+	position: absolute;
+	z-index: 3;
+	top: calc(var(--row) * var(--race-flag-row) + 0.1rem);
+	/* Flush to the pole: the label is the flag on it, not a note beside it. */
+	left: 0;
+	font-size: 0.6rem;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	line-height: 1.2;
+	white-space: nowrap;
+	/* No halo around this pill, unlike the ones that used to sit in a site lane:
+	   this row has no filmstrip behind it, so the label is only ever on the page
+	   background and the fill alone separates it. */
+	padding: 0.1rem 0.35rem;
+	color: var(--brand-text);
+	background: var(--accent);
+	opacity: 0;
+	transition: opacity 0.25s ease;
+}
+.race-flagpost.is-on .race-flagpost-label { opacity: 1; }
+
+/* TTFB, FCP and LCP in a site lane: stacked above the frames, and purple so they don't read as the blue live frame or Real world flags. */
+.race-lane.has-metrics { margin-top: calc(var(--metric-rows, 1) * 1.1rem + 0.2rem); }
+.race-flagpost.is-metric .race-flagpost-pole {
+	z-index: 4;
+	top: calc(-1 * (var(--row, 0) * 1.1rem + 1rem));
+	border-left-color: var(--metric-flag);
+}
+.race-flagpost.is-metric .race-flagpost-label {
+	z-index: 5;
+	top: auto;
+	bottom: calc(100% + var(--row, 0) * 1.1rem + 0.2rem);
+	font-size: 0.55rem;
+	color: var(--metric-flag-text);
+	background: var(--metric-flag);
+	pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.race-flagpost-pole,
+	.race-flagpost-label { transition: none; }
+}
+
+/* ---------------------------------------------------------- race: the winner */
+
+/*
+ * A green wash across the winning row as it crosses the line.
+ *
+ * An overlay rather than a background: the label column paints `--bg` to work as
+ * a sticky column and the lane paints nothing, so animating `background-color`
+ * on either would have to know what to return to. A pseudo-element fades over
+ * the top and leaves both alone.
+ */
+.race-lane.is-winner::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 1;
+	border-radius: 4px;
+	background: var(--good);
+	opacity: 0;
+	pointer-events: none;
+	animation: race-win 1.4s ease-out;
+}
+
+/* No wash on the label row — the lane below it carries the result. */
+.race-name.is-winner::before { display: none; }
+
+/* A wash that clears. The 🏁 beside the winner's name is what persists; the
+   green is the moment of crossing, not the record of it. */
+@keyframes race-win {
+	0% { opacity: 0; }
+	18% { opacity: 0.4; }
+	100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.race-lane.is-winner::before { animation: none; }
+}
+
+/* Space kept whether or not there is a result yet — see renderResult. Two lines
+   of it, since a dead heat names both sites and wraps on a narrow window, and a
+   reserve that only fits the common case still jumps on the uncommon one. */
+.race-result {
+	margin: 0.75rem 0 0;
+	font-size: 0.95rem;
+	min-height: 2.8em;
+}
+
+.race-note { margin-top: 1.5rem; }
+

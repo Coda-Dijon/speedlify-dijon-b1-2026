@@ -1,0 +1,51 @@
+---
+permalink: "/api/race.json"
+eleventyExcludeFromCollections: true
+---
+{#
+  Every site that has a stored filmstrip, as the /race/ page needs it.
+
+  Built as its own document rather than inlined into the page because the
+  selection is a query parameter: the page is one static file for every pairing,
+  so the catalog has to be fetched rather than rendered.
+-#}
+{%- set racers = [] -%}
+{%- for entry in sites.entries -%}
+	{%- if entry.filmstrip and entry.filmstrip.frames.length and entry.latest -%}
+		{%- set racers = (racers.push({
+			slug: entry.slug,
+			name: entry.displayUrl,
+			groups: entry.groups,
+			width: entry.filmstrip.width,
+			height: entry.filmstrip.height,
+			distinct: entry.filmstrip.distinct,
+			settledAt: entry.filmstrip.settledAt,
+			throttled: entry.filmstrip.throttled,
+			markers: entry.filmstrip.markers,
+			bands: entry | ringBands,
+			frames: entry.filmstrip.frames
+		}), racers) -%}
+	{%- endif -%}
+{%- endfor -%}
+{#
+  The categories /compare/ may offer unprompted: Shuffle draws from these, and
+  the select beside it lists them — one set, so the menu cannot name something
+  the pool refuses.
+
+  A category says so itself, with `compareEligible` in config/sites.js, rather
+  than being inferred here from flags that mean other things. Everything else
+  stays reachable by typing it or linking to it; this only narrows what the page
+  offers on its own.
+-#}
+{%- set shuffleGroups = [] -%}
+{%- for g in sites.groups -%}
+	{%- if g.compareEligible -%}
+		{%- set shuffleGroups = (shuffleGroups.push({ id: g.id, name: g.name }), shuffleGroups) -%}
+	{%- endif -%}
+{%- endfor -%}
+{{ {
+	version: 1,
+	formFactor: sites.config.formFactor,
+	categories: shuffleGroups,
+	sites: racers
+} | dump | safe }}
