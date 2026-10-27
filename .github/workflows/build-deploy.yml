@@ -4,10 +4,10 @@ on:
   push:
     branches: ["live"]
   schedule:
-    - cron: "0,15,30,45 8-18 8-14 11 *"  # Du 8 au 14 de novembre, toutes les 15 minutes entre 9h et 19h
+    - cron: "0,15,30,45 8-18 16-27 11 *"  # Du 16 au 27 de novembre, toutes les 15 minutes entre 9h et 19h
   workflow_dispatch:
   workflow_run:
-    workflows: ["Speedlify — scan & publish"]
+    workflows: ["Speedlify 2 — scan & publish"]
     types: 
       - "completed"
 
