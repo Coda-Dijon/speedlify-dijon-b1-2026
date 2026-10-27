@@ -21,7 +21,7 @@
     "purge": "node ./scripts/purge-excluded.mjs",
     "prune:filmstrips": "node ./scripts/prune-filmstrips.mjs",
     "reset": "node ./scripts/reset.mjs",
-    "zip-results": "node scripts/zip-results.js",
+    "zip-results": "node scripts/zip-results.cjs",
     "build-production": "npm run measure && npm run build && npm run zip-results"
   },
   "devDependencies": {
