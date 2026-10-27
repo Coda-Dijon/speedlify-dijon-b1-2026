@@ -1,7 +1,12 @@
-const zip = require("cross-zip");
+const AdmZip = require("adm-zip");
 const path = require("path");
+const fs = require("fs");
 
-let inPath = path.join(__dirname, "_data", "results");
-let outPath = path.join(__dirname, "_site", "results.zip");
+let inPath = path.join(__dirname, "..", "results");
+let outPath = path.join(__dirname, "../_site", "results.zip");
 
-zip.zipSync(inPath, outPath);
+fs.mkdirSync(path.dirname(outPath), { recursive: true });
+
+const zip = new AdmZip();
+zip.addLocalFolder(inPath, "results");
+zip.writeZip(outPath);

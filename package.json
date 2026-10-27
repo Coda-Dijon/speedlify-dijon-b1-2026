@@ -32,7 +32,7 @@
     "lighthouse": "^13.4.1",
     "lightningcss": "^1.33.0",
     "puppeteer-core": "^25.7.0",
-    "cross-zip": "^4.0.1"
+    "adm-zip": "^0.6.1"
   },
   "dependencies": {
     "@11ty/font-awesome": "^1.0.1",
