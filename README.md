@@ -2,7 +2,7 @@
 
 Mesurez les performances Web d’une liste de sites et comparez les résultats au fil du temps. Lighthouse pour les données de laboratoire, le Chrome UX Report pour les données de terrain issues d’utilisateurs réels, des journaux JSON en ajout seulement pour conserver l’historique, et un site statique Build Awesome pour afficher les résultats.
 
-- [Voir le site en direct sur `speedlify.dev`](https://www.speedlify.dev/)
+- [Voir le site en direct sur `coda-dijon.github.io/speedlify-dijon-b1-2026`](https://coda-dijon.github.io/speedlify-dijon-b1-2026/)
 - Le successeur de [`zachleat/speedlify`](https://github.com/zachleat/speedlify).
 
 ```bash
