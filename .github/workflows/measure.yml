@@ -1,0 +1,171 @@
+name: Measure
+
+# Measurement is a rolling process, decoupled from publishing.
+#
+# This workflow measures a bounded batch of the stalest sites and commits the
+# results. It does not try to cover the whole list, and it does not need to
+# succeed for the site to build — see publish.yml, which deploys whatever data
+# exists whenever it runs.
+#
+# To go faster, raise `batch` or add shards to the matrix. To go slower, run it
+# less often. Neither choice requires changing anything else.
+
+on:
+  schedule:
+    # Hourly. With batch=20 and 4 shards that is 1,920 sites/day — the same
+    # throughput as before, arriving in smaller, more frequent pieces. Shorter
+    # runs matter more than the total: Lighthouse does not fully release memory
+    # between runs, and a job that ends sooner is a job that cannot exhaust the
+    # heap or overrun the timeout mid-batch.
+    - cron: "0,30 8-18 16-27 11 *"  # Du 16 au 27 de novembre, toutes les 30 minutes entre 9h et 19h
+  workflow_dispatch:
+    inputs:
+      batch:
+        description: "Sites per shard this run"
+        type: string
+        default: "20"
+      force:
+        description: "Ignore the freshness window"
+        type: boolean
+        default: false
+
+# Runs may overlap in time without conflicting — each shard owns a disjoint
+# slice of the site list — but two runs of the SAME shard would duplicate work.
+concurrency:
+  group: measure
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    strategy:
+      # One shard failing must not stop the others; partial coverage is fine.
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        shard: [1, 2, 3, 4]
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Measure batch
+        env:
+          CRUX_API_KEY: ${{ secrets.CRUX_API_KEY }}
+        run: |
+          node bin/speedlify.js measure \
+            --shard=${{ matrix.shard }}/4 \
+            --limit=${{ inputs.batch || '20' }} \
+            ${{ inputs.force && '--force' || '' }}
+
+      - name: Commit results
+        # Runs even when the measure step failed. Results are written to disk as
+        # each site finishes, so a run that died at site 14 of 20 still produced
+        # thirteen good measurements — and skipping the commit throws all of them
+        # away, then re-measures the same sites next cycle because they are still
+        # the stalest. The job still reports failure; it just keeps the work.
+        if: always()
+        # Shards write to disjoint per-site directories, so a rebase never hits
+        # a content conflict — only a "branch moved" rejection, which is what the
+        # retry loop below handles.
+        #
+        # Two shared files are the exceptions.
+        #
+        # results/aliases.json: a single file every shard rewrites. Two shards
+        # adding it in the same cycle is an add/add conflict that no amount of
+        # retrying resolves. It is also *derived* — learnAliases recomputes it
+        # from stored results across every configured site — so one shard owning
+        # it loses nothing: whatever the others would have learned is relearned
+        # from their committed results next cycle.
+        #
+        # config/priority.txt: only shard 1 ever writes it. `partition` in
+        # lib/schedule.js routes every queued URL to that shard, so the others
+        # measure none and remove none, and dropFromQueue leaves no diff for them
+        # to commit. Before that, four shards deleted different lines of one
+        # short file in the same cycle; a queue is adjacent lines, so the hunks
+        # overlapped inside git's context window and conflicted — which the retry
+        # below cannot fix, a content conflict being identical on every attempt.
+        #
+        # logs/runs.ndjson: appended by every shard, so it cannot be owned the
+        # same way without losing three quarters of the log. .gitattributes
+        # marks it merge=union instead, which takes both sides' lines. The
+        # rebase --abort below is for anything union cannot settle: without it a
+        # conflicted rebase is left in progress and the four remaining attempts
+        # all fail on that rather than on the race they were meant to retry.
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if [ "${{ matrix.shard }}" != "1" ]; then
+            git checkout -- results/aliases.json 2>/dev/null || true
+          fi
+
+          git add results logs/runs.ndjson config/priority.txt
+          git diff --staged --quiet && exit 0
+
+          git commit -m "Measurements: shard ${{ matrix.shard }}/4"
+
+          for attempt in 1 2 3 4 5; do
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push && exit 0
+            git rebase --abort 2>/dev/null || true
+            echo "push race on attempt $attempt, retrying"
+            sleep $((RANDOM % 10 + 5))
+          done
+          echo "could not push after 5 attempts" >&2
+          exit 1
+
+  # Field data is cheap (one request per site) and independent of Lighthouse,
+  # so it runs on its own schedule rather than blocking the measurement job.
+  #
+  # Rolling, like the measurement job: CrUX allows 150 queries a minute per
+  # project, so the whole list has not fitted in one pass for a while — this
+  # takes the stalest histories it can cover in the time it has. The step's
+  # --max-minutes is deliberately well under timeout-minutes: a job killed by
+  # the runner never reaches the commit below, so an overrun loses everything it
+  # fetched, while stopping early keeps it.
+  field:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name == 'schedule'
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Refresh CrUX history
+        env:
+          CRUX_API_KEY: ${{ secrets.CRUX_API_KEY }}
+        if: env.CRUX_API_KEY != ''
+        run: node bin/speedlify.js backfill --max-minutes=20
+
+      - name: Commit field history
+        # Same reasoning as the measurement job: whatever was fetched before a
+        # failure is still worth keeping.
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add results logs/runs.ndjson
+          git diff --staged --quiet && exit 0
+          git commit -m "CrUX field history"
+          for attempt in 1 2 3 4 5; do
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push && exit 0
+            git rebase --abort 2>/dev/null || true
+            sleep $((RANDOM % 10 + 5))
+          done
+          exit 1
