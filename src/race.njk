@@ -346,6 +346,10 @@ images au lieu de se retrouver avec des commandes inactives.
 		grid.appendChild(L.renderRuler(timeline));
 
 		lanes.forEach(function (lane, index) {
+			// Prepend frame with base path for absolute URL
+			lane.site.frames = lane.site.frames.map(frame => ({
+				...frame,src:"{{meta.base_href}}" + frame.src
+			}))
 			lane.index = index;
 			/* Kept, so the clock can mark the winning row — see setTime. */
 			lane.nameEl = renderName(lane);
