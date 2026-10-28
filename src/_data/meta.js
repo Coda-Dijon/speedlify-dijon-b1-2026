@@ -23,6 +23,7 @@ export default {
 	// serait résolu par rapport à leur domaine. Ne mettez pas de barre oblique finale : les modèles
 	// en ajoutent une, et deux barres produiraient //js/speedlify2-score.js.
 	url: process.env.SPEEDLIFY_SITE_URL || "https://github.com/Coda-Dijon/speedlify-dijon-b1-2026",
+	base_href: process.env.SPEEDLIFY_BASE_HREF || "/",
 	// Emplacement du code source, indiqué par un lien dans le pied de page. Une valeur par défaut
 	// est préférable à une chaîne vide : sinon, le lien disparaît sans avertissement — comme celui
 	// de l’en-tête, dont l’absence est passée inaperçue pendant si longtemps. Remplacez cette valeur
