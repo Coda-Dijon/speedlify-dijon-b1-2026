@@ -5,113 +5,118 @@ title: Compare
 ---
 
 <header class="detail-head">
-	<h2 class="page-hed">Compare</h2>
+	<h2 class="page-hed">Comparaison</h2>
 	<p class="lede">
-		Two sites drawing side by side, replayed from the filmstrips Lighthouse
-		captured while measuring them. The clock is the load that was actually
-		recorded, so a lane that is further along really did get there first.
+		Deux sites s’affichent côte à côte, à partir des séquences d’images que
+		Lighthouse a capturées en les mesurant. Le chronomètre indique le temps
+		réellement enregistré : une piste plus avancée est donc bien arrivée là
+		plus tôt.
 	</p>
 </header>
 
 {#
-	The unscripted state, and the error state, are the same message: the animation
-	is the page. Replaced by the race itself once the catalog has loaded, so a
-	reader whose script never arrived is told where the frames are instead of
-	being left with dead controls.
+L’état sans script et l’état d’erreur affichent le même message : l’animation
+est la page. Il est remplacé par la course elle-même une fois le catalogue
+chargé. Ainsi, si le script ne se charge pas, le lecteur sait où trouver les
+images au lieu de se retrouver avec des commandes inactives.
 #}
 <div class="panel race-fallback" id="race-fallback">
 	<p id="race-fallback-text">
-		This page animates two filmstrips against each other, which needs
-		JavaScript. Each site's own filmstrip is on its site page, linked from
-		<a href="/">the leaderboard</a>.
+		Cette page anime deux séquences d’images pour les comparer, ce qui nécessite
+		JavaScript. La séquence d’images de chaque site se trouve sur sa page,
+		accessible depuis <a href="/">le classement</a>.
 	</p>
 </div>
 
 <div class="race" id="race" hidden>
 	<form class="panel race-picker" id="race-picker" autocomplete="off">
 		{#
-			First, because it governs everything under it: the lanes, the names
-			offered, and the categories worth listing all come from one capture or
-			the other. Two sites measured under different throttling are two
-			different connections, and laying them on one axis would show the
-			unthrottled one finishing far sooner for no reason but how it was
-			measured. Hidden while the corpus holds only one kind — a control with
-			nothing to choose between.
+		En premier, car ce choix détermine tout le reste : les pistes, les noms
+		proposés et les catégories affichées proviennent tous d’une même capture.
+		Deux sites mesurés avec des paramètres de limitation différents
+		correspondent à deux connexions différentes ; les placer sur le même axe
+		ferait arriver bien plus vite le site non limité, uniquement en raison
+		de ses conditions de mesure. Ce contrôle est masqué lorsque le corpus
+		ne comporte qu’un seul type de capture : inutile d’afficher un choix
+		sans alternative.
 		#}
 		<div class="race-picker-top">
 			<fieldset class="race-throttle" id="race-throttle" hidden>
-				<legend>Capture Type</legend>
+				<legend>Type de capture</legend>
 				{#
-					The same two marks the site pages put on a filmstrip, so the control
-					and the label it selects for read as one idea. Decorative: the word
-					beside each carries the meaning.
+				Les mêmes deux symboles que sur les pages des sites, pour que le
+				contrôle et l’étiquette de la capture forment un tout. Les symboles
+				sont décoratifs : le texte adjacent en donne le sens.
 				#}
 				<label>
 					<input type="radio" name="race-throttle" value="true" checked>
-					Throttled <span class="tag-mark" aria-hidden="true">🐢</span>
+					Limité <span class="tag-mark" aria-hidden="true">🐢</span>
 					<span class="race-throttle-count" data-capture="true"></span>
 				</label>
 				<label>
 					<input type="radio" name="race-throttle" value="false">
-					Unthrottled <span class="tag-mark" aria-hidden="true">🐇</span>
+					Non limité <span class="tag-mark" aria-hidden="true">🐇</span>
 					<span class="race-throttle-count" data-capture="false"></span>
 				</label>
 			</fieldset>
 			<div class="race-shuffle">
-				<button type="button" id="race-shuffle"><i class="fa-solid fa-play" width="10" height="10" aria-hidden="true"></i> Shuffle</button>
+				<button type="button" id="race-shuffle"><i class="fa-solid fa-play" width="10" height="10" aria-hidden="true"></i> Mélanger</button>
 				{#
-					Narrows what Shuffle draws from. Not part of the race itself — the
-					address carries the sites, not how they were chosen — so it is a
-					control rather than state, and it is populated from the catalog
-					because only categories that actually have filmstrips can be raced.
+				Permet de limiter les choix proposés par le bouton de mélange.
+				Ce filtre ne fait pas partie de la course elle-même : l’adresse
+				conserve les sites, pas la façon dont ils ont été choisis. C’est
+				donc un contrôle, alimenté par le catalogue, qui ne propose que les
+				catégories comportant des séquences d’images à comparer.
 				#}
 				<label class="race-category">
-					from
-					<select id="race-category"><option value="">all categories</option></select>
+					parmi
+					<select id="race-category"><option value="">toutes les catégories</option></select>
 				</label>
 			</div>
 		</div>
 
 		<div class="race-fields" id="race-fields"></div>
 		{#
-			One list for every lane. The value people type is the site's display
-			URL; the address carries slugs, which is what /site/<slug>/ uses.
+		Une seule liste pour toutes les pistes. La valeur saisie est l’URL
+		d’affichage du site ; l’adresse utilise des slugs, comme
+		/site/<slug>/.
 		#}
 		<datalist id="race-catalog"></datalist>
 		{#
-			The trash mark, rendered once here so the Font Awesome transform can turn
-			it into a `<use>` against this page's spritesheet and the symbol gets
-			bundled. The lane rows are built in the browser and cannot call a
-			build-time shortcode, so each Remove button clones this instead of
-			carrying its own copy of the path data.
-		#}
-		<span class="race-icon-source" hidden>
+		Le symbole de suppression est rendu une seule fois ici afin que la
+		transformation Font Awesome puisse le convertir en `<use>` pointant vers
+			la feuille de sprites de cette page et que le symbole soit inclus dans
+			le bundle. Les lignes de piste sont créées dans le navigateur et ne
+			peuvent pas utiliser de shortcode à la compilation ; chaque bouton
+			Supprimer en clone donc le contenu plutôt que de reproduire le tracé.
+			#}
+			<span class="race-icon-source" hidden>
 			<i class="fa-solid fa-trash-can" width="14" height="14" aria-hidden="true"></i>
 		</span>
-		<span class="race-icon-source-lock" hidden>
+			<span class="race-icon-source-lock" hidden>
 			<i class="fa-solid fa-lock" width="14" height="14" aria-hidden="true"></i>
 		</span>
-		<span class="race-icon-source-unlock" hidden>
+			<span class="race-icon-source-unlock" hidden>
 			<i class="fa-solid fa-lock-open" width="14" height="14" aria-hidden="true"></i>
 		</span>
-		<span class="race-icon-source-finish" hidden>
+			<span class="race-icon-source-finish" hidden>
 			<i class="fa-solid fa-flag-checkered" width="10" height="10" aria-hidden="true"></i>
 		</span>
-		<div class="race-picker-actions">
-			<button type="button" id="race-add">Add a lane</button>
-			<span class="race-count muted small" id="race-count"></span>
-		</div>
+			<div class="race-picker-actions">
+				<button type="button" id="race-add">Ajouter une piste</button>
+				<span class="race-count muted small" id="race-count"></span>
+			</div>
 	</form>
 
 	<div class="race-controls">
-		<button type="button" class="race-play" id="race-play">Start</button>
-		<button type="button" id="race-restart">Reset</button>
+		<button type="button" class="race-play" id="race-play">Démarrer</button>
+		<button type="button" id="race-restart">Réinitialiser</button>
 		<label class="race-speed">
-			Speed
+			Vitesse
 			<select id="race-speed">
-				<option value="0.25">0.25&times;</option>
-				<option value="0.5">0.5&times;</option>
-				<option value="1" selected>1&times; real time</option>
+				<option value="0.25">0,25&times;</option>
+				<option value="0.5">0,5&times;</option>
+				<option value="1" selected>1&times; temps réel</option>
 				<option value="2">2&times;</option>
 				<option value="4">4&times;</option>
 			</select>
@@ -120,7 +125,7 @@ title: Compare
 	</div>
 
 	<input type="range" class="race-scrub" id="race-scrub" min="0" max="1000" value="0" step="1"
-		aria-label="Scrub through the comparison">
+			aria-label="Parcourir la comparaison">
 
 	<div class="race-scroll" id="race-scroll">
 		<div class="race-grid" id="race-grid"></div>
@@ -129,67 +134,74 @@ title: Compare
 	<p class="race-result" id="race-result" role="status"></p>
 
 	<p class="muted small race-note">
-		Frames are thumbnails from the median Lighthouse run on the emulated
-		{{ sites.config.formFactor }} profile, timed from navigation start and
-		resampled here onto one shared grid, since each run samples on its own
-		schedule. The clock is that recorded load. Each strip is only eight samples
-		of its own run, and Lighthouse sizes that run's timeline to the run, so a
-		lane simply stops where its capture stops rather than holding its last
-		frame across an axis built for a longer one.
+		Les images sont des vignettes tirées de la capture Lighthouse médiane sur le
+		profil émulé {{ sites.config.formFactor }}. Les temps sont mesurés depuis le
+		début de la navigation, puis les images sont rééchantillonnées sur une grille
+		commune, puisque chaque exécution les capture selon son propre calendrier.
+		Le chronomètre indique le temps enregistré. Chaque séquence ne comporte que
+		huit échantillons de sa propre exécution, et Lighthouse adapte la durée de
+		cette séquence à celle de l’exécution : une piste s’arrête donc à la fin de
+		sa capture, au lieu de conserver sa dernière image sur un axe conçu pour une
+		exécution plus longue.
 	</p>
 	{#
-		Two accounts of the same page, one per capture, swapped by the control at
-		the top of the form. They cannot be one paragraph hedged both ways: the
-		unthrottled note exists to warn that the frames are faster than any visitor
-		would see, and the throttled one exists to say the opposite.
+	Deux explications pour la même page, une par type de capture, affichées selon
+	le choix effectué en haut du formulaire. Elles ne peuvent pas être réunies
+	en un seul paragraphe avec des réserves : la note sur les captures non
+	limitées avertit que les images défilent plus vite que pour un visiteur,
+	tandis que celle sur les captures limitées explique l’inverse.
 	#}
 	<div id="race-note-unthrottled" hidden>
-	<p class="muted small race-note">
-		<strong>These frames are barely throttled.</strong> The runs use Lighthouse's
-		default simulated throttling, which does not slow the connection or the
-		processor: it clears network throttling before the load and never applies
-		CPU throttling at all. Device emulation is real &mdash; a phone-sized
-		viewport and a mobile user agent, so this is genuinely the
-		{{ sites.config.formFactor }} layout &mdash; but the page otherwise arrives
-		as fast as the measuring machine and its connection allow. The one
-		exception is <code>requestIdleCallback</code>, which Lighthouse shims to
-		hand back a quarter of its usual budget per callback, so a page that
-		schedules work that way does spread it thinner here than it would on your
-		machine.
-	</p>
-	<p class="muted small race-note">
-		Slow 4G and a 4&times; CPU slowdown are applied afterwards instead, by
-		Lighthouse's Lantern model, as an estimate of what that load would have
-		been over a slow connection. That is where TTFB, FCP and LCP come from, and
-		it is why none of them are drawn on this axis: the frames are one load and
-		those numbers describe a different, slower one that never actually ran.
-		Both are correct about different things, and no offset reconciles them: a
-		page can be fully painted in these frames well before the FCP it reports.
-		So the finish line here is the observed one:
-		when a lane's picture stops changing. The rings beside each lane are that
-		site's scores, which are about the site rather than about this clock. This
-		is a picture of two measurements, not a benchmark.
-	</p>
+		<p class="muted small race-note">
+			<strong>Ces images proviennent d’une capture très peu limitée.</strong> Les
+			exécutions utilisent la limitation simulée par défaut de Lighthouse, qui ne
+			ralentit ni la connexion ni le processeur : la limitation réseau est
+			désactivée avant le chargement et aucune limitation du processeur n’est
+			appliquée. L’émulation de l’appareil, elle, est bien réelle : la fenêtre
+			d’affichage a la taille d’un téléphone et l’agent utilisateur est mobile.
+			Il s’agit donc bien de la mise en page {{ sites.config.formFactor }}, mais,
+			pour le reste, la page se charge aussi vite que le permettent la machine de
+			mesure et sa connexion. Une exception : Lighthouse simule
+			<code>requestIdleCallback</code> en ne lui accordant qu’un quart de son
+			budget habituel à chaque appel. Une page qui planifie son travail de cette
+			façon le répartit donc davantage ici que sur votre machine.
+		</p>
+		<p class="muted small race-note">
+			Le modèle Lantern de Lighthouse applique ensuite un profil 4G lent et un
+			ralentissement du processeur par 4 pour estimer le temps de chargement sur
+			une connexion lente. C’est de là que viennent les valeurs TTFB, FCP et LCP,
+			qui ne sont pas représentées sur cet axe : les images montrent un chargement,
+			tandis que ces valeurs décrivent un autre chargement, plus lent, qui n’a
+			jamais réellement eu lieu. Les deux sont exacts, mais décrivent des choses
+			différentes, et aucun décalage ne peut les faire coïncider : une page peut
+			être entièrement affichée dans ces images bien avant le FCP indiqué. La
+			ligne d’arrivée correspond donc à ce qui a été observé : le moment où
+			l’image d’une piste cesse de changer. Les anneaux à côté de chaque piste
+			indiquent les scores du site, qui portent sur le site et non sur ce
+			chronomètre. Ceci illustre deux mesures ; ce n’est pas un benchmark.
+		</p>
 	</div>
 
 	<div id="race-note-throttled">
-	<p class="muted small race-note">
-		<strong>These frames are of a throttled load.</strong> The runs applied
-		Lighthouse's Slow 4G profile and a 4&times; CPU slowdown to the browser
-		itself &mdash; not to a model afterwards &mdash; so the page arrived over a
-		deliberately slow connection on a deliberately slow processor. What you are
-		watching is much closer to what someone on a phone would sit through than
-		an unthrottled capture is.
-	</p>
-	<p class="muted small race-note">
-		The TTFB, FCP and LCP flags in each lane are observed in the same trace as
-		its frames, so they line up with the pictures. They come from one throttled
-		load, not the site's scored runs, so they can differ from the numbers on its
-		site page. A close result is closer than it looks.
-		The rings beside each lane are that site's scores, which are about the site
-		rather than about this clock. This is a picture of two measurements, not a
-		benchmark.
-	</p>
+		<p class="muted small race-note">
+			<strong>Ces images proviennent d’un chargement limité.</strong> Les
+			exécutions ont appliqué le profil 4G lent de Lighthouse et un ralentissement
+			du processeur par 4 directement au navigateur, et non à un modèle après
+			coup : la page s’est chargée sur une connexion volontairement lente et un
+			processeur volontairement ralenti. Cela se rapproche davantage de ce qu’une
+			personne sur téléphone pourrait attendre que ne le ferait une capture sans
+			limitation.
+		</p>
+		<p class="muted small race-note">
+			Les marqueurs TTFB, FCP et LCP de chaque piste sont observés dans la même
+			trace que ses images ; ils correspondent donc à ce qu’elles montrent. Ils
+			proviennent d’un seul chargement limité, et non des exécutions ayant servi
+			à calculer le score du site : ils peuvent donc différer des valeurs affichées
+			sur sa page. Un résultat serré l’est encore davantage qu’il n’y paraît.
+			Les anneaux à côté de chaque piste indiquent les scores du site, qui portent
+			sur le site et non sur ce chronomètre. Ceci illustre deux mesures ; ce n’est
+			pas un benchmark.
+		</p>
 	</div>
 </div>
 
@@ -219,27 +231,28 @@ title: Compare
 	}
 
 	/*
-	 * Real-world durations to read the lanes against.
+	 * Durées réelles pour comparer les couloirs.
 	 *
-	 * The axis is never stretched to fit one; markers past the end of the race
-	 * are not drawn. The longer ones only show up in throttled races.
+	 * L’axe n’est jamais étiré pour les faire tenir ; les repères situés après
+	 * la fin de la course ne sont pas dessinés. Les plus longues n’apparaissent
+	 * que dans les courses ralenties.
 	 */
 	var COMPARISONS = [
-		{ label: "👁 Human blink", at: 150 },
-		/* 60 seconds over 70 beats. */
-		{ label: "💓 Human heartbeat", at: 857 },
-		/* 384,400 km at 299,792 km/s. */
-		{ label: "🌕 Light from Moon to Earth", at: 1282 },
-		/* 40,075 km of equator in one sidereal day — 465 m/s. */
-		{ label: "🌍 Earth spins 1 km at the equator", at: 2150 },
-		/* A mile at 343 m/s, the speed of sound at 20°C. */
-		{ label: "🔊 Sound travels one mile", at: 4692 },
-		{ label: "🍪 5s Rule", at: 5000 },
-		{ label: "📹 Vine video", at: 6000 },
-		{ label: "🏃 Usain Bolt runs 100m", at: 9580 },
-		{ label: "🧼 Wash your Hands (CDC)", at: 20000 },
-		{ label: "🏀 NBA shot clock", at: 24000 },
-		{ label: "📺 TV Commercial", at: 30000 }
+		{ label: "👁 Clignement d’œil humain", at: 150 },
+		/* 60 secondes pour 70 battements. */
+		{ label: "💓 Battement de cœur humain", at: 857 },
+		/* 384 400 km à 299 792 km/s. */
+		{ label: "🌕 Lumière de la Lune à la Terre", at: 1282 },
+		/* 40 075 km à l’équateur en un jour sidéral — 465 m/s. */
+		{ label: "🌍 La Terre tourne de 1 km à l’équateur", at: 2150 },
+		/* Un mile à 343 m/s, la vitesse du son à 20 °C. */
+		{ label: "🔊 Le son parcourt un mile", at: 4692 },
+		{ label: "🍪 Règle des 5 secondes", at: 5000 },
+		{ label: "📹 Vidéo TikTok", at: 6000 },
+		{ label: "🏃 Usain Bolt court le 100 m", at: 9580 },
+		{ label: "🧼 Lavez-vous les mains (CDC)", at: 20000 },
+		{ label: "🏀 Temps d’attaque NBA", at: 24000 },
+		{ label: "📺 Publicité télévisée", at: 30000 }
 	];
 
 
@@ -282,18 +295,18 @@ title: Compare
 	var settledAt = L.settledAt;
 
 	/*
-	 * The six band dots the Recently Measured lists draw, from the same
-	 * `ringBands` the report uses — four Lighthouse categories, then axe, then
-	 * Core Web Vitals.
+	 * Les six points des catégories affichés dans les listes « Mesures récentes »,
+	 * issus du même `ringBands` que le rapport — les quatre catégories Lighthouse,
+	 * puis axe et les Core Web Vitals.
 	 *
-	 * Dots rather than the leaderboard's rings: these sit inline beside a site
-	 * name on one line, where six 24px circles would be the line rather than a
-	 * detail on it.
+	 * Des points plutôt que les anneaux du classement : ils s’affichent sur une
+	 * seule ligne, à côté du nom d’un site, où six cercles de 24 px prendraient
+	 * toute la place au lieu de rester un simple détail.
 	 */
 	function bandDots(site) {
 		var dots = el("span", "recents-dots");
 		dots.setAttribute("aria-hidden", "true");
-		dots.title = "Performance, Accessibility, Best Practices, SEO, Axe, Core Web Vitals";
+		dots.title = "Performances, Accessibilité, Bonnes pratiques, SEO, Axe, Core Web Vitals";
 		(site.bands || []).forEach(function (band) {
 			dots.appendChild(el("span", "recents-dot recents-dot-" + band));
 		});
@@ -569,7 +582,7 @@ title: Compare
 		playing = false;
 		cancelAnimationFrame(raf);
 		L.commitFollow(scroll);
-		playButton.textContent = now >= timeline.end ? "Replay" : now > 0 ? "Resume" : "Start";
+		playButton.textContent = now >= timeline.end ? "Rejouer" : now > 0 ? "Reprendre" : "Démarrer";
 	}
 
 	function restart() {
@@ -579,7 +592,7 @@ title: Compare
 		L.commitFollow(scroll);
 		scroll.scrollLeft = 0;
 		setTime(0);
-		playButton.textContent = "Start";
+		playButton.textContent = "Démarrer";
 		renderResult(null);
 	}
 
@@ -614,12 +627,13 @@ title: Compare
 			return;
 		}
 
-		/* A dead heat is the honest reading when both settled on the same sample,
-		   which the strips are too coarse to separate. */
+		/* Une égalité est l’interprétation la plus juste lorsque les deux sites
+		   se stabilisent sur le même échantillon, car les bandes sont trop
+		   grossières pour les départager. */
 		var tied = ranked.filter(function (l) { return settledAt(l.site) === winnerAt; });
-		result.innerHTML = "🏁 Dead heat at " + fmtMs(winnerAt) + " — " +
-			tied.map(function (l) { return "<strong>" + escapeHtml(l.site.name) + "</strong>"; }).join(" and ") +
-			" both settled on the same frame.";
+		result.innerHTML = "🏁 Égalité à " + fmtMs(winnerAt) + " — " +
+			tied.map(function (l) { return "<strong>" + escapeHtml(l.site.name) + "</strong>"; }).join(" et ") +
+			" se sont stabilisés sur la même image.";
 	}
 
 	function escapeHtml(value) {
@@ -660,7 +674,7 @@ title: Compare
 			input.type = "text";
 			input.setAttribute("list", "race-catalog");
 			input.value = lane ? lane.site.name : "";
-			if (!lane) input.placeholder = "nothing eligible yet";
+			if (!lane) input.placeholder = "aucun élément admissible pour le moment";
 			input.addEventListener("change", function () {
 				var typed = input.value.trim();
 				var match = byName.get(typed.toLowerCase()) || bySlug.get(typed);
@@ -680,23 +694,24 @@ title: Compare
 			row.appendChild(input);
 
 			/*
-			 * Lock a lane to keep it through shuffles.
+			 * Verrouille un couloir pour le conserver lors des mélanges.
 			 *
-			 * A toggle rather than a checkbox: it changes what one button does to
-			 * one lane, so it sits in that lane's row and says so in its pressed
-			 * state. Toggling redraws the row and re-judges Shuffle and nothing
-			 * else — it is not a change to the comparison, so it touches neither
-			 * the address nor the animation.
+			 * Il s’agit d’un bouton à bascule plutôt que d’une case à cocher :
+			 * il modifie l’action d’un bouton sur un couloir précis. Il se trouve
+			 * donc sur la ligne de ce couloir et son état indique s’il est activé.
+			 * L’activation ou la désactivation redessine la ligne et réévalue
+			 * uniquement le bouton « Mélanger » — cela ne modifie pas la
+			 * comparaison et n’a donc aucun effet sur l’adresse ni l’animation.
 			 */
 			if (lane) {
 				var lock = el("button", "race-field-lock");
 				lock.type = "button";
 				lock.innerHTML = lockIcon(lane.locked);
 				lock.setAttribute("aria-pressed", lane.locked ? "true" : "false");
-				var lockLabel = (lane.locked ? "Unlock" : "Lock") + " lane " + (index + 1);
+				var lockLabel = (lane.locked ? "Déverrouiller" : "Verrouiller") + " le couloir " + (index + 1);
 				lock.title = lane.locked
-					? lockLabel + " — Shuffle will replace it"
-					: lockLabel + " — keep it when shuffling";
+					? lockLabel + " — le mélange le remplacera"
+					: lockLabel + " — le conserver lors du mélange";
 				lock.setAttribute("aria-label", lockLabel);
 				lock.addEventListener("click", function () {
 					lane.locked = !lane.locked;
@@ -941,7 +956,7 @@ title: Compare
 		shuffleCategory = "";
 		var all = el("option");
 		all.value = "";
-		all.textContent = "all categories";
+		all.textContent = "toutes les catégories";
 		select.appendChild(all);
 
 		categories.forEach(function (category) {
@@ -1180,7 +1195,7 @@ title: Compare
 		catalog = (data && data.sites) || [];
 		categories = (data && data.categories) || [];
 		if (catalog.length < 2) {
-			fail("No filmstrips have been captured yet, so there is nothing to race.");
+			fail("Aucune séquence de défilement n’a encore été capturée : il n’y a rien à comparer.");
 			return;
 		}
 
@@ -1191,10 +1206,10 @@ title: Compare
 		});
 		fillCatalogList();
 
-		count.textContent = catalog.length + " sites have a filmstrip to race.";
+		count.textContent = catalog.length + " sites disposent d’une séquence à comparer.";
 
 		var initial = fromAddress();
-		// Before the opening draw, so an empty default side falls back first.
+		// Avant le premier affichage, pour que le côté vide par défaut soit d’abord remplacé.
 		setUpCaptureControl();
 		lanes = lanesFor(initial || openingLanes(), Boolean(initial));
 
@@ -1301,7 +1316,7 @@ title: Compare
 		})
 		.then(start)
 		.catch(function () {
-			fail("The list of filmstrips could not be loaded, so the race cannot start. Each site's own filmstrip is on its site page.");
+			fail("Impossible de charger la liste des séquences de défilement ; la comparaison ne peut pas démarrer. La séquence de chaque site est disponible sur sa page.");
 		});
 })();
 </script>

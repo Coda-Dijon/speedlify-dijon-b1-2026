@@ -1,6 +1,6 @@
 {% if samples.length %}
 <details class="failure-nodes">
-	<summary>Offending element{{ "s" if samples.length != 1 }}{% if total > samples.length %} ({{ samples.length }} of {{ total | num }}){% endif %}</summary>
+	<summary>Élément{{ "s" if samples.length != 1 }} problématique{% if total > samples.length %} ({{ samples.length }} sur {{ total | num }}){% endif %}</summary>
 	<ol>
 		{% for node in samples %}
 		<li>

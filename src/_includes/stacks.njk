@@ -1,8 +1,8 @@
 {#
-	The Technology tallies, shared by the home page and every category page.
-	Kept in one file because they are the same three panels either way — only the
-	set of sites behind them differs, and a second copy would be a second thing to
-	keep in step.
+	Les statistiques technologiques, partagées par la page d’accueil et toutes
+	les pages de catégorie. Elles sont regroupées dans un seul fichier, car les
+	trois panneaux sont identiques dans les deux cas : seul l’ensemble des sites
+	analysés change. Une seconde copie serait une deuxième version à maintenir.
 #}
 
 {% macro stacktally(tally, label, title) %}
@@ -10,7 +10,7 @@
 <div class="tally">
 	<h3 class="tally-head">
 		{{ label }}
-		<span class="tally-meta">{{ tally.distinct }} distinct · {{ tally.detected }} of {{ tally.detected + tally.unknown }} detected</span>
+		<span class="tally-meta">{{ tally.distinct }} éléments distincts · {{ tally.detected }} sur {{ tally.detected + tally.unknown }} détectés</span>
 	</h3>
 	<ul class="tally-list">
 		{% for item in tally.items %}
@@ -21,10 +21,11 @@
 		</li>
 		{% endfor %}
 		{% if tally.rare %}
-		{# One-offs with no brand mark, folded into a single row so the list stays
-		   readable without the count silently disagreeing with the heading. #}
-		<li class="tally-item tally-rare" title="{{ tally.rareNames | join(', ') }} — one site each">
-			<span class="tally-name">…and {{ tally.rare }} one-off{{ tally.rare | plural('', 's') }}</span>
+		{# Les éléments présents une seule fois et sans logo sont regroupés sur une
+		   ligne pour préserver la lisibilité sans que le total diffère de celui
+		   indiqué dans le titre. #}
+		<li class="tally-item tally-rare" title="{{ tally.rareNames | join(', ') }} — un site chacun">
+			<span class="tally-name">… et {{ tally.rare }} élément{{ tally.rare | plural('', 's') }} présent{{ tally.rare | plural('', 's') }} une seule fois</span>
 		</li>
 		{% endif %}
 	</ul>
@@ -34,63 +35,68 @@
 
 
 {#
-	A bar per major Eleventy version. Proportional widths rather than a chart
-	library: five bars whose lengths are one number each do not need an axis, a
-	legend, or JavaScript.
+	Une barre par version majeure d’Eleventy. Pas besoin d’une bibliothèque de
+	graphiques pour représenter des proportions : cinq barres, chacune définie
+	par une seule valeur, ne nécessitent ni axe, ni légende, ni JavaScript.
 
-	Drawn from the sites that report a version, with the ones that do not stated
-	underneath — most of the corpus emits no version at all, and bars that quietly
-	represented two thirds of the sites they claim to would be the misleading kind
-	of chart.
+	Les données proviennent des sites qui indiquent leur version ; les autres
+	sont comptabilisés en dessous. La plupart des sites du corpus n’indiquent
+	aucune version : des barres représentant silencieusement les deux tiers des
+	sites qu’elles prétendent décrire seraient trompeuses.
 #}
 {% macro versionbars(data) %}
 {#
-	Six is a floor on the sites behind the bars, not on the bars themselves.
-	Proportions drawn from a handful of sites are noise wearing a chart's
-	clothes — on a small category two sites would read as "50% on Eleventy 2",
-	which is true and tells you nothing.
+	Le seuil de six s’applique au nombre de sites représentés par les barres,
+	pas au nombre de barres. Des proportions calculées sur une poignée de sites
+	ne sont que du bruit déguisé en graphique : dans une petite catégorie, deux
+	sites donneraient « 50 % utilisent Eleventy 2 », ce qui est vrai, mais peu
+	informatif.
 #}
 {% if data.items.length and data.versioned > 6 %}
 <div class="tally versions">
 	<h3 class="tally-head">
-		{# Marks and word in one element: the heading is a flex row with
-		   space-between, and three children would push the icons away from the
-		   word they belong to. The marks stand in for naming both projects, which
-		   is the point — one count across a rename. #}
+		{# Le logo et le texte sont réunis dans un seul élément : le titre est
+		   une ligne flex avec `space-between`, et trois enfants éloigneraient
+		   les logos du texte auquel ils se rapportent. Les logos remplacent le
+		   nom des deux projets, ce qui est important ici : un seul total est
+		   conservé malgré le changement de nom. #}
 		<span class="version-title">
 			{% for mark in data.marks %}{% stackIcon mark %}{% endfor %}
 			Versions
 		</span>
-		<span class="tally-meta">{{ data.versioned | num }} of {{ data.measured | num }} detected</span>
+		<span class="tally-meta">{{ data.versioned | num }} sur {{ data.measured | num }} détectés</span>
 	</h3>
 	<ul class="version-list">
 		{% for item in data.items %}
-		<li class="version-row" title="{{ item.count }} {{ item.count | plural('site') }} on Eleventy {{ item.label }}">
+		<li class="version-row" title="{{ item.count }} {{ item.count | plural('site') }} utilisent Eleventy {{ item.label }}">
 			<span class="version-label">{{ item.label }}</span>
 			<span class="version-bar"><span class="version-fill" style="width: {{ (item.share * 100) | round(1) }}%"></span></span>
 			<span class="version-count">{{ item.count | num }}</span>
-			{# Its own column so the pills line up on their left edge rather than
-			   drifting with the width of the count beside them. Of the sites that
-			   reported a version — the same denominator the bars are drawn from,
-			   not the total in the heading. #}
+			{# Une colonne dédiée aligne les pourcentages à gauche, sans qu’ils
+			   se décalent selon la largeur du nombre adjacent. Pourcentage des
+			   sites ayant indiqué une version : c’est le même dénominateur que
+			   celui des barres, et non le total indiqué dans le titre. #}
 			<span class="version-share">{{ (item.share * 100) | round }}%</span>
 		</li>
 		{% endfor %}
 		{% if data.unversioned %}
-		{# The same shape the stack tally uses for its one-offs: a last row saying
-		   what the rows above do not cover, so the bars and the heading's count
-		   cannot appear to disagree. #}
-		<li class="version-row version-rest" title="{{ data.unversioned | num }} {{ data.unversioned | plural('site') }} report the generator but no version">
-			{# Whole phrase in the bar column, under the bars rather than under the
-			   version labels: it is a note about the chart, not another version. #}
+		{# Même principe que pour les éléments présents une seule fois dans les
+		   statistiques des technologies : une dernière ligne indique ce que
+		   les lignes précédentes ne couvrent pas, pour éviter toute apparente
+		   contradiction entre les barres et le total du titre. #}
+		<li class="version-row version-rest" title="{{ data.unversioned | num }} {{ data.unversioned | plural('site') }} signalent le générateur, mais pas sa version">
+			{# La phrase complète se trouve dans la colonne des barres, sous
+			   celles-ci, et non sous les libellés de version : c’est une note
+			   sur le graphique, pas une autre version. #}
 			<span></span>
 			{#
-				Says what it counts, now that the heading counts against every
-				measured site: "…and 233 more" invited adding it to the heading's
-				number, which is drawn from a different set. These are Eleventy
-				sites that named no version.
+				Précise ce qui est comptabilisé, puisque le titre indique désormais
+				un total calculé sur tous les sites mesurés. « … et 233 autres »
+				pouvait laisser penser qu’il fallait ajouter ce nombre à celui du
+				titre, qui repose sur un autre ensemble de sites. Il s’agit des
+				sites Eleventy qui n’ont indiqué aucune version.
 			#}
-			<span class="version-more">…and {{ data.unversioned | num }} with no version</span>
+			<span class="version-more">… et {{ data.unversioned | num }} sans version indiquée</span>
 		</li>
 		{% endif %}
 	</ul>
@@ -100,22 +106,22 @@
 
 
 {#
-	The whole section. Both callers want the same heading and the same three
-	panels, so they pass their tallies and their own anchor rather than repeating
-	the markup.
+	La section complète. Les deux appels utilisent le même titre et les mêmes
+	panneaux ; ils transmettent donc leurs statistiques et leur propre ancre,
+	plutôt que de répéter le balisage.
 #}
 {% macro technology(stacks, id) %}
 {% if stacks.generators.items.length or stacks.hosts.items.length %}
 <section class="group" id="{{ id }}">
 	<div class="group-head">
-		<h2>Technology</h2>
+		<h2>Technologies</h2>
 	</div>
 	<div class="stacks">
-		{{ stacktally(stacks.generators, "Built with", "built with") }}
+		{{ stacktally(stacks.generators, "Construit avec", "construit avec") }}
 		{{ versionbars(stacks.eleventyVersions) }}
-		{# A site counts once per tool, so these rows add up to more than the heading. #}
-		{{ stacktally(stacks.tools, "Uses", "using") }}
-		{{ stacktally(stacks.hosts, "Hosted by", "hosted by") }}
+		{# Un site est compté une fois par outil ; le total de ces lignes dépasse donc celui du titre. #}
+		{{ stacktally(stacks.tools, "Utilise", "utilise") }}
+		{{ stacktally(stacks.hosts, "Hébergé par", "hébergé par") }}
 	</div>
 </section>
 {% endif %}

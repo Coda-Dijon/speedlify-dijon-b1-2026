@@ -7,25 +7,29 @@ permalink: "/api/{{ route.hash }}.json"
 eleventyExcludeFromCollections: true
 ---
 {#
-  Compatibility route for the original Speedlify's API.
+  Route de compatibilité pour l’API de la version originale de Speedlify.
 
-  The documented, preferred usage of `<speedlify2-score>` hardcodes a hash in the
-  markup, so pages we do not control request this filename directly. It is the
-  one route whose absence breaks an embed that is already deployed.
+  L’utilisation recommandée et documentée de `<speedlify2-score>` consiste à
+  inscrire un hash directement dans le balisage. Les pages que nous ne contrôlons
+  pas demandent donc directement ce nom de fichier. C’est la seule route dont
+  l’absence casse une intégration déjà déployée.
 
-  Only the four Lighthouse scores are emitted, because they are the only fields
-  whose absence produces a broken render: with no attributes the component shows
-  exactly these. Everything else it reads — weight.summary, ranks.cumulative,
-  previousRanks.cumulative — sits behind an opt-in attribute and a guard, and
-  renders nothing at all when missing rather than failing.
+  Seuls les quatre scores Lighthouse sont émis, car leur absence suffit à casser
+  l’affichage : sans attributs, le composant affiche précisément ces scores.
+  Tous les autres champs qu’il lit — weight.summary, ranks.cumulative et
+  previousRanks.cumulative — dépendent d’un attribut facultatif et d’une
+  vérification. S’ils sont absents, rien ne s’affiche et aucune erreur ne se
+  produit.
 
-  Sites with no successful measurement emit an empty object: the component
-  reads through optional chaining, so it draws nothing instead of erroring.
+  Les sites sans mesure réussie renvoient un objet vide : le composant utilise
+  l’enchaînement optionnel pour accéder aux propriétés ; il n’affiche donc rien
+  plutôt que de générer une erreur.
 
-  Paginated over `compatRoutes` rather than over entries, because this is not
-  one file per site: only the URLs the original instance published get one, from
-  the frozen snapshot in config/legacy-api-urls.json. The hash is computed over
-  the URL as that config wrote it, trailing slash and all.
+  La pagination porte sur `compatRoutes` plutôt que sur les entrées, car il ne
+  s’agit pas de générer un fichier par site : seules les URL publiées par
+  l’instance d’origine en reçoivent un, à partir de l’instantané figé dans
+  config/legacy-api-urls.json. Le hash est calculé à partir de l’URL telle qu’elle
+  figure dans ce fichier de configuration, barre oblique finale comprise.
 -#}
 {% if route.lighthouse -%}
 {

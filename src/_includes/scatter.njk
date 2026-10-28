@@ -1,52 +1,45 @@
 {#
-	One scatter, drawn twice — once for total page weight and once for scripts
-	alone. A macro because the two are the same picture of different columns, and
-	a second copy is how one of them ends up a version behind the other.
+	Un seul nuage de points, affiché deux fois : une fois pour le poids total de la page et une fois pour les scripts uniquement. Une macro, car les deux graphiques représentent les mêmes données avec des colonnes différentes ; copier le code ferait inévitablement prendre du retard à l’une des versions.
 
-	`plot` is whichever set lib/report.js built; `xTitle` names its horizontal
-	scale. Everything else is identical between them.
+	`plot` correspond à l’ensemble de données construit par lib/report.js ; `xTitle` désigne l’échelle horizontale. Tout le reste est identique dans les deux graphiques.
 #}
 {#
-	Pearson's r as a pill beside a chart's heading, next to the site count — see
-	`correlation` in lib/report.js.
+	Le coefficient r de Pearson, affiché sous forme de pastille à côté du titre du graphique et du nombre de sites — voir `correlation` dans lib/report.js.
 
-	A macro rather than seven copies of the same markup, and separate from
-	`scatterfigure` because it sits in the section's `<h2>` while the figure sits
-	below it. Absent, rather than shown as "—", on a plot with too few points to
-	correlate: a heading is not the place to explain why a number is missing.
+	Une macro évite de répéter sept fois le même balisage. Elle est séparée de `scatterfigure`, car elle apparaît dans le `<h2>` de la section, tandis que le graphique vient plus bas. Si le graphique contient trop peu de points pour calculer une corrélation, la pastille est omise plutôt que remplacée par « — » : un titre n’est pas l’endroit où expliquer l’absence d’une valeur.
 
-	Spelled out in the title rather than left as a bare coefficient. r measures
-	scatter about a line and says nothing about cause, and a number this easy to
-	over-read should carry that where it is read.
+	Le titre explicite la signification du coefficient au lieu de le présenter seul. r mesure à quel point les points suivent une droite et n’indique rien sur la causalité ; ce nombre, facile à surinterpréter, doit donc être accompagné de cette précision là où il est lu.
 #}
 {% macro rtag(plot) %}
 	{%- if plot.correlation -%}
 	<span class="tag tag-r"
-		title="Pearson correlation over {{ plot.correlation.n | num }} points, on the axes as drawn. Measures how closely the points follow a straight line — not cause.">r = {{ plot.correlation.r | num(2) }}</span>
+		title="Corrélation de Pearson calculée sur {{ plot.correlation.n | num }} points, selon les axes affichés. Mesure à quel point les points suivent une droite — pas la causalité.">r = {{ plot.correlation.r | num(2) }}</span>
 	{%- endif -%}
 {% endmacro %}
 
 {% macro scatterfigure(plot, xTitle, yTitle="Largest Contentful Paint") %}
 	{#
-		Inline SVG rather than a canvas or an image: it is the only form that
-		needs no JavaScript, scales to any width without a second asset, and can
-		take its colors from the theme. One circle per site, and no per-dot
-		markup beyond its position — the radius, color and opacity all come from
-		the stylesheet.
+		SVG intégré plutôt qu’un canevas ou une image : c’est le seul format qui
+		ne nécessite pas de JavaScript, s’adapte à toutes les largeurs sans
+		ressource supplémentaire et peut reprendre les couleurs du thème. Un
+		cercle par site, sans autre balisage que sa position : le rayon, la
+		couleur et l’opacité sont définis par la feuille de style.
 
-		`preserveAspectRatio` is left at its default so the plot letterboxes
-		rather than stretches; the shape of a scatter is part of what it says.
+		`preserveAspectRatio` conserve sa valeur par défaut afin que le graphique
+		soit encadré sans être déformé ; la forme d’un nuage de points contribue
+		à ce qu’il exprime.
 	#}
 	<figure class="plot">
 		<div class="plot-frame">
 		{#
-			The description is assembled from the axis names and the bands the plot
-			was built with, not written out here: five charts share this macro and
-			they do not share a vertical axis, so a sentence about paint times was
-			read aloud over the layout-shift and score charts too.
+			La description est assemblée à partir des noms des axes et des plages
+			utilisées pour construire le graphique, plutôt que rédigée ici : cinq
+			graphiques partagent cette macro, mais pas leur axe vertical. Une
+			description parlant des temps de rendu serait donc aussi lue pour les
+			graphiques sur les décalages de mise en page et les scores.
 		#}
 		<svg viewBox="0 0 {{ plot.box.w }} {{ plot.box.h }}" role="img"
-			aria-label="Scatter plot of {{ xTitle }} against {{ yTitle }} for {{ plot.count | num }} sites: {{ plot.summary }}.">
+			aria-label="Nuage de points représentant {{ xTitle }} en fonction de {{ yTitle }} pour {{ plot.count | num }} sites : {{ plot.summary }}.">
 			<g class="plot-grid">
 				{%- for tick in plot.xTicks %}
 				<line x1="{{ tick.x }}" x2="{{ tick.x }}" y1="{{ plot.box.top }}" y2="{{ plot.box.top + plot.plot.h }}"/>
@@ -57,13 +50,14 @@
 			</g>
 
 			{#
-				The two Core Web Vitals boundaries, so the colors below read as a
-				scale someone else defined rather than as decoration.
+				Les deux seuils des Core Web Vitals : les couleurs ci-dessous
+				représentent ainsi une échelle définie indépendamment du graphique,
+				plutôt qu’un simple élément décoratif.
 			#}
 			<g class="plot-threshold">
 				{%- for line in plot.thresholds %}
 				{%- if plot.bandOn == "x" %}
-				{# LCP runs along the bottom on this chart, so its boundaries stand up. #}
+				{# Le LCP se trouve en bas de ce graphique ; ses seuils sont donc verticaux. #}
 				<line x1="{{ line.x }}" x2="{{ line.x }}" y1="{{ plot.box.top }}" y2="{{ plot.box.top + plot.plot.h }}"/>
 				<text x="{{ line.x + 5 }}" y="{{ plot.box.top + 12 }}" text-anchor="start">{{ line.label }}</text>
 				{%- else %}
@@ -74,11 +68,11 @@
 			</g>
 
 			{#
-				The break in the scale, and the column beyond it.
+				La rupture d’échelle et la portion au-delà.
 
-				Drawn before the ticks so the dashes sit under the numbers rather
-				than through them. Only ever present on an axis that has zeroes to
-				hold — see `zero` in lib/report.js.
+				Elle est tracée avant les graduations afin que les tirets passent
+				sous les nombres, et non à travers. Elle n’apparaît que sur un axe
+				dont l’échelle doit inclure zéro — voir `zero` dans lib/report.js.
 			#}
 			{%- if plot.zero or plot.zeroY %}
 			<g class="plot-break">
@@ -86,7 +80,7 @@
 				<line x1="{{ plot.zero.sep }}" x2="{{ plot.zero.sep }}"
 					y1="{{ plot.box.top }}" y2="{{ plot.box.top + plot.plot.h }}"/>
 				{%- endif %}
-				{#- The same break lying flat, for an axis whose zero is a real reading. -#}
+				{#- La même rupture à l’horizontale, pour un axe où zéro correspond à une valeur réelle. -#}
 				{%- if plot.zeroY %}
 				<line x1="{{ plot.box.left }}" x2="{{ plot.box.left + plot.plot.w }}"
 					y1="{{ plot.zeroY.sep }}" y2="{{ plot.zeroY.sep }}"/>
@@ -95,9 +89,10 @@
 			{%- endif %}
 
 			{#
-				y = x, where both axes measure the same thing. Under the dots and
-				above the grid: it is the reference every point is read against, so
-				it must not obscure them or be lost among the gridlines.
+				y = x, lorsque les deux axes mesurent la même chose. Cette ligne
+				apparaît sous les points et au-dessus de la grille : c’est la
+				référence à laquelle chaque point est comparé. Elle ne doit donc
+				ni les masquer ni se confondre avec les lignes de la grille.
 			#}
 			{%- if plot.identity %}
 			<g class="plot-identity">
@@ -122,9 +117,10 @@
 			</g>
 
 			{#
-				What each scale measures. The ticks say "1 MB" and "10 s"; without
-				these, which of the two is on which axis is a guess — and the whole
-				point of the chart is the relationship between them.
+				Ce que mesure chaque échelle. Les graduations indiquent « 1 MB »
+				et « 10 s » ; sans ces titres, il faudrait deviner laquelle
+				correspond à chaque axe — alors que le graphique vise précisément
+				à montrer leur relation.
 			#}
 			<g class="plot-axis-title">
 				<text x="{{ plot.axis.xLabel.x }}" y="{{ plot.axis.xLabel.y }}" text-anchor="middle">{{ xTitle }}</text>
@@ -133,16 +129,18 @@
 			</g>
 
 			{#
-				Poor first, good last, so the dense green cloud is not buried under
-				the sparse red one — with 1,490 overlapping dots, paint order is the
-				difference between a readable plot and a smear.
+				Les résultats mauvais d’abord, les bons en dernier, afin que le
+				dense nuage vert ne soit pas masqué par le nuage rouge, plus
+			clairsemé. Avec 1 490 points qui se chevauchent, l’ordre de tracé
+				fait la différence entre un graphique lisible et une tache.
 			#}
 			{%- for band in ["poor", "average", "good"] %}
 			<g class="plot-dots plot-{{ band }}">
 				{#
-					What makes a dot hoverable is the overlay after the SVG, not
-					anything here — a circle can only carry a `<title>`, which
-					arrives after a delay and cannot be styled.
+					Les points sont rendus interactifs par la superposition placée
+					après le SVG, et non par un élément ici : un cercle ne peut
+					contenir qu’un `<title>`, qui s’affiche après un délai et ne
+					peut pas être mis en forme.
 				#}
 				{%- for dot in plot.dots[band] %}<circle cx="{{ dot.x }}" cy="{{ dot.y }}" r="3"/>{% endfor %}
 			</g>
@@ -150,30 +148,34 @@
 		</svg>
 
 		{#
-			The tooltips: one link per outlier, positioned over the plot in
-			percentages of the same box the viewBox describes, so the two scale
-			together with no script measuring anything.
+			Les infobulles : un lien par valeur atypique, positionné sur le
+			graphique en pourcentage de la même zone que celle décrite par le
+			viewBox. Les deux se redimensionnent ainsi ensemble, sans qu’un script
+			ait besoin de mesurer quoi que ce soit.
 
-			Links rather than labels, because "what is that dot?" is nearly always
-			followed by "show me that site" — and being a link makes each one
-			reachable by keyboard and readable by a screen reader, which a
-			`<title>` on a circle is not.
+			Des liens plutôt que des étiquettes, car la question « quel est ce
+			point ? » est presque toujours suivie de « montre-moi ce site ». En
+			outre, chaque point est accessible au clavier et lisible par un
+			lecteur d’écran, contrairement à un `<title>` sur un cercle.
 		#}
 		<div class="plot-hits">
 			{%- for site in plot.named %}
 			{#
-				Dot-sized targets throughout: nine hundred of these sit in the
-				cloud, and at a finger-sized target twenty would overlap any given
-				point, so the hover would land on whichever the DOM painted last
-				rather than the one under the cursor.
+				Des cibles de la taille des points partout : neuf cents d’entre
+				elles se trouvent dans le nuage. Avec des cibles de la taille d’un
+				doigt, une vingtaine se chevaucheraient autour de chaque point.
+				Le survol désignerait alors le point peint en dernier dans le DOM,
+				plutôt que celui sous le curseur.
 
-				Most are out of the tab order — nine hundred tab stops in the
-				middle of a page is a trap, not access, and each is a second way to
-				reach a link the leaderboard already lists in full. The ten marked
-				in lib/report.js stay in it, spread across the weight axis, so the
-				chart can be walked without a mouse. They carry a name because the
-				card is two grid cells and its text runs together when read aloud:
-				"ecsspert.com6 kB".
+				La plupart sont exclues de l’ordre de tabulation : neuf cents
+				arrêts au milieu d’une page constitueraient un piège, pas une
+				amélioration de l’accessibilité, et chaque lien ferait doublon
+				avec celui du classement, qui présente déjà toutes les
+				informations. Les dix liens désignés dans lib/report.js restent
+				accessibles au clavier et sont répartis sur l’axe du poids ; le
+				graphique peut ainsi être parcouru sans souris. Ils ont un nom,
+				car la carte occupe deux cellules de la grille et son texte se
+				confond à l’oral : « ecsspert.com 6 kB ».
 			#}
 			<a class="plot-hit{{ ' is-key' if site.keyboard }}{{ ' is-right' if site.flipX }}{{ ' is-low' if site.flipY }}"
 				href="/site/{{ site.slug }}/" style="left: {{ site.px }}%; top: {{ site.py }}%"

@@ -3,27 +3,31 @@ permalink: "/api/urls.json"
 eleventyExcludeFromCollections: true
 ---
 {#
-  Compatibility route for the original Speedlify's API.
+  Route de compatibilité pour l’API de la version originale de Speedlify.
 
-  A `<speedlify2-score>` component with no `hash` attribute fetches this to turn a
-  URL into one, then requests /api/<hash>.json. Without it that path 404s and the
-  component fails outright.
+  Un composant `<speedlify2-score>` sans attribut `hash` récupère ce fichier pour
+  convertir une URL en hash, puis demande `/api/<hash>.json`. Sans cette route,
+  cette requête renvoie une erreur 404 et le composant ne fonctionne pas.
 
-  Deliberately minimal: the component reads `.hash` and nothing else, so nothing
-  else is emitted. The original also carries requestedUrl, url, categories and
-  vertical here — absent, because no consumer fails without them.
+  Le contenu est volontairement minimal : le composant ne lit que `.hash`, donc
+  aucun autre champ n’est généré. Le fichier d’origine contient aussi
+  `requestedUrl`, `url`, `categories` et `vertical` ; ils sont omis, car leur
+  absence ne gêne aucun consommateur.
 
-  Only the URLs the original instance published, from the frozen snapshot in
-  config/legacy-api-urls.json — not our own site list. An embed can only exist
-  for a URL that instance served, so those are the only keys worth having;
-  adding our 1,600 would be 1,600 entries nothing looks up.
+  Seules figurent les URL publiées par l’instance d’origine, issues de
+  l’instantané figé dans config/legacy-api-urls.json — et non celles de notre
+  propre liste de sites. Une intégration ne peut exister que pour une URL servie
+  par cette instance ; seules ces clés sont donc utiles. En ajouter 1 600
+  reviendrait à générer 1 600 entrées que rien ne consulte.
 
-  Keyed by the URL as a bare string. The lookup is `json[url]` with no
-  normalization at all, so the key has to be spelled the way the original spelled
-  it — `https://example.com/about/`, where we store the slash stripped.
+  Les clés sont les URL sous forme de chaînes brutes. La recherche se fait avec
+  `json[url]`, sans aucune normalisation. La clé doit donc être écrite exactement
+  comme dans la source d’origine — par exemple `https://example.com/about/`,
+  alors que nous stockons cette URL sans sa barre oblique finale.
 
-  Built from the same `compatRoutes` list as the per-hash files, so the index
-  cannot name a hash that was never written.
+  Le fichier est généré à partir de la même liste `compatRoutes` que les fichiers
+  individuels par hash. Ainsi, l’index ne peut pas contenir un hash pour lequel
+  aucun fichier n’a été créé.
 -#}
 {
 {%- for route in sites.compatRoutes %}

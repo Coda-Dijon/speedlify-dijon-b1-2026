@@ -1,32 +1,37 @@
 {#
-	The strip plot, drawn twice — JavaScript weight by generator and time to first
-	byte by host. Same picture of different columns, so one definition.
+	Le graphique en bandes, dessiné deux fois — le poids JavaScript par générateur
+	et le délai avant le premier octet par hôte. Même représentation de colonnes
+	différentes, donc une seule définition.
 
-	`strip` is whichever set lib/report.js built and `xTitle` names its scale.
-	`showMedianValues` prints each row's median beside its tick. On by choice at
-	both call sites rather than by default, so a future strip can leave it off:
-	it earns its place where the summary is a number worth reading exactly, and a
-	log axis is not something anyone reads a value off precisely.
+	`strip` correspond au jeu de données construit par lib/report.js et `xTitle`
+	nomme son échelle. `showMedianValues` affiche la médiane de chaque ligne à côté
+	de sa marque. Activé volontairement aux deux endroits où le macro est appelé,
+	plutôt que par défaut, afin qu’un futur graphique en bandes puisse le désactiver :
+	cette option est utile lorsque le résumé mérite d’être lu comme une valeur exacte,
+	contrairement à un axe logarithmique, qui ne permet pas de lire une valeur avec
+	précision.
 #}
 {% macro stripfigure(strip, xTitle, showMedianValues = false) %}
 	{#
-		`plot-scroll` rather than a second phone layout: the whole SVG scales with
-		its container, so at 375px a 13-unit label renders at 4.5 pixels and the
-		axis ticks go with it — the names are not the only casualty. A minimum
-		width holds the type at a readable size and the frame scrolls to it.
+		Utiliser `plot-scroll` plutôt qu’une seconde mise en page pour téléphone :
+		le SVG entier s’adapte à son conteneur. À 375 px, une étiquette de 13 unités
+		ne fait plus que 4,5 pixels et les graduations de l’axe rétrécissent aussi —
+		les noms ne sont pas les seuls éléments illisibles. Une largeur minimale
+		maintient le texte à une taille lisible et le cadre permet de faire défiler
+		le graphique.
 
-		Scoped to this macro because the scatter's tooltips overflow their frame
-		on purpose, and a scroll container would clip them.
+		Cette règle ne concerne que ce macro, car les infobulles du nuage de points
+		débordent volontairement de leur cadre, et un conteneur défilant les couperait.
 
-		The frame is focusable so the chart can be panned with arrow keys: a
-		scroll region that only a pointer can move is a piece of the page that
-		keyboard users cannot reach.
+		Le cadre peut recevoir le focus afin de pouvoir parcourir le graphique avec
+		les touches fléchées : une zone défilante que seule la souris peut déplacer
+		est inaccessible aux personnes utilisant le clavier.
 	#}
 	<figure class="plot plot-scroll">
 		<div class="plot-frame" tabindex="0" role="group"
-			aria-label="{{ xTitle }} by {{ strip.label }}, scrollable">
+			aria-label="{{ xTitle }} par {{ strip.label }}, défilable">
 		<svg viewBox="0 0 {{ strip.box.w }} {{ strip.box.h }}" role="img"
-			aria-label="Median {{ xTitle }} by {{ strip.label }}{% for row in strip.rows %}. {{ row.name }}, {{ row.count }} sites, median {{ row.medianText }}{% endfor %}.">
+			aria-label="Médiane de {{ xTitle }} par {{ strip.label }}{% for row in strip.rows %}. {{ row.name }}, {{ row.count }} sites, médiane {{ row.medianText }}{% endfor %}.">
 			<g class="plot-grid">
 				{%- for tick in strip.xTicks %}
 				<line x1="{{ tick.x }}" x2="{{ tick.x }}" y1="{{ strip.box.top }}" y2="{{ strip.box.top + strip.plot.h }}"/>
@@ -51,8 +56,9 @@
 			</g>
 
 			{#
-				Names in the margin rather than a legend: nine rows each need reading
-				against their own label, and a legend would make that a lookup.
+				Les noms sont placés dans la marge plutôt que dans une légende :
+				avec neuf lignes, chacun se lit directement en regard de son étiquette,
+				sans devoir faire de correspondance avec une légende.
 			#}
 			<g class="gen-labels">
 				{%- for row in strip.rows %}
@@ -61,16 +67,18 @@
 			</g>
 
 			{#
-				Sites first and faint, the median over them: the dots are the
-				evidence and the median is the summary, so the summary must not be
-				lost among them.
+				Les sites sont d’abord représentés par des points discrets, puis
+				la médiane est superposée : les points constituent les données et
+				la médiane en est le résumé. Ce résumé ne doit donc pas se perdre
+				parmi les points.
 			#}
 			<g class="gen-dots">
 				{#
-					One circle per occupied position, sized by how many sites share it
-					— see `stack` in lib/report.js. The title is the only way to read a
-					count off a circle, and costs one element per position rather than
-					one per site.
+					Un cercle par position occupée, dont la taille dépend du nombre
+					de sites qui y sont regroupés — voir `stack` dans lib/report.js.
+					L’infobulle est le seul moyen de lire le nombre associé à un cercle ;
+					cette méthode ajoute un élément par position plutôt qu’un élément
+					par site.
 				#}
 				{%- for row in strip.rows %}{% for dot in row.dots %}<circle cx="{{ dot.x }}" cy="{{ row.y }}" r="{{ dot.r }}">{% if dot.n > 1 %}<title>{{ dot.n }} sites</title>{% endif %}</circle>{% endfor %}{% endfor %}
 			</g>
@@ -79,17 +87,19 @@
 			</g>
 			{%- if showMedianValues %}
 			{#
-				The number beside its own tick, in the tick's color so the two read as
-				one mark. Beside rather than above: a row is a drift of overlapping
-				dots and the space above the tick belongs to the row above it.
+				La valeur est affichée à côté de sa propre marque, dans la même
+				couleur, afin que les deux soient perçues comme un seul repère.
+				Elle est placée à côté plutôt qu’au-dessus : une ligne est déjà
+				encombrée de points qui se chevauchent, et l’espace au-dessus
+				de la marque appartient à la ligne précédente.
 
-				Flipped to the left of the tick near the right edge, where a label
-				drawn outward would run off the frame — 70 units is wider than any
-				value this formats to.
+				Le texte est placé à gauche de la marque près du bord droit, car
+				un libellé placé vers l’extérieur risquerait de dépasser du cadre —
+				70 unités suffisent pour contenir la plus longue valeur formatée.
 
-				Haloed in the page background (see .gen-median-values) because it is
-				drawn over the dots by definition: the tick sits in the thick of the
-				distribution, which is the whole reason for printing it there.
+				Un halo reprend la couleur de fond de la page (voir .gen-median-values),
+				car le texte est dessiné par-dessus les points : la marque se trouve
+				au cœur de la distribution, d’où l’intérêt d’afficher sa valeur ici.
 			#}
 			<g class="gen-median-values">
 				{%- for row in strip.rows %}
@@ -102,12 +112,13 @@
 		</div>
 
 		{#
-			Shown only at the widths where the chart actually overflows, which CSS
-			can answer and the template cannot — see `.plot-scroll-note`. macOS
-			hides its scrollbars until something moves, so on the machines most
-			likely to be reading this there is otherwise no sign the chart
-			continues past the edge.
+			Ce message s’affiche uniquement aux largeurs où le graphique déborde,
+			ce que le CSS peut déterminer, contrairement au modèle — voir
+			`.plot-scroll-note`. macOS masquant les barres de défilement jusqu’à
+			ce qu’on les utilise, il n’y a sinon aucun signe que le graphique
+			se prolonge au-delà du bord, notamment sur les appareils où il est le
+			plus susceptible d’être consulté.
 		#}
-		<figcaption class="plot-scroll-note">Scroll sideways for the rest of the scale.</figcaption>
+		<figcaption class="plot-scroll-note">Faites défiler horizontalement pour voir le reste de l’échelle.</figcaption>
 	</figure>
 {% endmacro %}

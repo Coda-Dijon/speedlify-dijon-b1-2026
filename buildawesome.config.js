@@ -19,6 +19,8 @@ import { ringBands } from "./lib/report.js";
 import { siteApi, groupApi, groupsApi } from "./lib/api.js";
 
 const ICONS_DIR = "src/icons";
+const LOCALE = "fr-FR";
+const STRING_COMPARE_LOCALE = "fr";
 
 function minifyCss(filename) {
 	return transformCss({ filename, code: fs.readFileSync(filename), minify: true }).code.toString();
@@ -385,9 +387,10 @@ export default async function ($config) {
 		return `${(v / 1000).toFixed(2)} s`;
 	});
 
+
 	$config.addFilter("num", (v, places = 0) => {
 		if (typeof v !== "number") return "—";
-		return v.toLocaleString("en-US", { minimumFractionDigits: places, maximumFractionDigits: places });
+		return v.toLocaleString(LOCALE, { minimumFractionDigits: places, maximumFractionDigits: places });
 	});
 
 	/** Format by declared unit so one template row handles ms, bytes and counts. */
@@ -396,7 +399,7 @@ export default async function ($config) {
 		if (unit === "ms") return v < 1000 ? `${Math.round(v)} ms` : `${(v / 1000).toFixed(2)} s`;
 		if (unit === "bytes") return formatBytes(v);
 		// Unitless: CLS needs decimals, counts do not.
-		return Number.isInteger(v) ? v.toLocaleString("en-US") : v.toFixed(3);
+		return Number.isInteger(v) ? v.toLocaleString(LOCALE) : v.toFixed(3);
 	});
 
 	/**
@@ -414,7 +417,7 @@ export default async function ($config) {
 		if (style === "long") {
 			// Explicit components, not dateStyle/timeStyle: Intl rejects those in
 			// combination with timeZoneName, which is the whole point here.
-			return d.toLocaleString("en-US", {
+			return d.toLocaleString(LOCALE, {
 				year: "numeric",
 				month: "short",
 				day: "numeric",
@@ -428,10 +431,10 @@ export default async function ($config) {
 		// ISO form, so a column of them sorts and scans, without reading as a
 		// serial number the way all-numeric does.
 		//
-		// Assembled from parts because no en-US format puts them in this order.
+		// Assembled from parts because no fr-FR format puts them in this order.
 		if (style === "ymd") {
 			const parts = Object.fromEntries(
-				new Intl.DateTimeFormat("en-US", {
+				new Intl.DateTimeFormat(LOCALE, {
 					year: "numeric",
 					month: "short",
 					day: "numeric",
@@ -444,7 +447,7 @@ export default async function ($config) {
 			return `${parts.year} ${parts.month} ${parts.day}`;
 		}
 
-		return d.toLocaleDateString("en-US", {
+		return d.toLocaleDateString(LOCALE, {
 			month: "short",
 			day: "numeric",
 			year: "numeric",
@@ -649,7 +652,7 @@ export default async function ($config) {
 	/** Count and correctly-pluralized noun together: "1 site", "3 sites". */
 	$config.addFilter("countOf", (count, singular, plural) => {
 		const word = count === 1 ? singular : plural || `${singular}s`;
-		return `${(count ?? 0).toLocaleString("en-US")} ${word}`;
+		return `${(count ?? 0).toLocaleString(LOCALE)} ${word}`;
 	});
 
 	/**
@@ -978,8 +981,9 @@ export default async function ($config) {
 	$config.addFilter("sortBy", (list, key) => {
 		if (!Array.isArray(list)) return list;
 
+
 		return [...list].sort((a, b) =>
-			String(a?.[key] ?? "").localeCompare(String(b?.[key] ?? ""), "en", {
+			String(a?.[key] ?? "").localeCompare(String(b?.[key] ?? ""), STRING_COMPARE_LOCALE, {
 				sensitivity: "base",
 				numeric: true,
 			}),

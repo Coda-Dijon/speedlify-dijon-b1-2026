@@ -4,48 +4,50 @@ function goatcounterUrl(value) {
 	try {
 		url = new URL(value);
 	} catch {
-		throw new Error(`SPEEDLIFY_GOATCOUNTER_URL is not a valid URL: ${JSON.stringify(value)}`);
+		throw new Error(`SPEEDLIFY_GOATCOUNTER_URL n’est pas une URL valide : ${JSON.stringify(value)}`);
 	}
 	if (url.protocol !== "https:") {
-		throw new Error(`SPEEDLIFY_GOATCOUNTER_URL must be an https:// URL: ${JSON.stringify(value)}`);
+		throw new Error(`SPEEDLIFY_GOATCOUNTER_URL doit être une URL en https:// : ${JSON.stringify(value)}`);
 	}
-	return url.href;
+return url.href;
 }
 
 export default {
 	title: "speedlify2",
-	tagline: "Web performance, measured over time",
+	tagline: "Performances web mesurées au fil du temps",
 	description:
-		"Lighthouse lab metrics, Axe, and Chrome UX Report field data for a list of sites recorded and compared over time.",
-	// Set to your deployed origin for absolute URLs in metadata.
-	// Where this instance is published. Used for the copy-paste embed snippets,
-	// which land on other people's sites and so need an absolute URL — a path
-	// would resolve against their domain. No trailing slash: the templates add
-	// one, and two would give //js/speedlify2-score.js.
+		"Métriques Lighthouse, données Axe et données de terrain du Chrome UX Report pour une liste de sites, enregistrées et comparées au fil du temps.",
+	// Indiquez l’origine de votre déploiement pour générer des URL absolues dans les métadonnées.
+	// Adresse de publication de cette instance. Elle sert dans les extraits de code à copier-coller,
+	// intégrés sur d’autres sites : une URL absolue est donc nécessaire, car un simple chemin
+	// serait résolu par rapport à leur domaine. Ne mettez pas de barre oblique finale : les modèles
+	// en ajoutent une, et deux barres produiraient //js/speedlify2-score.js.
 	url: process.env.SPEEDLIFY_SITE_URL || "https://www.speedlify.dev",
-	// Where the source lives, linked from the footer. Defaulted rather than left
-	// blank: an empty string silently drops the link, which is how the header one
-	// went unnoticed for so long. Override it when running your own instance.
+	// Emplacement du code source, indiqué par un lien dans le pied de page. Une valeur par défaut
+	// est préférable à une chaîne vide : sinon, le lien disparaît sans avertissement — comme celui
+	// de l’en-tête, dont l’absence est passée inaperçue pendant si longtemps. Remplacez cette valeur
+	// si vous exécutez votre propre instance.
 	repo: process.env.SPEEDLIFY_REPO_URL || "https://github.com/zachleat/speedlify2",
 
-	// GoatCounter endpoint, e.g. https://you.goatcounter.com/count. Off unless
-	// set: analytics belong to one deployment, not to the template.
+	// Point de terminaison GoatCounter, par exemple https://vous.goatcounter.com/count.
+	// Le suivi est désactivé tant que cette valeur n’est pas définie : les statistiques
+	// appartiennent à un déploiement donné, pas au modèle.
 	goatcounter: goatcounterUrl(process.env.SPEEDLIFY_GOATCOUNTER_URL),
 
-	// Favicon service for the site list. `{url}` is replaced with the
-	// encoded site URL. Set to "" for a build that makes no external requests
-	// at all — which is arguably the right default for a tool that measures
-	// third-party weight for a living.
+	// Service de favicons pour la liste des sites. `{url}` est remplacé par l’URL du site
+	// encodée. Définissez cette valeur sur "" pour une compilation qui n’effectue aucune requête
+	// externe — ce qui est sans doute le choix par défaut le plus judicieux pour un outil qui
+	// mesure précisément le poids des ressources tierces.
 	avatarService: "https://v1.indieweb-avatar.11ty.dev/{url}/",
 
-	// Screenshot service for the individual site pages. Same substitution, same
-	// switch: "" turns it off. `medium` is 650px wide at the service's default
-	// 1:1 ratio; the sizes it offers are small (375), medium (650), large (1024)
-	// and opengraph (1200x630).
+	// Service de captures d’écran pour les pages individuelles des sites. Même substitution,
+	// même option : "" désactive le service. `medium` correspond à une largeur de 650 px, avec
+	// le ratio 1:1 par défaut du service. Les tailles disponibles sont small (375), medium (650),
+	// large (1024) et opengraph (1200x630).
 	//
-	// One request per site page rather than per row, which is why this is on the
-	// detail pages and not the leaderboard — a category page carries a thousand
-	// rows, and a thousand screenshots is not a page, it is a denial of service
-	// aimed at someone else's server.
+	// Une requête par page de site, et non par ligne : c’est pourquoi le service est utilisé
+	// sur les pages de détail plutôt que sur le classement. Une page de catégorie peut contenir
+	// mille lignes ; générer mille captures d’écran ne relève plus d’une simple page, mais d’une
+	// attaque par déni de service contre le serveur d’autrui.
 	screenshotService: "https://v1.screenshot.11ty.dev/{url}/medium/",
 };

@@ -9,97 +9,95 @@ eleventyComputed:
   title: "{{ group.name }}"
 ---
 
-{% from "statbar.njk" import statbar %}
-{% from "stacks.njk" import technology %}
+{% from "statbar.njk" import statbar %}{% from "stacks.njk" import technology %}
 
 <header class="detail-head">
 	{#
-		The heading and the way in, on one row. Right-aligned rather than under
-		the description, because it is the one thing on this page a reader might
-		have come to *do* — everything else here is something to read.
+	Le titre et le moyen d’agir sont sur la même ligne. Le lien est aligné
+	à droite plutôt que placé sous la description, car c’est la seule chose
+	que les visiteurs pourraient vouloir faire sur cette page : le reste
+	est à lire.
 	#}
 	<div class="group-title">
 		{#
-			The category's health beside its name: the share of its measured sites
-			showing no red ring, which is the same question the leaderboard's first
-			step asks of a single site.
+		L’état de santé de la catégorie figure à côté de son nom : il indique
+		la part des sites mesurés sans cercle rouge. C’est la même question
+		que pose la première étape du classement pour un site donné.
 
-			A proportion, so a curated dozen and a community list of a thousand are
-			judged on the same terms — a category cannot look healthy by being small.
+		Il s’agit d’une proportion : une sélection de douze sites et une liste
+		communautaire de mille sites sont évaluées selon les mêmes critères.
+		Une catégorie ne peut donc pas paraître en bonne santé simplement parce
+		qu’elle est petite.
 		#}
-		<h2 class="page-hed">{{ group.name }}{% if group.health %}<span class="health-pill health-{{ group.health.band }}" title="{{ group.health.clean | num }} of {{ group.health.measured | num }} measured {{ group.health.measured | plural('site') }} in {{ group.name }} show no red ring ({{ group.health.pct }}%). Good is 50% or more, Warn 28% or more.">{{ "Good" if group.health.band == "good" else ("Warn" if group.health.band == "average" else "Bad") }}</span>{% endif %}</h2>
+		<h2 class="page-hed">{{ group.name }}{% if group.health
+			%}<span class="health-pill health-{{ group.health.band }}" title="{{ group.health.clean | num }} sites sur {{ group.health.measured | num }} mesurés {{ group.health.measured | plural('site') }} dans {{ group.name }} n’ont aucun cercle rouge ({{ group.health.pct }} %). « Bon » correspond à 50 % ou plus, « À surveiller » à 28 % ou plus.">{{ "Bon" if group.health.band == "good" else ("À surveiller" if group.health.band == "average" else "Mauvais") }}</span>{%
+			endif %}</h2>
 		{% if group.submitUrl %}
 		<a class="cta" href="{{ group.submitUrl }}">{{ group.submitLabel }}</a>
 		{% endif %}
 	</div>
 	{#
-		`safe` because a description may carry a link — the community list names
-		the repository it comes from, and that is worth being clickable. These
-		strings are ours, written in config/sites.js, not anything a measured site
-		supplies.
+	Le filtre `safe` est nécessaire, car une description peut contenir un lien.
+	La liste communautaire indique le dépôt dont elle provient : ce lien mérite
+	d’être cliquable. Ces chaînes sont définies par nos soins dans
+	config/sites.js, et non fournies par les sites mesurés.
 	#}
 	{% if group.description %}<p class="lede">{{ group.description | safe }}</p>{% endif %}
 	{#
-		Coverage, then cadence. Measurement is rolling and invisible from the
-		page, so "1,143 of 1,235 measured" reads as a gap to be closed rather than
-		as a schedule doing its job — the second half says which it is.
+	D’abord le nombre de sites couverts, puis la fréquence des mesures.
+	Les mesures sont effectuées en continu, sans être visibles depuis cette
+	page. « 1 143 sur 1 235 mesurés » peut donc sembler indiquer un retard à
+	rattraper ; la seconde partie explique la fréquence réelle.
 	#}
 	<p class="muted">
-		{{ group.measured | num }} of {{ group.entries.length | countOf("site") }} measured
-		{%- if group.freshnessHours %} · each site {{ group.freshnessHours | cadence }}
-		{%- if group.lastMeasured %}, most recently <time datetime="{{ group.lastMeasured | iso }}">{{ group.lastMeasured | since }}</time> ago{% endif %}
+		{{ group.measured | num }} sur {{ group.entries.length | countOf("site") }} mesurés
+		{%- if group.freshnessHours %} · fréquence des mesures : {{ group.freshnessHours | cadence }}
+		{%- if group.lastMeasured %}, dernière mesure il y a
+		<time datetime="{{ group.lastMeasured | iso }}">{{ group.lastMeasured | since }}</time>
+		{% endif %}
 		{%- endif %}
 	</p>
 	{#
-		The other half of the note on the home page's Perfect scores board. Said
-		here too because this is where someone notices the absence: a starter with
-		full marks that is not on that board looks like an oversight unless the
-		page it *is* on explains itself.
+	L’autre moitié de la note du tableau des scores parfaits sur la page
+	d’accueil. Elle figure aussi ici, là où l’absence peut être remarquée :
+	un site de démarrage avec des scores parfaits qui n’apparaît pas dans
+	ce tableau pourrait sembler oublié, à moins que la page où il figure
+	l’explique.
 
-		Read from the category rather than counted from its rows, so it still says
-		so before anything here has been measured.
+	L’information vient de la catégorie au lieu d’être calculée à partir de
+	ses lignes ; elle reste donc visible même si aucun site n’a encore été
+	mesuré ici.
 	#}
 	{% if group.excludeFromPerfectScores %}
 	<p class="muted small">
-		Perfect scores here are kept off the <a href="/#leaderboard">home page's board</a>,
-		unless the site is also listed in another category.
+		Les scores parfaits de cette catégorie ne figurent pas dans le <a href="/#leaderboard">classement de la page
+		d’accueil</a>,
+		sauf si le site apparaît également dans une autre catégorie.
 		{% if group.excludeFromPerfectScoresNote %}{{ group.excludeFromPerfectScoresNote }}{% endif %}
-		They rank normally on this page and in the overall leaderboard.
-	</p>
+		Ils sont classés normalement sur cette page et dans le classement général. </p>
 	{% endif %}
 </header>
 
-{# The same tiles as the home page, over this category alone. #}
-{% if group.stats.measured %}{{ statbar(group.stats, metrics) }}{% endif %}
+{# Les mêmes indicateurs que sur la page d’accueil, mais pour cette catégorie uniquement. #}{% if group.stats.measured %}{{ statbar(group.stats, metrics) }}{% endif %}
 
 {% if not group.entries.length %}
-<div class="empty"><p>No sites in this group.</p></div>
-{% else %}
+<div class="empty"><p>Aucun site dans cette catégorie.</p></div>{% else %}
 
-{#
-	Computed before the section so the section itself can be skipped. An empty
-	"Biggest movers" heading followed by an apology is worse than no heading:
-	most groups have nothing significant to report most of the time, and a
-	permanent empty panel trains you to scroll past it.
-#}
-{#
-	The four sites whose performance score improved most since the run before.
-	Improvements only — regressions are deliberately left out, see lib/report.js,
-	which also does the ordering a template cannot.
-#}
-{% if group.topMovers.length %}
+{#	Calculé avant la section afin de pouvoir l’omettre si nécessaire. Un titre	« Plus fortes progressions » suivi d’excuses parce qu’il n’y a rien à signaler	est moins utile que l’absence de titre : la plupart du temps, les catégories	n’ont rien de notable à signaler, et un panneau vide permanent incite à	passer directement à la suite.#}{#	Les quatre sites dont le score de performance s’est le plus amélioré depuis	la mesure précédente. Seules les améliorations sont affichées ; les baisses	sont volontairement exclues. Voir lib/report.js, qui effectue également le	classement, impossible à réaliser dans un modèle.#}{% if group.topMovers.length %}
 <section class="panel">
-	<h2>Biggest movers</h2>
+	<h2>Plus fortes progressions</h2>
 	<p class="muted small">
-		Sites whose performance score improved by more than this group's normal
-		run-to-run noise. Everything else is jitter and is deliberately hidden.
-	</p>
+		Sites dont le score de performance s’est amélioré davantage que les
+		variations habituelles d’une mesure à l’autre dans cette catégorie.
+		Les autres variations sont du bruit et sont volontairement masquées. </p>
 	<ul class="mover-cards">
 		{% for m in group.topMovers %}
 		<li class="mover-card {{ m.vsPrevious | deltaClass }}">
 			<a class="site-link" href="/site/{{ m.slug }}/">
 				{% set avatar = m.url | avatar(meta.avatarService) %}
-				{% if avatar %}<img class="favicon" src="{{ avatar }}" width="32" height="32" alt="" loading="lazy" decoding="async">{% endif %}
+				{% if avatar
+				%}<img class="favicon" src="{{ avatar }}" width="32" height="32" alt="" loading="lazy" decoding="async">{%
+				endif %}
 				<span title="{{ m.displayUrl }}">{{ m.displayUrl }}</span>
 			</a>
 			<span class="mover-delta">{{ m.vsPrevious | deltaArrow }} {{ m.vsPrevious | deltaText }}</span>
@@ -107,182 +105,204 @@ eleventyComputed:
 		</li>
 		{% endfor %}
 	</ul>
-</section>
-{% endif %}
+</section>{% endif %}
 
-{#
-	Past this many entries the table stops being something you read and becomes
-	something you scroll past, so a large category shows only its clean rows and
-	names the rest underneath. The threshold is on entries rather than measured
-	sites: what makes the page unreadable is its length, and an unmeasured row
-	takes up just as much of it.
+{#	Au-delà de ce nombre d’entrées, le tableau devient quelque chose qu’on fait	défiler plutôt qu’on lit. Les grandes catégories n’affichent donc que leurs	lignes entièrement vertes et listent les autres en dessous. Le seuil porte	sur le nombre d’entrées, pas sur celui des sites mesurés : c’est la longueur	de la page qui la rend difficile à lire, et une ligne non mesurée prend	autant de place.
 
-	A presentation choice and nothing more — every stat on this page, the ranks
-	in the table and the numbers in the bar above are all computed over the whole
-	category. Nothing here filters what is counted.
-#}
-{% set MAX_FULL_ROWS = 500 %}
-{% set filtered = group.entries.length > MAX_FULL_ROWS %}
+Il s’agit uniquement d’un choix de présentation. Toutes les statistiques	de cette page, les rangs du tableau et les chiffres des indicateurs ci-dessus	sont calculés sur l’ensemble de la catégorie. Rien n’est exclu du calcul.#}{% set MAX_FULL_ROWS = 500 %}{% set filtered = group.entries.length > MAX_FULL_ROWS %}
 
-{#
-	An unranked category is listed alphabetically. Leaving it in score order would
-	still read as a ranking — the order is the claim, whether or not it is
-	numbered — and alphabetical says outright that the order carries no meaning
-	while staying somewhere you can look a site up.
-#}
-{% set source = group.entries if group.ranked else group.entries | sortBy("displayUrl") %}
+{#	Une catégorie sans classement est présentée par ordre alphabétique. La laisser	triée par score donnerait malgré tout l’impression d’un classement : l’ordre	suggère une hiérarchie, même sans numéros. L’ordre alphabétique indique	clairement que l’ordre n’a pas de signification, tout en permettant de	retrouver facilement un site.#}{% set source = group.entries if group.ranked else group.entries | sortBy("displayUrl") %}
 
-{% set rows = [] %}
-{% set rest = [] %}
-{#
-	Clean rows only. A site with no figures — never measured, or failing every
-	attempt — has nothing to put in eleven columns, and a run of rows reading "not
-	measured yet" is a worse answer than a name in the list below, which at least
-	does not promise a table's worth of data. The list marks both cases with an
-	icon.
-#}
-{% for entry in source %}
-	{% if not filtered or entry.allGreen %}
-		{% set rows = (rows.push(entry), rows) %}
-	{% else %}
-		{% set rest = (rest.push(entry), rest) %}
-	{% endif %}
-{% endfor %}
+{% set rows = [] %}{% set rest = [] %}{#	Seules les lignes entièrement vertes sont affichées dans le tableau. Un site	sans données — jamais mesuré ou dont toutes les tentatives ont échoué — n’a	rien à afficher dans onze colonnes. Une succession de lignes indiquant	« pas encore mesuré » est moins utile qu’un nom dans la liste ci-dessous,	qui signale au moins la situation au moyen d’une icône.#}{% for entry in source %}	{% if not filtered or entry.allGreen %}		{% set rows = (rows.push(entry), rows) %}	{% else %}		{% set rest = (rest.push(entry), rest) %}	{% endif %}{% endfor %}
 
 <section class="panel">
-	<h2>{{ "Leaderboard" if group.ranked else "Sites" }}</h2>
+	<h2>{{ "Classement" if group.ranked else "Sites" }}</h2>
 	{% if filtered %}
 	<p class="muted small">
-		Of {{ group.entries.length | num }} sites, showing the {{ rows.length | num }} with “good” scores (all green circles): every Lighthouse category at 90 or above, no axe violations, no Core Web Vital failing. The other {{ rest.length | num }} are in an overflow list below.
-	</p>
+		Sur {{ group.entries.length | num }} sites, voici les {{ rows.length | num }}
+		qui ont de « bons » scores (tous les cercles sont verts) : chaque catégorie
+		Lighthouse est à 90 ou plus, aucune violation axe, et aucun Core Web Vital
+		à un niveau insuffisant. Les {{ rest.length | num }} autres figurent dans
+		la liste complémentaire ci-dessous. </p>
 	{% endif %}
 	{% if not group.ranked %}
 	<p class="muted small">
-		Not ranked, listed alphabetically. Still measured in case they return!
-	</p>
+		Les sites ne sont pas classés et sont présentés par ordre alphabétique.
+		Ils restent mesurés au cas où ils reviendraient ! </p>
 	{% else %}
 	<p class="muted small">
-		Ranked by the circle color first: all green beats a row with amber, which beats red. Sites are not penalized for unknown Core Web Vitals. Tiebreakers include: sum of all four Lighthouse categories, fewest failing Core Web Vitals, then fewest axe violations, then Speed Index per KB — a heavy site outranks an empty one.
-	</p>
+		Le classement donne la priorité à la couleur des cercles : une ligne
+		entièrement verte devance une ligne comportant de l’ambre, qui devance
+		une ligne comportant du rouge. Les sites ne sont pas pénalisés pour les
+		Core Web Vitals inconnus. Les critères de départage comprennent la somme
+		des quatre catégories Lighthouse, le plus petit nombre de Core Web Vitals
+		insuffisants, puis le plus petit nombre de violations axe, et enfin le
+		Speed Index par Ko : un site lourd est mieux classé qu’un site vide. </p>
 	{% endif %}
 	<div class="table-scroll">
-	<table class="grid">
-		<thead>
+		<table class="grid">
+			<thead>
 			<tr>
-				{% if group.ranked %}<th class="col-rank">#</th>{% endif %}
-				<th class="col-site">Site</th>
-				<th class="col-stack" title="What built the site, detected from its generator tag or presumed from the list it is on">Tool</th>
-				<th class="col-stack col-stack-uses" title="Frameworks and libraries the page loads alongside what built it. What another tool always brings — React on a Next.js site — is left to the site's own page">Uses</th>
-				<th class="col-stack" title="Who serves the site, detected from its response headers on the same page load">Host</th>
-				<th class="col-rings" title="The four Lighthouse categories, then violating nodes from a full axe run and the Core Web Vitals verdict from real users. The ranking breaks ties the other way round: Core Web Vitals first, then axe">Scores</th>
-				<th class="col-trend">Perf trend</th>
-				<th class="col-lcp"><span class="lcp-head">LCP</span></th>
-				<th>CLS</th><th>TBT</th>
-				<th title="Total bytes transferred, with the page's DOM element count beneath it. Element count is only shown where the DOM snapshot looked like a page that actually loaded">Weight</th><th>Req</th>
-				<th class="col-lvf" title="The lab LCP as a multiple of the real-user p75. Above 1x the lab is slower than reality; below 1x the lab number is flattering the site. Only where CrUX has field data">Lab vs field</th>
-				<th class="col-nojs" title="Share of pixels that differ between the page as rendered and the same page with scripts disabled. A shifted layout counts, so a noscript banner alone can account for a large figure. A warning mark means the page drew nothing at all without JavaScript. Only measured where a no-JS capture is stored">No-JS ∆</th>
-			</tr>
-		</thead>
-		<tbody>
-		{% for entry in rows %}
-			<tr{% if entry.currentlyFailing %} class="row-failing"{% endif %}>
 				{% if group.ranked %}
-				<td class="col-rank">
-					{% if entry.groupRanks[group.id].overall %}
-					<span class="trophy">{{ entry.groupRanks[group.id].overall | trophy }}</span><span class="hash">#</span>{{ entry.groupRanks[group.id].overall }}{% if entry.groupRanks[group.id].overallClimb %}<span class="rank-climb" title="Up {{ entry.groupRanks[group.id].overallClimb }} {{ "place" if entry.groupRanks[group.id].overallClimb == 1 else "places" }} in this category since the previous measurement, from #{{ entry.groupRanks[group.id].overallPrevious }}">&#9650;{{ entry.groupRanks[group.id].overallClimb }}</span>{% endif %}
-					{% else %}—{% endif %}
-				</td>
+				<th class="col-rank">Nº</th>
 				{% endif %}
-				<td class="col-site">
-					<a class="site-link" href="/site/{{ entry.slug }}/">
-						{% set avatar = entry.url | avatar(meta.avatarService) %}
-						{% if avatar %}<img class="favicon" src="{{ avatar }}" width="32" height="32" alt="" loading="lazy" decoding="async">{% endif %}
-						<span title="{{ entry.displayUrl }}">{{ entry.displayUrl }}</span>
-					</a>
-					{% if entry.hiring %}<span class="badge badge-hiring">{{ entry.hiring.label }}</span>{% endif %}
-					{% if entry.latest %}<span class="updated-tag {{ 'stale-age' if entry.dataStale }}" title="Measured {{ entry.latest.date | date('long') }}"><time datetime="{{ entry.latest.date | iso }}">{{ entry.latest.date | since }}</time></span>{% else %}<span class="updated-tag never">never</span>{% endif %}
-					{% if entry.currentlyFailing %}<span class="badge badge-error" title="{{ entry.lastError }}">failing</span>{% endif %}
-					{% if entry.redirectTo and entry.redirectTo != entry.url %}<span class="badge badge-redirect" title="Measured through a redirect to {{ entry.redirectTo }}{% if entry.redirectConfirmed %} — confirmed, so history will follow it{% else %} — {{ entry.redirectReason }}{% endif %}">&#8618; redirect</span>
-					{% elif entry.canonicalUrl %}<span class="badge badge-redirect" title="Measured through a redirect to {{ entry.canonicalUrl }} — the site's canonical form of this URL">&#8618; redirect</span>{% endif %}
-					{% if entry.unlisted %}<span class="badge badge-unlisted" title="Built with {{ entry.unlisted.generator }} but not in {{ entry.unlisted.groupName }} — nobody has submitted it to the 11ty/11ty-community repository">unlisted</span>{% endif %}
-				</td>
-				{% if entry.latest %}
-					{# 22 rather than the shortcode's 16, in all three stack columns:
-					   these are the row's only pictures, in columns of their own, and
-					   at 16 they read as punctuation beside the numbers. The inline
-					   uses elsewhere — a tally row, a stat, a heading — sit next to
-					   text and keep the default. #}
-					<td class="col-stack">
-						{% if entry.generator %}{% stackIcon entry.generator, 22 %}
-						{% elif entry.presumedGenerator %}{% stackIcon entry.presumedGenerator, 22 %}
-						{% else %}<span class="stack-none" title="No generator detected">·</span>{% endif %}
-					</td>
-					{#- `or []`, since a site measured before the probe was stored has no tool list
-					    at all and the slice cannot read null. -#}
-					{%- set extraTools = entry.tools or [] %}
-					{#- Three, because that is what the column is wide enough to show without
-					    the row turning into a list. The rest stay a count. -#}
-					{%- set shownTools = extraTools.slice(0, 3) %}
-					<td class="col-stack col-stack-uses">
-						<span class="stack-row">
-							{%- if shownTools.length %}
-							{%- for tool in shownTools %}{% stackIcon tool, 22 %}{% endfor %}
-							{%- if extraTools.length > shownTools.length %}<span class="stack-more" title="Also uses {{ extraTools.slice(3) | join(', ', 'name') }}">+{{ extraTools.length - shownTools.length }}</span>{% endif %}
-							{%- else %}<span class="stack-none" title="No framework or library detected">·</span>{% endif %}
-						</span>
-					</td>
-					<td class="col-stack">
-						{% if entry.host %}{% stackIcon entry.host, 22 %}{% else %}<span class="stack-none" title="No host detected">·</span>{% endif %}
-					</td>
-					{#
-						Six rings, in the order <speedlify2-score> draws them: the four
-						Lighthouse categories, then Core Web Vitals and axe — the ranking's
-						two tiebreakers in the order it applies them, and the two things
-						Lighthouse's own categories do not cover. One column rather than
-						three, so a row reads as one picture and matches the embeddable
-						badge exactly.
-					#}
-					<td class="col-rings">
-						<span class="rings">
-						{% for score in metrics.SCORES %}
-							{% scoreRing entry.latest.lab.scores[score.key], score.label, score.short %}
-						{% endfor %}
-						{% axeRing entry.axe %}
-						{% cwvRing entry.cwvFailures, entry.cwv.assessed, entry.cwvWorst %}
-						</span>
-					</td>
-					{#
-						The line is softened, not grayed, on a site whose performance score
-						still bands good — the same treatment the detail page gives a metric
-						inside its threshold. A row scoring 96 after 99 has moved the wrong
-						way, and that is worth a color, but not the red kept for a site that
-						is actually slow.
-					#}
-					{% set perfGood = (entry.latest.lab.scores.performance | scoreClass) == "good" %}
-					<td class="col-trend">{% sparkline entry.trends.performance, { good: perfGood } %}</td>
-					<td class="num col-lcp"><span class="lcp-cell"><span class="lcp-value">{{ entry.latest.lab.timings.lcp | ms }}</span>{% lcpBar entry.latest.lab.lcpBreakdown, entry.latest.lab.timings.lcp %}</span></td>
-					<td class="num">{{ entry.latest.lab.timings.cls | unit("") }}</td>
-					<td class="num">{{ entry.latest.lab.timings.tbt | ms }}</td>
-					<td class="num">{% set domCount = entry.latest.lab.dom.elements %}{{ entry.latest.lab.weight.total | bytes }}{% if domCount %}<span class="weight-dom" title="{{ domCount | num }} DOM elements">{{ domCount | num }} elements</span>{% endif %}</td>
-					<td class="num">{{ entry.latest.lab.weight.requests | num }}</td>
-					<td class="num">{% if entry.labVsField %}<span class="lvf" title="Lab LCP {{ entry.labVsField.lab | ms }}, field p75 {{ entry.labVsField.field | ms }}">{{ entry.labVsField.ratio }}&times;</span>{% else %}<span class="muted">&mdash;</span>{% endif %}</td>
-					<td class="num col-nojs">{% if entry.ownScreenshot and entry.ownScreenshot.difference !== null %}{{ entry.ownScreenshot.difference }}%{% if entry.clientRendered %}<span class="csr-yes" title="only {{ entry.ownScreenshot.noJsText }}% of the no-JS capture is text, so the page said nothing without its scripts"><i class="fa-solid fa-triangle-exclamation csr-icon" width="12" height="12" aria-hidden="true"></i>EMPTY</span>{% endif %}{% else %}<span class="muted">&mdash;</span>{% endif %}</td>
-				{% else %}
-					{# 11 either way: dropping the rank column removes a cell from this row too,
-   so the span covers the same remainder. #}
-				<td colspan="12" class="muted">not measured yet</td>
-				{% endif %}
+				<th class="col-site">Site</th>
+				<th class="col-stack" title="Technologie utilisée pour créer le site, détectée à partir de sa balise generator ou déduite de la liste où il figure">
+					Outil
+				</th>
+				<th class="col-stack col-stack-uses" title="Frameworks et bibliothèques chargés par la page en complément de l’outil de création. Les éléments toujours associés à un autre outil — React sur un site Next.js, par exemple — sont laissés à la page du site">
+					Utilise
+				</th>
+				<th class="col-stack" title="Hébergeur du site, détecté à partir des en-têtes de réponse lors du même chargement de page">
+					Hébergeur
+				</th>
+				<th class="col-rings" title="Les quatre catégories Lighthouse, puis les nœuds présentant des violations lors d’une analyse axe complète, et l’évaluation des Core Web Vitals mesurés auprès de vrais utilisateurs. Pour départager les ex æquo, l’ordre est inversé : Core Web Vitals d’abord, puis axe">
+					Scores
+				</th>
+				<th class="col-trend">Évolution des performances</th>
+				<th class="col-lcp"><span class="lcp-head">LCP</span></th>
+				<th>CLS</th>
+				<th>TBT</th>
+				<th title="Total des octets transférés, avec le nombre d’éléments DOM de la page en dessous. Ce nombre n’est indiqué que si la capture du DOM ressemble à une page correctement chargée">
+					Poids
+				</th>
+				<th>Requêtes</th>
+				<th class="col-lvf" title="Le LCP mesuré en laboratoire comparé au 75e percentile réel. Au-dessus de 1×, le laboratoire est plus lent que la réalité ; en dessous de 1×, le résultat de laboratoire est flatteur pour le site. Affiché uniquement lorsque CrUX dispose de données réelles">
+					Labo / réel
+				</th>
+				<th class="col-nojs" title="Part des pixels qui diffèrent entre la page rendue et cette même page sans scripts. Les décalages de mise en page sont comptabilisés : une simple bannière noscript peut donc produire un chiffre élevé. Un symbole d’avertissement indique que la page ne s’est pas affichée du tout sans JavaScript. Mesuré uniquement lorsqu’une capture sans JavaScript est disponible">
+					Différence sans JS
+				</th>
 			</tr>
-		{% endfor %}
-		</tbody>
-	</table>
+			</thead>
+
+			<tbody>
+			{% for entry in rows %}
+			<tr
+			{% if entry.currentlyFailing %} class="row-failing"{% endif %}>
+			{% if group.ranked %}
+			<td class="col-rank">
+				{% if entry.groupRanks[group.id].overall %}
+				<span class="trophy">{{ entry.groupRanks[group.id].overall | trophy }}</span><span class="hash">#</span>{{
+				entry.groupRanks[group.id].overall }}{% if entry.groupRanks[group.id].overallClimb
+				%}<span class="rank-climb" title="A gagné {{ entry.groupRanks[group.id].overallClimb }} place{% if entry.groupRanks[group.id].overallClimb != 1 %}s{% endif %} dans cette catégorie depuis la mesure précédente, où le site était nº {{ entry.groupRanks[group.id].overallPrevious }}">&#9650;{{ entry.groupRanks[group.id].overallClimb }}</span>{%
+				endif %}
+				{% else %}—{% endif %}
+			</td>
+			{% endif %}
+			<td class="col-site">
+				<a class="site-link" href="/site/{{ entry.slug }}/">
+					{% set avatar = entry.url | avatar(meta.avatarService) %}
+					{% if avatar
+					%}<img class="favicon" src="{{ avatar }}" width="32" height="32" alt="" loading="lazy" decoding="async">{%
+					endif %}
+					<span title="{{ entry.displayUrl }}">{{ entry.displayUrl }}</span>
+				</a>
+				{% if entry.hiring %}<span class="badge badge-hiring">{{ entry.hiring.label }}</span>{% endif %}
+				{% if entry.latest
+				%}<span class="updated-tag {{ 'stale-age' if entry.dataStale }}" title="Mesuré le {{ entry.latest.date | date('long') }}"><time datetime="{{ entry.latest.date | iso }}">{{ entry.latest.date | since }}</time></span>{%
+				else %}<span class="updated-tag never">jamais mesuré</span>{% endif %}
+				{% if entry.currentlyFailing %}<span class="badge badge-error" title="{{ entry.lastError }}">échec de mesure</span>{%
+				endif %}
+				{% if entry.redirectTo and entry.redirectTo != entry.url
+				%}<span class="badge badge-redirect" title="Mesuré après une redirection vers {{ entry.redirectTo }}{% if entry.redirectConfirmed %} — redirection confirmée, l’historique la suivra{% else %} — {{ entry.redirectReason }}{% endif %}">&#8618; redirection</span>
+				{% elif entry.canonicalUrl
+				%}<span class="badge badge-redirect" title="Mesuré après une redirection vers {{ entry.canonicalUrl }} — l’adresse canonique du site">&#8618; redirection</span>{%
+				endif %}
+				{% if entry.unlisted
+				%}<span class="badge badge-unlisted" title="Créé avec {{ entry.unlisted.generator }}, mais absent de {{ entry.unlisted.groupName }} — personne ne l’a proposé dans le dépôt 11ty/11ty-community">non répertorié</span>{%
+				endif %}
+			</td>
+			{% if entry.latest %}
+			{# 22 rather than the shortcode's 16, in all three stack columns:
+			these are the row's only pictures, in columns of their own, and
+			at 16 they read as punctuation beside the numbers. The inline
+			uses elsewhere — a tally row, a stat, a heading — sit next to
+			text and keep the default. #}
+			<td class="col-stack">
+				{% if entry.generator %}{% stackIcon entry.generator, 22 %}
+				{% elif entry.presumedGenerator %}{% stackIcon entry.presumedGenerator, 22 %}
+				{% else %}<span class="stack-none" title="Aucun outil de création détecté">·</span>{% endif %}
+			</td>
+			{#- `or []`, since a site measured before the probe was stored has no tool list
+			at all and the slice cannot read null. -#}
+			{%- set extraTools = entry.tools or [] %}
+			{#- Three, because that is what the column is wide enough to show without
+			the row turning into a list. The rest stay a count. -#}
+			{%- set shownTools = extraTools.slice(0, 3) %}
+			<td class="col-stack col-stack-uses">
+        						<span class="stack-row">
+        							{%- if shownTools.length %}
+        							{%- for tool in shownTools %}{% stackIcon tool, 22 %}{% endfor %}
+        							{%- if extraTools.length > shownTools.length %}<span class="stack-more" title="Utilise également {{ extraTools.slice(3) | join(', ', 'name') }}">+{{ extraTools.length - shownTools.length }}</span>{% endif %}
+        							{%- else %}<span class="stack-none" title="Aucun framework ni bibliothèque détecté">·</span>{% endif %}
+        						</span>
+			</td>
+			<td class="col-stack">
+				{% if entry.host %}{% stackIcon entry.host, 22 %}{% else
+				%}<span class="stack-none" title="Aucun hébergeur détecté">·</span>{% endif %}
+			</td>
+			{#
+			Six rings, in the order
+			<speedlify2-score> draws them: the four
+				Lighthouse categories, then Core Web Vitals and axe — the ranking's
+				two tiebreakers in the order it applies them, and the two things
+				Lighthouse's own categories do not cover. One column rather than
+				three, so a row reads as one picture and matches the embeddable
+				badge exactly.
+				#}
+				<td class="col-rings">
+        						<span class="rings">
+        						{% for score in metrics.SCORES %}
+        							{% scoreRing entry.latest.lab.scores[score.key], score.label, score.short %}
+        						{% endfor %}
+        						{% axeRing entry.axe %}
+        						{% cwvRing entry.cwvFailures, entry.cwv.assessed, entry.cwvWorst %}
+        						</span>
+				</td>
+				{#
+				The line is softened, not grayed, on a site whose performance score
+				still bands good — the same treatment the detail page gives a metric
+				inside its threshold. A row scoring 96 after 99 has moved the wrong
+				way, and that is worth a color, but not the red kept for a site that
+				is actually slow.
+				#}
+				{% set perfGood = (entry.latest.lab.scores.performance | scoreClass) == "good" %}
+				<td class="col-trend">{% sparkline entry.trends.performance, { good: perfGood } %}</td>
+				<td class="num col-lcp"><span class="lcp-cell"><span class="lcp-value">{{ entry.latest.lab.timings.lcp | ms }}</span>{% lcpBar entry.latest.lab.lcpBreakdown, entry.latest.lab.timings.lcp %}</span>
+				</td>
+				<td class="num">{{ entry.latest.lab.timings.cls | unit("") }}</td>
+				<td class="num">{{ entry.latest.lab.timings.tbt | ms }}</td>
+				<td class="num">{% set domCount = entry.latest.lab.dom.elements %}{{ entry.latest.lab.weight.total |
+					bytes }}{% if domCount %}<span class="weight-dom" title="{{ domCount | num }} éléments DOM">{{ domCount | num }} éléments</span>{%
+					endif %}
+				</td>
+				<td class="num">{{ entry.latest.lab.weight.requests | num }}</td>
+				<td class="num">{% if entry.labVsField
+					%}<span class="lvf" title="LCP en laboratoire : {{ entry.labVsField.lab | ms }}, 75e percentile réel : {{ entry.labVsField.field | ms }}">{{ entry.labVsField.ratio }}&times;</span>{%
+					else %}<span class="muted">&mdash;</span>{% endif %}
+				</td>
+				<td class="num col-nojs">{% if entry.ownScreenshot and entry.ownScreenshot.difference !== null %}{{
+					entry.ownScreenshot.difference }}%{% if entry.clientRendered
+					%}<span class="csr-yes" title="Le texte représente seulement {{ entry.ownScreenshot.noJsText }} % de la capture sans JavaScript : la page n’affichait rien sans ses scripts"><i class="fa-solid fa-triangle-exclamation csr-icon" width="12" height="12" aria-hidden="true"></i>VIDE</span>{%
+					endif %}{% else %}<span class="muted">&mdash;</span>{% endif %}
+				</td>
+				{% else %}
+				{# 11 either way: dropping the rank column removes a cell from this row too,
+				so the span covers the same remainder. #}
+				<td colspan="12" class="muted">pas encore mesuré</td>
+				{% endif %}
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
 	</div>
 
 	{#
-		Right after the ranked table, for a reader who has finished the leaderboard
-		itself — but only when there is an overflow list below to separate it from
-		the one at the end of the page. Without that list the two would sit a
-		paragraph apart, which reads as a stutter rather than as two exits.
+	Right after the ranked table, for a reader who has finished the leaderboard
+	itself — but only when there is an overflow list below to separate it from
+	the one at the end of the page. Without that list the two would sit a
+	paragraph apart, which reads as a stutter rather than as two exits.
 	#}
 	{% if group.submitUrl and rest.length %}
 	<p class="cta-footer">
@@ -292,47 +312,49 @@ eleventyComputed:
 
 	{% if rest.length %}
 	{#
-		Names, not numbers. These rows were left out because the table was too long
-		to read, so repeating the columns here would undo the point — the link is
-		what is useful, and every figure is on the page it goes to.
+	Names, not numbers. These rows were left out because the table was too long
+	to read, so repeating the columns here would undo the point — the link is
+	what is useful, and every figure is on the page it goes to.
 	#}
 	<h3 class="rest-head">
-		The other {{ rest.length | num }}
-		<span class="muted small">— at least one ring amber, red or unmeasured, in no particular order</span>
+		Les {{ rest.length | num }} autres
+		<span class="muted small">— au moins un indicateur orange, rouge ou non mesuré, sans ordre particulier</span>
 	</h3>
 	{#
-		Shuffled, and reshuffled on every build. There is no ranking left to show
-		here — that is what the table above is for — so any fixed order would be
-		read as one anyway, and alphabetical would put the same sites at the top
-		of a 900-name list for ever.
+	Shuffled, and reshuffled on every build. There is no ranking left to show
+	here — that is what the table above is for — so any fixed order would be
+	read as one anyway, and alphabetical would put the same sites at the top
+	of a 900-name list for ever.
 	#}
 	<ul class="rest-list">
 		{% for entry in rest | shuffle %}
 		<li>
 			<a href="/site/{{ entry.slug }}/">{{ entry.displayUrl }}</a>
 			{#
-				The one thing worth saying here beyond the name: this row is not in
-				the table because the site is down, rather than because its scores
-				are middling. The title carries the error itself.
+			The one thing worth saying here beyond the name: this row is not in
+			the table because the site is down, rather than because its scores
+			are middling. The title carries the error itself.
 			#}
 			{#
-				Two independent marks, because they answer different questions and a
-				site can need both. The hourglass says there are no figures on the
-				page this links to; the triangle says the last attempt errored, and
-				carries the error itself. Most of the sites with no figures have both
-				— nothing to show, and a reason why — but each stands alone: a site
-				measured months ago can be failing today, and a site added this
-				morning has neither been tried nor refused.
+			Two independent marks, because they answer different questions and a
+			site can need both. The hourglass says there are no figures on the
+			page this links to; the triangle says the last attempt errored, and
+			carries the error itself. Most of the sites with no figures have both
+			— nothing to show, and a reason why — but each stands alone: a site
+			measured months ago can be failing today, and a site added this
+			morning has neither been tried nor refused.
 
-				The hourglass first: what is missing, then why. Muted rather than red,
-				since a site nobody has measured yet is a gap in our data and not a
-				verdict on theirs.
+			The hourglass first: what is missing, then why. Muted rather than red,
+			since a site nobody has measured yet is a gap in our data and not a
+			verdict on theirs.
 			#}
 			{%- if not entry.latest %}
-			<i class="fa-solid fa-hourglass-start rest-pending" title="No successful measurement yet" width="12" height="12">No results yet</i>
+			<i class="fa-solid fa-hourglass-start rest-pending" title="Aucune mesure réussie pour le moment" width="12" height="12">Aucun
+				résultat pour le moment</i>
 			{%- endif %}
 			{%- if entry.currentlyFailing %}
-			<i class="fa-solid fa-triangle-exclamation rest-error" title="{{ entry.lastError }}" width="12" height="12">Currently failing</i>
+			<i class="fa-solid fa-triangle-exclamation rest-error" title="{{ entry.lastError }}" width="12" height="12">Échec
+				de mesure actuel</i>
 			{%- endif %}
 		</li>
 		{% endfor %}
@@ -340,9 +362,9 @@ eleventyComputed:
 	{% endif %}
 
 	{#
-		Last on the page, after the overflow list as well as the table. Someone who
-		has read both and still not found their own site is exactly who this is
-		for, and by then the header is a thousand rows away.
+	Last on the page, after the overflow list as well as the table. Someone who
+	has read both and still not found their own site is exactly who this is
+	for, and by then the header is a thousand rows away.
 	#}
 	{% if group.submitUrl %}
 	<p class="cta-footer">
@@ -351,11 +373,4 @@ eleventyComputed:
 	{% endif %}
 </section>
 
-{#
-	After the leaderboard, matching the home page's order: the tables are what
-	someone came for, and this is the summary you read once you have looked. Over
-	this category's sites alone, so it answers what a category is usually for —
-	what these particular sites have in common.
-#}
-{{ technology(group.stacks, "stacks") }}
-{% endif %}
+{#	After the leaderboard, matching the home page's order: the tables are what	someone came for, and this is the summary you read once you have looked. Over	this category's sites alone, so it answers what a category is usually for —	what these particular sites have in common.#}{{ technology(group.stacks, "stacks") }}{% endif %}

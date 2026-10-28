@@ -3,11 +3,13 @@ permalink: "/api/race.json"
 eleventyExcludeFromCollections: true
 ---
 {#
-  Every site that has a stored filmstrip, as the /race/ page needs it.
+  Tous les sites dont une bande de vignettes est enregistrée, comme l’exige
+  la page /race/.
 
-  Built as its own document rather than inlined into the page because the
-  selection is a query parameter: the page is one static file for every pairing,
-  so the catalog has to be fetched rather than rendered.
+  Généré dans un document distinct plutôt qu’intégré à la page, car la sélection
+  dépend d’un paramètre de requête : la page est un fichier statique unique pour
+  chaque paire de sites. Le catalogue doit donc être récupéré, et non généré
+  directement dans la page.
 -#}
 {%- set racers = [] -%}
 {%- for entry in sites.entries -%}
@@ -28,14 +30,16 @@ eleventyExcludeFromCollections: true
 	{%- endif -%}
 {%- endfor -%}
 {#
-  The categories /compare/ may offer unprompted: Shuffle draws from these, and
-  the select beside it lists them — one set, so the menu cannot name something
-  the pool refuses.
+  Les catégories que /compare/ peut proposer spontanément : le bouton de
+  mélange aléatoire choisit parmi celles-ci, et le menu déroulant voisin les
+  affiche. Il s’agit du même ensemble, afin que le menu ne propose pas de
+  catégorie absente du tirage aléatoire.
 
-  A category says so itself, with `compareEligible` in config/sites.js, rather
-  than being inferred here from flags that mean other things. Everything else
-  stays reachable by typing it or linking to it; this only narrows what the page
-  offers on its own.
+  Chaque catégorie l’indique explicitement avec `compareEligible` dans
+  config/sites.js, plutôt que de déduire cette possibilité à partir d’indicateurs
+  ayant une autre signification. Les autres catégories restent accessibles en
+  les saisissant ou en ouvrant un lien ; cela limite uniquement les choix que
+  la page propose d’elle-même.
 -#}
 {%- set shuffleGroups = [] -%}
 {%- for g in sites.groups -%}

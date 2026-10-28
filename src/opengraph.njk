@@ -3,29 +3,34 @@ permalink: /opengraph/
 eleventyExcludeFromCollections: true
 ---
 {#
-	The Open Graph card generator: one page, 1200×630 at the top left, showing
-	whichever tracked site is asked for.
+Le générateur de cartes Open Graph : une page de 1200 × 630 pixels, en haut
+à gauche, qui affiche le site suivi de votre choix.
 
-	The same shape as the card page on 11ty-website — a page sized exactly to the
-	image, screenshotted by a service rather than composited by a build step,
-	with the editor UI kept below the fold. `?site=<slug>` picks the site, so a
-	card has a stable URL; the select is how you find the slug.
+La page suit le même modèle que celle des cartes d’11ty-website : une page
+dont les dimensions correspondent exactement à celles de l’image, capturée
+par un service plutôt que composée pendant la génération du site, avec
+l’interface d’édition placée sous la zone visible. Le paramètre
+`?site=<slug>` permet de choisir le site et fournit à chaque carte une URL
+	stable. La liste déroulante permet de trouver son identifiant.
 
-	Everything a card can say is computed here and carried as data: the script
-	below draws no conclusions, it only puts values into an existing skeleton.
-	The ring bands in particular come from the same `lib/rank.js` the site's own
-	rings use, through the `scoreClass`/`axeClass`/`cwvClass` filters, so a card
-	cannot paint a circle a different color from the page it depicts.
--#}
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<title>Open Graph card generator · {{ meta.title }}</title>
-<meta name="robots" content="noindex">
-{#- Linked rather than inlined: the card borrows the site's own tokens, ring
-    rules and stack-mark rules, and there is no reason to duplicate them. -#}
-<link rel="stylesheet" href="/css/style.css">
+	Tout le contenu de la carte est calculé ici et transmis sous forme de
+	données : le script ci-dessous ne tire aucune conclusion, il insère
+	uniquement des valeurs dans une structure déjà créée. Les couleurs des
+	anneaux proviennent notamment de `lib/rank.js`, utilisé aussi par les
+	anneaux des pages du site, via les filtres `scoreClass`, `axeClass` et
+	`cwvClass`. La couleur d’un cercle sur la carte correspond donc toujours
+	à celle de la page représentée.
+	-#}
+	<!doctype html>
+	<html lang="fr">
+	<head>
+		<meta charset="utf-8">
+		<title>Générateur de cartes Open Graph · {{ meta.title }}</title>
+		<meta name="robots" content="noindex">
+		{#- La feuille de style est liée plutôt qu’intégrée directement : la carte
+		réutilise les variables CSS du site, les règles des anneaux et celles des
+		icônes des outils. Il n’est pas nécessaire de les dupliquer. -#}
+		<link rel="stylesheet" href="/css/style.css">
 <style>
 /* Dark unconditionally. A card is one image on somebody else's timeline, so it
    cannot follow a reader's preference the way the site does. */
@@ -314,15 +319,17 @@ body { margin: 0; padding: 0; }
 	</div>
 
 	{#
-		The rings are rendered here by the same shortcodes the site's own pages
-		use, with placeholder values, and the script only rewrites what varies:
-		the band class, the arc's dash and the text in the middle. So there is no
-		copy of the ring geometry in the browser — the circumference is read back
-		off the arc it is already drawn with.
+	Les anneaux sont affichés ici à l’aide des mêmes shortcodes que ceux
+	utilisés sur les pages du site, avec des valeurs provisoires. Le script
+	ne modifie que les éléments variables : la classe de bande, le tiret de
+	l’arc et le texte au centre. La géométrie des anneaux n’est donc pas
+	reproduite dans le navigateur : la circonférence est lue directement
+	sur l’arc déjà dessiné.
 
-		Placeholders rather than a real site's figures because every one of them
-		has to produce an arc: the shortcode omits the arc entirely for a null,
-		and the script cannot fill in an element that was never rendered.
+	Les valeurs provisoires sont utilisées plutôt que les résultats d’un
+	vrai site, car chacune doit produire un arc : le shortcode omet entièrement
+	l’arc si la valeur est null, et le script ne peut pas remplir un élément
+	qui n’a jamais été affiché.
 	#}
 	<div class="og-rings" id="og-rings" hidden>
 		{% for score in metrics.SCORES %}
@@ -344,43 +351,40 @@ body { margin: 0; padding: 0; }
 	<div class="og-bottom">
 		<div class="og-figures" id="og-figures">
 			<span class="og-figure" id="og-fig-weight">
-				<span class="og-figure-label">Page weight</span>
+				<span class="og-figure-label">Poids de la page</span>
 				<span class="og-figure-value"></span>
 			</span>
 			<span class="og-figure" id="og-fig-requests">
-				<span class="og-figure-label">Requests</span>
+				<span class="og-figure-label">Requêtes</span>
 				<span class="og-figure-value"></span>
 			</span>
 			<span class="og-figure" id="og-fig-lcp">
 				<span class="og-figure-label">LCP</span>
 				<span class="og-figure-value"></span>
 			</span>
-			{#- Only where a no-JS capture was stored. Same gate as the site page's own section. -#}
+			{#- Affiché uniquement lorsqu’une capture sans JavaScript a été enregistrée. Même condition que pour la section correspondante de la page du site. -#}
 			<span class="og-figure" id="og-fig-nojs" hidden>
-				<span class="og-figure-label">No-JS &#8710;</span>
+				<span class="og-figure-label">Sans JS &#8710;</span>
 				<span class="og-figure-value"></span>
 			</span>
-			{#- The two most recent runs, oldest row first, as the six bands each
-			    one produced. A shape rather than a figure: what it says is whether
-			    the last run looks like the one before it. -#}
+			{#- Les deux mesures les plus récentes, dans l’ordre chronologique, sous forme des six bandes de chacune. Il s’agit d’une représentation visuelle, pas d’une valeur : elle permet de voir si la dernière mesure ressemble à la précédente. -#}
 			<span class="og-figure" id="og-fig-runs" hidden>
 				<span class="og-figure-label"></span>
 				<span class="og-runs"></span>
 			</span>
 		</div>
-		<p class="og-unmeasured" id="og-unmeasured" hidden>Not yet measured.</p>
+		<p class="og-unmeasured" id="og-unmeasured" hidden">Pas encore mesuré.</p>
 		<p class="og-date" id="og-date"></p>
 	</div>
 </div>
 
 <div class="ui">
-	<h2>Open Graph card</h2>
-	<p>The card above is exactly 1200&times;630 at the top left of this page; everything from here down, and the darker area around it, stays out of the shot.</p>
+	<h2>Carte Open Graph</h2>
+	<p>La carte ci-dessus mesure exactement 1200&times;630 pixels et se trouve en haut à gauche de cette page. Tout ce qui se trouve en dessous, ainsi que la zone plus sombre qui l’entoure, n’apparaît pas dans la capture.</p>
 
-	{#- Two steps rather than one select of 1,500. The category narrows the list;
-	    only the site reaches the URL, and the category is read back off it. -#}
+	{#- Deux étapes plutôt qu’une liste déroulante de 1 500 éléments. La catégorie réduit la liste ; seul le site détermine l’URL, et la catégorie est ensuite récupérée depuis celle-ci. -#}
 	<div class="ui-fields">
-		<label>Category
+		<label>Catégorie
 			<select id="field-category"></select>
 		</label>
 		<label>Site
@@ -392,129 +396,124 @@ body { margin: 0; padding: 0; }
 	</div>
 
 	<div class="ui-actions">
-		<button type="button" id="copy-link">Copy link to this card</button>
-		<a id="open-screenshot" href="" target="_blank" rel="noopener">Open screenshot URL</a>
-		<a id="open-report" href="">Full report</a>
-		<a id="open-category" href="">Category</a>
+		<button type="button" id="copy-link">Copier le lien de cette carte</button>
+		<a id="open-screenshot" href="" target="_blank" rel="noopener">Ouvrir l’URL de la capture</a>
+		<a id="open-report" href="">Rapport complet</a>
+		<a id="open-category" href="">Catégorie</a>
 	</div>
 
-	<p>Rendered as an image by: <code id="ui-screenshot-url"></code></p>
+	<p>Image générée à partir de : <code id="ui-screenshot-url"></code></p>
 
-	{#- A card that fails to draw still looks like a card: the skeleton below the
-	    script is a plausible one, all hundreds and this site's own domain. So a
-	    failure says so here rather than only in the console, where nobody looking
-	    at a wrong-looking image would think to check. -#}
+	{#- Même si la carte ne s’affiche pas correctement, elle doit conserver son apparence. Le squelette ci-dessous, visible avant l’exécution du script, est crédible : il affiche des centaines partout et le domaine du site. En cas d’erreur, le message s’affiche donc ici plutôt que seulement dans la console, où personne ne penserait à regarder après avoir vu une image incorrecte. -#}
 	<p id="ui-problem" class="ui-problem" hidden></p>
 </div>
 
 {#
-	One mark per distinct generator and host, rendered once and cloned by the
-	script. Not carried in the JSON below: `stackIcon` emits a Font Awesome `<i>`
-	for brands Font Awesome carries, and that only becomes a glyph because the
-	plugin transforms real markup — an element inside a JSON string is never
-	seen. Cloning also means a brand used by 700 sites is one copy of its path.
+Une icône par générateur ou hébergeur distinct, affichée une seule fois et
+dupliquée par le script. Les icônes ne figurent pas dans le JSON ci-dessous :
+`stackIcon` génère un élément Font Awesome `<i>` pour les marques prises en
+	charge par Font Awesome, qui ne devient un glyphe que lorsque le plugin
+	transforme du véritable code HTML. Un élément inclus dans une chaîne JSON
+	n’est jamais détecté. Le clonage permet aussi de n’avoir qu’une seule copie
+	du chemin d’une icône de marque utilisée par 700 sites.
 
-	Keyed by name, which is what the stacks summary carries. A bucketed row like
-	"Self-hosted" therefore gets the bucket's own chip rather than the mark of
-	the daemon behind it, which the site pages do show.
-#}
-<div id="og-marks" hidden>
-	<span data-icon="warning">{#- Cloned into the No-JS figure. -#}<i class="fa-solid fa-triangle-exclamation" width="18" height="18" aria-hidden="true"></i></span>
-	{%- for item in sites.stacks.generators.items %}<span data-mark="{{ item.name }}">{% stackIcon item, 30 %}</span>{% endfor -%}
-	{%- for item in sites.stacks.hosts.items %}<span data-mark="{{ item.name }}">{% stackIcon item, 30 %}</span>{% endfor -%}
-</div>
+	Les éléments sont indexés par leur nom, comme dans le récapitulatif des
+	outils. Ainsi, une catégorie regroupée comme « Hébergé soi-même » utilise
+	sa propre icône plutôt que celle du logiciel qui se trouve derrière, laquelle
+	est affichée sur les pages des sites.
+	#}
+	<div id="og-marks" hidden>
+		<span data-icon="warning">{#- Cloné dans la valeur « Sans JS ». -#}<i class="fa-solid fa-triangle-exclamation" width="18" height="18" aria-hidden="true"></i></span>
+		{%- for item in sites.stacks.generators.items %}<span data-mark="{{ item.name }}">{% stackIcon item, 30 %}</span>{% endfor -%}
+		{%- for item in sites.stacks.hosts.items %}<span data-mark="{{ item.name }}">{% stackIcon item, 30 %}</span>{% endfor -%}
+	</div>
 
-{#
-	Every tracked site, as arrays rather than objects — this is 1,500-odd records
-	and the keys would be most of the bytes. The legend is in the script below.
+	{#
+	Tous les sites suivis, sous forme de tableaux plutôt que d’objets : il y a
+	environ 1 500 enregistrements, et les clés représenteraient une grande
+	partie du poids total. La légende se trouve dans le script ci-dessous.
 
-	The leading 0 keeps the comma placement simple in the loop and is sliced off
-	on the other side, the same trick the 11ty-website card page uses.
-#}
-{#
-	The categories in the order the site puts them: the ones the home page lists,
-	in `sites.groups` order, then the rest. The same two passes the category
-	switcher in base.njk makes, for the same reason — a category kept off the
-	front page is still reachable, but it belongs after the ones a reader arrived
-	expecting. Sorting these alphabetically in the browser would have put this
-	page's list in an order nothing else on the site uses.
+	Le 0 initial simplifie la gestion des virgules dans la boucle. Il est retiré
+	de l’autre côté, selon la même astuce que sur la page des cartes du site
+	11ty-website.
+	#}
+	{#
+	Les catégories sont présentées dans le même ordre que sur le site : d’abord
+	celles affichées sur la page d’accueil, dans l’ordre de `sites.groups`, puis
+	les autres. La page de sélection des catégories dans base.njk procède de la
+	même manière, pour la même raison : une catégorie absente de la page d’accueil
+	reste accessible, mais apparaît après celles auxquelles les lecteurs
+	s’attendent. Un tri alphabétique dans le navigateur aurait donné à cette liste
+	un ordre différent de celui utilisé ailleurs sur le site.
 
-	Each is a `[name, id]` pair: the records carry a category's name, and its page
-	is addressed by id.
-#}
-<script type="application/json" id="og-categories">
+	Chaque élément est une paire `[nom, identifiant]` : les enregistrements
+	contiennent le nom de la catégorie, et sa page est désignée par son
+	identifiant.
+	#}
+	<script type="application/json" id="og-categories">
 [0
 {%- for g in sites.groups %}{% if g.showOnHomePageCategoryList %},{{ [g.name, g.id] | dump | replace("</", "<\\/") | safe }}{% endif %}{% endfor -%}
 {%- for g in sites.groups %}{% if not g.showOnHomePageCategoryList %},{{ [g.name, g.id] | dump | replace("</", "<\\/") | safe }}{% endif %}{% endfor -%}
 ]
-</script>
+	</script>
 
-<script type="application/json" id="og-sites">
-[0
-{%- for entry in sites.entries -%}
-	{%- set lab = entry.latest.lab if entry.latest -%}
-	{%- set rings = [] -%}
-	{%- for score in metrics.SCORES -%}
-		{%- set v = lab.scores[score.key] if lab else null -%}
-		{%- set rings = (rings.push([v | scoreClass, v]), rings) -%}
-	{%- endfor -%}
-	{#- Mirrors axeRing: a run that errored has no count, and no count is "none". -#}
-	{%- set axeValue = entry.axe.violations if entry.axe and not entry.axe.error else null -%}
-	{%- set rings = (rings.push([axeValue | axeClass, null]), rings) -%}
-	{%- set rings = (rings.push([entry.cwvFailures | cwvClass(entry.cwvWorst or "poor"), null]), rings) -%}
-	{#- A rank is only worth putting on a card while it is a credit, and the rings
-	    beside it decide that: "#812" over an amber circle is a card arguing with
-	    itself. Green or gray only — an axe run that did not happen and a site
-	    CrUX has never sampled are absences, not marks against it.
+	<script type="application/json" id="og-sites">
+		[0
+			{%- for entry in sites.entries -%}
+			{%- set lab = entry.latest.lab if entry.latest -%}
+			{%- set rings = [] -%}
+			{%- for score in metrics.SCORES -%}
+			{%- set v = lab.scores[score.key] if lab else null -%}
+			{%- set rings = (rings.push([v | scoreClass, v]), rings) -%}
+			{%- endfor -%}
+			{#- Reproduit le comportement de axeRing : un test ayant échoué ne fournit aucun décompte, et l’absence de décompte correspond à « aucun ». -#}
+			{%- set axeValue = entry.axe.violations if entry.axe and not entry.axe.error else null -%}
+			{%- set rings = (rings.push([axeValue | axeClass, null]), rings) -%}
+			{%- set rings = (rings.push([entry.cwvFailures | cwvClass(entry.cwvWorst or "poor"), null]), rings) -%}
+			{#- Un classement ne mérite d’apparaître sur une carte que s’il est flatteur ; les anneaux affichés à côté permettent de le déterminer. « N° 812 » au-dessus d’un cercle orange serait contradictoire. Seuls le vert et le gris sont acceptés : un test axe non effectué et un site jamais échantillonné par CrUX sont des absences de données, pas des points négatifs.
 
-	    Read off the same six bands the card draws rather than `allGreen`, which
-	    answers a near-miss of this question: it wants axe green rather than green
-	    or unrun, and it lets an amber Core Web Vitals through. -#}
-	{%- set offBand = [] -%}
-	{%- for ring in rings -%}
-		{%- if ring[0] == "average" or ring[0] == "poor" -%}
+				On examine les six bandes affichées sur la carte plutôt que `allGreen`, qui ne répond pas exactement à la question : il exige un anneau axe vert plutôt que vert ou non évalué, et accepte un résultat Core Web Vitals orange. -#}
+			{%- set offBand = [] -%}
+			{%- for ring in rings -%}
+			{%- if ring[0] == "average" or ring[0] == "poor" -%}
 			{%- set offBand = (offBand.push(ring[0]), offBand) -%}
-		{%- endif -%}
-	{%- endfor -%}
-	{#- "Self-hosted" is the absence of a host rather than one — the bucket a bare
-	    daemon name falls into — so the card says nothing rather than naming it. -#}
-	{%- set hostName = entry.host.name if (entry.host and entry.host.id != "self-hosted") else null -%}
-	{%- set generator = entry.generator or entry.presumedGenerator -%}
-	{%- set noJs = entry.ownScreenshot.difference if entry.ownScreenshot else null -%}
-	{#- The last three runs, each as its six bands reduced to their initials —
-	    good, average, poor, none are distinct in the first letter, so this is a
-	    wire format rather than a second opinion about banding. History is
-	    stored oldest first, so these come out in that order too. -#}
-	{%- set runs = [] -%}
-	{%- set runCount = entry.history | length -%}
-	{%- for run in entry.history -%}
-		{%- if loop.index0 >= runCount - 3 -%}
+			{%- endif -%}
+			{%- endfor -%}
+			{#- « Hébergé soi-même » indique l’absence d’hébergeur plutôt qu’un hébergeur en particulier : c’est la catégorie dans laquelle tombe un nom de serveur seul. La carte n’affiche donc aucun nom. -#}
+			{%- set hostName = entry.host.name if (entry.host and entry.host.id != "self-hosted") else null -%}
+			{%- set generator = entry.generator or entry.presumedGenerator -%}
+			{%- set noJs = entry.ownScreenshot.difference if entry.ownScreenshot else null -%}
+			{#- Les trois dernières mesures, chacune représentée par les initiales de ses six bandes — « bon », « moyen », « mauvais » et « aucun » ne se distinguent pas tous par leur première lettre ; il s’agit donc d’un format de données, pas d’une nouvelle interprétation des bandes. L’historique étant enregistré du plus ancien au plus récent, les valeurs sont présentées dans cet ordre. -#}
+			{%- set runs = [] -%}
+			{%- set runCount = entry.history | length -%}
+			{%- for run in entry.history -%}
+			{%- if loop.index0 >= runCount - 3 -%}
 			{%- set letters = [] -%}
 			{%- for band in run.bands -%}{%- set letters = (letters.push(band[0]), letters) -%}{%- endfor -%}
 			{%- set runs = (runs.push(letters | join("")), runs) -%}
-		{%- endif -%}
-	{%- endfor -%}
-	,{{ [
-		entry.slug,
-		entry.displayUrl,
-		entry.url,
-		entry.groupName,
-		entry.ranks.overall if (entry.ranks.overall and not offBand.length) else null,
-		rings,
-		(lab.weight.total | bytes) if lab else null,
-		(lab.weight.requests | num) if lab else null,
-		(lab.timings.lcp | ms) if lab else null,
-		noJs,
-		entry.clientRendered or false,
-		(entry.latest.date | date("ymd")) if entry.latest else null,
-		generator.name or null,
-		hostName,
-		(generator.presumed or false) if generator else false,
-		runs
-	] | dump | replace("</", "<\\/") | safe }}
-{%- endfor -%}
-]
-</script>
+			{%- endif -%}
+			{%- endfor -%}
+		,{{ [
+			entry.slug,
+			entry.displayUrl,
+			entry.url,
+			entry.groupName,
+			entry.ranks.overall if (entry.ranks.overall and not offBand.length) else null,
+			rings,
+			(lab.weight.total | bytes) if lab else null,
+			(lab.weight.requests | num) if lab else null,
+			(lab.timings.lcp | ms) if lab else null,
+			noJs,
+			entry.clientRendered or false,
+			(entry.latest.date | date("ymd")) if entry.latest else null,
+			generator.name or null,
+			hostName,
+			(generator.presumed or false) if generator else false,
+			runs
+		] | dump | replace("</", "<\\/") | safe }}
+			{%- endfor -%}
+		]
+	</script>
 
 <script type="module">
 /* Field order in each record above. */

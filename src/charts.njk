@@ -1,13 +1,13 @@
 ---
 layout: base.njk
 permalink: /charts/index.html
-title: Charts
+title: Graphiques
 ---
 
 <header class="detail-head">
-	<h2 class="page-hed">Charts</h2>
+	<h2 class="page-hed">Graphiques</h2>
 	<p class="lede">
-		Pulls the most recent measurement of every site (excluding starter projects). Tooltips are only shown on green (well scoring) data points.
+		Affiche la mesure la plus récente pour chaque site (à l’exception des projets de démarrage). Les infobulles ne s’affichent que sur les points verts (données bien notées).
 	</p>
 </header>
 
@@ -16,21 +16,21 @@ title: Charts
 {% from "strip.njk" import stripfigure %}
 
 {#
-	Built rather than written out, so a chart that has no data to draw drops out
-	of the list instead of leaving a link to a section that is not on the page.
+	La table des matières est générée automatiquement : les graphiques sans
+	données sont omis plutôt que de laisser un lien vers une section absente.
 #}
 {% set toc = [] %}
-{% if sites.lcpScatter %}{% set toc = (toc.push({ id: "weight-lcp", label: "Page Weight" }), toc) %}{% endif %}
-{% if sites.jsScatter %}{% set toc = (toc.push({ id: "js-lcp", label: "JavaScript Weight" }), toc) %}{% endif %}
-{% if sites.ttfbScatter %}{% set toc = (toc.push({ id: "ttfb-lcp", label: "Time to First Byte" }), toc) %}{% endif %}
-{% if sites.fontClsScatter %}{% set toc = (toc.push({ id: "font-cls", label: "Fonts and Layout Shift" }), toc) %}{% endif %}
-{% if sites.thirdPartyScatter %}{% set toc = (toc.push({ id: "third-party", label: "Third Party" }), toc) %}{% endif %}
-{% if sites.domScatter %}{% set toc = (toc.push({ id: "dom-performance", label: "DOM Elements" }), toc) %}{% endif %}
-{% if sites.employeeScatter %}{% set toc = (toc.push({ id: "employees-lcp", label: "Company Size" }), toc) %}{% endif %}
-{% if sites.jsByGenerator %}{% set toc = (toc.push({ id: "js-by-generator", label: "JavaScript by Generator" }), toc) %}{% endif %}
-{% if sites.clientRenderedByGenerator %}{% set toc = (toc.push({ id: "client-rendered", label: "Client Rendering by Generator" }), toc) %}{% endif %}
-{% if sites.ttfbByHost %}{% set toc = (toc.push({ id: "ttfb-by-host", label: "TTFB by Host" }), toc) %}{% endif %}
-{% if sites.labFieldPairs %}{% set toc = (toc.push({ id: "lab-field", label: "Field vs Lab LCP" }), toc) %}{% endif %}
+{% if sites.lcpScatter %}{% set toc = (toc.push({ id: "weight-lcp", label: "Poids des pages" }), toc) %}{% endif %}
+{% if sites.jsScatter %}{% set toc = (toc.push({ id: "js-lcp", label: "Poids du JavaScript" }), toc) %}{% endif %}
+{% if sites.ttfbScatter %}{% set toc = (toc.push({ id: "ttfb-lcp", label: "Temps jusqu’au premier octet" }), toc) %}{% endif %}
+{% if sites.fontClsScatter %}{% set toc = (toc.push({ id: "font-cls", label: "Polices et décalage de mise en page" }), toc) %}{% endif %}
+{% if sites.thirdPartyScatter %}{% set toc = (toc.push({ id: "third-party", label: "Tiers" }), toc) %}{% endif %}
+{% if sites.domScatter %}{% set toc = (toc.push({ id: "dom-performance", label: "Éléments DOM" }), toc) %}{% endif %}
+{% if sites.employeeScatter %}{% set toc = (toc.push({ id: "employees-lcp", label: "Taille de l’entreprise" }), toc) %}{% endif %}
+{% if sites.jsByGenerator %}{% set toc = (toc.push({ id: "js-by-generator", label: "JavaScript selon le générateur" }), toc) %}{% endif %}
+{% if sites.clientRenderedByGenerator %}{% set toc = (toc.push({ id: "client-rendered", label: "Rendu côté client selon le générateur" }), toc) %}{% endif %}
+{% if sites.ttfbByHost %}{% set toc = (toc.push({ id: "ttfb-by-host", label: "TTFB selon l’hébergeur" }), toc) %}{% endif %}
+{% if sites.labFieldPairs %}{% set toc = (toc.push({ id: "lab-field", label: "LCP terrain et laboratoire" }), toc) %}{% endif %}
 
 {{ contents(toc) }}
 
@@ -38,9 +38,9 @@ title: Charts
 {% set plot = sites.lcpScatter %}
 <section class="group" id="weight-lcp">
 	<div class="group-head">
-		<h2>Page Weight vs LCP <span class="tag">{{ plot.count | num }} sites</span> {{ rtag(plot) }}</h2>
+		<h2>Poids de la page et LCP <span class="tag">{{ plot.count | num }} sites</span> {{ rtag(plot) }}</h2>
 	</div>
-	{{ scatterfigure(plot, "Page Weight") }}
+	{{ scatterfigure(plot, "Poids de la page") }}
 </section>
 {% endif %}
 
@@ -48,9 +48,9 @@ title: Charts
 {% set js = sites.jsScatter %}
 <section class="group" id="js-lcp">
 	<div class="group-head">
-		<h2>JavaScript Weight vs LCP <span class="tag">{{ js.count | num }} sites</span> {{ rtag(js) }}</h2>
+		<h2>Poids du JavaScript et LCP <span class="tag">{{ js.count | num }} sites</span> {{ rtag(js) }}</h2>
 	</div>
-	{{ scatterfigure(js, "JavaScript Weight") }}
+	{{ scatterfigure(js, "Poids du JavaScript") }}
 </section>
 {% endif %}
 
@@ -58,9 +58,9 @@ title: Charts
 {% set ttfb = sites.ttfbScatter %}
 <section class="group" id="ttfb-lcp">
 	<div class="group-head">
-		<h2>TTFB vs LCP <span class="tag">{{ ttfb.count | num }} sites</span> {{ rtag(ttfb) }}</h2>
+		<h2>TTFB et LCP <span class="tag">{{ ttfb.count | num }} sites</span> {{ rtag(ttfb) }}</h2>
 	</div>
-	{{ scatterfigure(ttfb, "Time to First Byte") }}
+	{{ scatterfigure(ttfb, "Temps jusqu’au premier octet") }}
 </section>
 {% endif %}
 
@@ -68,9 +68,9 @@ title: Charts
 {% set fonts = sites.fontClsScatter %}
 <section class="group" id="font-cls">
 	<div class="group-head">
-		<h2>Web Font Weight vs CLS <span class="tag">{{ fonts.count | num }} sites</span> {{ rtag(fonts) }}</h2>
+		<h2>Poids des polices web et CLS <span class="tag">{{ fonts.count | num }} sites</span> {{ rtag(fonts) }}</h2>
 	</div>
-	{{ scatterfigure(fonts, "Web Font Weight", "Cumulative Layout Shift") }}
+	{{ scatterfigure(fonts, "Poids des polices web", "Décalage cumulatif de mise en page") }}
 </section>
 {% endif %}
 
@@ -78,13 +78,13 @@ title: Charts
 {% set tp = sites.thirdPartyScatter %}
 <section class="group" id="third-party">
 	<div class="group-head">
-		<h2>Performance vs Third Party <span class="tag">{{ tp.count | num }} sites</span> {{ rtag(tp) }}</h2>
+		<h2>Performances et ressources tierces <span class="tag">{{ tp.count | num }} sites</span> {{ rtag(tp) }}</h2>
 	</div>
 	<p class="muted small">
-		Lighthouse’s Performance score weighed against third-party weight — usually
-		things like analytics, embeds, fonts, tag managers, ads.
+		Le score de performances Lighthouse comparé au poids des ressources tierces — généralement
+		des outils d’analyse, des contenus intégrés, des polices, des gestionnaires de balises ou des publicités.
 	</p>
-	{{ scatterfigure(tp, "Performance Score", "Third-Party Weight") }}
+	{{ scatterfigure(tp, "Score de performances", "Poids des ressources tierces") }}
 </section>
 {% endif %}
 
@@ -92,21 +92,21 @@ title: Charts
 {% set dom = sites.domScatter %}
 <section class="group" id="dom-performance">
 	<div class="group-head">
-		<h2>Performance vs DOM Elements <span class="tag">{{ dom.count | num }} sites</span> {{ rtag(dom) }}</h2>
+		<h2>Performances et éléments DOM <span class="tag">{{ dom.count | num }} sites</span> {{ rtag(dom) }}</h2>
 	</div>
 	<p class="muted small">
-		Lighthouse&rsquo;s Performance score against DOM element count. A big
-		document is paid for in style and layout work on every frame.
+		Le score de performances Lighthouse comparé au nombre d’éléments DOM. Un document
+		volumineux entraîne davantage de travail de style et de mise en page à chaque image affichée.
 	</p>
 	{#
-		The drift is real and the spread is the caveat, so both are said above
-		rather than left for a reader to infer from a cloud of dots. The median
-		falls from 99 under a hundred elements to 58 past three thousand — but the
-		green band runs the whole height of the chart, some sites past three
-		thousand still score 100, and one under a hundred scores 12. Node count
-		moves the odds; it does not decide the number.
+		La tendance est réelle, mais la dispersion doit aussi être signalée :
+		les médianes passent de 99 sous la barre des cent éléments à 58 au-delà
+		de trois mille. Toutefois, la bande verte s’étend sur toute la hauteur
+		du graphique : certains sites dépassant trois mille éléments obtiennent
+		toujours 100, tandis qu’un site de moins de cent éléments obtient 12.
+		Le nombre de nœuds influe sur les chances, mais ne détermine pas le score.
 	#}
-	{{ scatterfigure(dom, "Performance Score", "DOM Elements") }}
+	{{ scatterfigure(dom, "Score de performances", "Éléments DOM") }}
 </section>
 {% endif %}
 
@@ -114,26 +114,24 @@ title: Charts
 {% set emp = sites.employeeScatter %}
 <section class="group" id="employees-lcp">
 	<div class="group-head">
-		<h2>Company Size vs LCP <span class="tag">{{ emp.count | num }} companies</span> {{ rtag(emp) }}</h2>
+		<h2>Taille de l’entreprise et LCP <span class="tag">{{ emp.count | num }} entreprises</span> {{ rtag(emp) }}</h2>
 	</div>
 	<p class="muted small">
-		Big Tech, Web Hosts and Website Builders only &mdash; the categories where
-		&ldquo;how many people work here&rdquo; has an answer. Headcount comes from
-		each company&rsquo;s own filings and disclosures. One dot per company,
-		using its canonical site.
+		Grandes entreprises technologiques, hébergeurs web et créateurs de sites uniquement — les catégories
+		pour lesquelles le nombre d’employés est connu. Les effectifs proviennent des déclarations et
+		publications de chaque entreprise. Un point par entreprise, à partir de son site de référence.
 		{%- if sites.employeesUnknown.length %}
-		A further {{ sites.employeesUnknown.length }}
-		{{ "company is" if sites.employeesUnknown.length == 1 else "companies are" }}
-		measured but not plotted, having published no headcount.
+		{{ sites.employeesUnknown.length }} autre{{ "entreprise n’a" if sites.employeesUnknown.length == 1 else "s n’ont" }}
+		publié aucun effectif et a donc été mesurée sans être représentée sur le graphique.
 		{%- endif %}
 	</p>
 	{#
-		Unlike every other chart here, this one names its slow dots as well as its
-		fast ones — see `nameAll` in lib/report.js. These are the largest companies
-		on earth rather than someone's personal site, and the whole reading is
-		which company sits where.
+		Contrairement aux autres graphiques, celui-ci identifie aussi les points
+		lents — voir `nameAll` dans lib/report.js. Il s’agit des plus grandes
+		entreprises du monde, et non de sites personnels ; l’intérêt est de voir
+		où se situe chacune d’elles.
 	#}
-	{{ scatterfigure(emp, "Employees") }}
+	{{ scatterfigure(emp, "Employés") }}
 </section>
 {% endif %}
 
@@ -141,23 +139,23 @@ title: Charts
 {% set jg = sites.jsByGenerator %}
 <section class="group" id="js-by-generator">
 	<div class="group-head">
-		<h2>JavaScript Weight by Site Generator <span class="tag">{{ jg.count | num }} sites</span></h2>
+		<h2>Poids du JavaScript selon le générateur de site <span class="tag">{{ jg.count | num }} sites</span></h2>
 	</div>
 	<p class="muted small">
-		One row per generator, one dot per site, ordered by median.
+		Une ligne par générateur, un point par site, classés selon la médiane.
 	</p>
 	{#
-		The caveat is not a footnote. Eleventy is four fifths of the sites that
-		report a generator here, and every other row is a handful of sites that
-		someone chose to submit to an Eleventy project. Read down the column of
-		counts before reading across the rows.
+		La réserve est essentielle : Eleventy représente quatre sites sur cinq
+		parmi ceux qui déclarent un générateur. Les autres lignes ne comptent que
+		quelques sites, soumis par des contributeurs à un projet Eleventy.
+		Commencez par lire les nombres d’échantillons avant de comparer les lignes.
 	#}
 	<p class="muted small">
-		Across {{ jg.groups }} generators with at least five sites each:
-		twenty more were detected too rarely in this data set.
+		Parmi {{ jg.groups }} générateurs comptant au moins cinq sites chacun :
+		vingt autres ont aussi été détectés, mais trop rarement dans cet ensemble de données.
 	</p>
 
-	{{ stripfigure(jg, "JavaScript Weight", true) }}
+	{{ stripfigure(jg, "Poids du JavaScript", true) }}
 </section>
 {% endif %}
 
@@ -165,55 +163,53 @@ title: Charts
 {% set cr = sites.clientRenderedByGenerator %}
 <section class="group" id="client-rendered">
 	<div class="group-head">
-		<h2>Client Rendering by Generator <span class="tag">{{ cr.judged | num }} sites</span></h2>
+		<h2>Rendu côté client selon le générateur <span class="tag">{{ cr.judged | num }} sites</span></h2>
 	</div>
 	<p class="muted small">
-		Sites that painted nothing with scripts disabled, by the tool their page
-		reports building it. One row per generator: a dot for how many of its
-		sites were judged, a dot for how many came up blank, and a line joining
-		them &mdash; so the length of the row is the size of the sample the finding
-		came out of.
+		Sites qui n’affichent rien lorsque les scripts sont désactivés, regroupés selon l’outil déclaré
+		pour leur création. Une ligne par générateur : un point indique le nombre de sites évalués,
+		un autre le nombre de sites restés vierges, et une ligne les relie. La longueur de la ligne
+		représente donc la taille de l’échantillon à l’origine du constat.
 	</p>
 	{#
-		Three caveats, and none of them is a footnote.
+		Trois réserves, qui ne doivent pas être reléguées en note.
 
-		The first is coverage: only a site with a no-JS capture can be judged, and
-		which sites have one is a property of the category, not of the site. This
-		is a slice of the corpus, not a census of it.
+		Premièrement, la couverture : seuls les sites disposant d’une capture sans JavaScript
+		peuvent être évalués. Les sites concernés dépendent de la catégorie ; cet échantillon
+		ne représente pas l’ensemble du corpus.
 
-		The second is that the largest row is not a tool. A page that renders
-		nothing server-side often ships no build-time generator tag either — the
-		same property produces both — so "no generator tag" collects much of what
-		this chart is looking for, and the tools named below it are the ones that
-		did declare themselves.
+		Deuxièmement, la ligne la plus longue ne correspond pas à un outil. Une page qui ne
+		se rend pas côté serveur ne déclare souvent aucun générateur au moment de la compilation.
+		Cette même caractéristique explique à la fois l’absence de balise et ce que le graphique
+		cherche à repérer. Les outils nommés en dessous sont ceux qui se sont déclarés.
 
-		The third is scale: with a handful of flagged sites, one site moving is a
-		visible change in a row. Both counts are printed beside every row for that
-		reason, and the axis is a count of sites rather than a rate — the shortest
-		row here is one site out of one, which as a percentage would be the far end
-		of the chart.
+		Troisièmement, la taille de l’échantillon : quand quelques sites seulement sont signalés,
+		le déplacement d’un seul site change visiblement la ligne. Les deux nombres sont indiqués
+		à côté de chaque ligne pour cette raison, et l’axe compte les sites — pas les taux.
+		La ligne la plus courte représente un site sur un : exprimée en pourcentage, elle se
+		trouverait tout au bout de l’axe.
 	#}
 	<p class="muted small">
-		{{ cr.flagged }} empty pre-JavaScript blank pages from {{ cr.judged | num }} measured {{ cr.judged | plural("site") }}.
+		{{ cr.flagged }} pages vierges avant l’exécution de JavaScript, sur {{ cr.judged | num }} {{ cr.judged | plural("site") }} mesurés.
 	</p>
 
 	{% if cr.pairs %}
 	{% set crp = cr.pairs %}
 	{#
-		A dumbbell rather than the nested bars this used to be, and only the rows
-		that flagged something. The bar version drew all twenty-nine generators,
-		which meant twenty-three rows of an empty track — and it scaled every bar
-		against the largest row, so the mark a reader compared was sample size
-		wearing the costume of a finding.
+		Un graphique en haltères remplace les barres imbriquées, et seules les
+		lignes où quelque chose a été signalé sont affichées. La version avec
+		barres montrait les vingt-neuf générateurs, soit vingt-trois lignes
+		entièrement vides ; en outre, chaque barre était rapportée à la ligne la
+		plus longue, confondant la taille de l’échantillon avec l’importance du constat.
 
-		Here the sample is the line and the finding is the left dot, and a row of
-		one site is visibly a row of one site.
+		Ici, le trait représente l’échantillon et le point de gauche le constat.
+		Une ligne correspondant à un seul site reste visiblement une ligne d’un site.
 	#}
 	<figure class="plot plot-scroll">
 		<div class="plot-frame" tabindex="0" role="group"
-			aria-label="Blank pre-JavaScript pages by generator, scrollable">
+			aria-label="Pages vierges avant JavaScript selon le générateur, avec défilement possible">
 		<svg viewBox="0 0 {{ crp.box.w }} {{ crp.box.h }}" role="img"
-			aria-label="Sites judged and sites that drew nothing without JavaScript, by generator{% for pair in crp.pairs %}. {{ pair.name }}, {{ pair.rate }}{% endfor %}.">
+			aria-label="Sites évalués et sites n’affichant rien sans JavaScript, selon le générateur{% for pair in crp.pairs %}. {{ pair.name }}, {{ pair.rate }}{% endfor %}.">
 			<g class="plot-grid">
 				{%- for tick in crp.xTicks %}
 				<line x1="{{ tick.x }}" x2="{{ tick.x }}" y1="{{ crp.box.top }}" y2="{{ crp.box.top + crp.plot.h }}"/>
@@ -230,8 +226,9 @@ title: Charts
 			</g>
 
 			{#
-				Names in the margin, as on the strip plots above — a row is read
-				against its own label, and a legend would make that a lookup.
+				Les noms sont placés dans la marge, comme sur les graphiques
+				en bandes ci-dessus : chaque ligne se lit avec son libellé,
+				sans avoir à consulter une légende.
 			#}
 			<g class="gen-labels">
 				{%- for pair in crp.pairs %}
@@ -240,10 +237,11 @@ title: Charts
 			</g>
 
 			{#
-				Line, then the judged dot, then the flagged dot on top — the flagged
-				end carries the finding, so nothing is allowed to sit over it. On a
-				row where every judged site came up blank the two coincide, which is
-				the true picture of "1 of 1" and not something to nudge apart.
+				Le trait est dessiné en premier, puis le point des sites évalués,
+				et enfin le point des sites signalés par-dessus : celui-ci porte le
+				constat et ne doit donc pas être masqué. Quand tous les sites évalués
+				sont restés vierges, les deux points se confondent. C’est bien ce que
+				signifie « 1 sur 1 » ; il ne faut pas les écarter artificiellement.
 			#}
 			<g class="pair-links">
 				{%- for pair in crp.pairs %}<line x1="{{ pair.flaggedX }}" x2="{{ pair.judgedX }}" y1="{{ pair.y }}" y2="{{ pair.y }}"/>{% endfor %}
@@ -256,13 +254,14 @@ title: Charts
 			</g>
 
 			{#
-				"10 of 59" beside the row, because the rate is the number a reader
-				wants and the one thing that must not be plotted: as a coordinate it
-				would put a single site at the far end of the axis, ahead of a row of
-				thirteen. Printed next to its own sample it cannot be read that way.
+				« 10 sur 59 » est affiché à côté de la ligne : c’est le taux
+				qu’on souhaite connaître, mais qu’il ne faut pas représenter
+				sur l’axe. Comme coordonnée, un seul site se retrouverait tout
+				au bout, devant une ligne de treize sites. Affiché à côté de
+				l’échantillon correspondant, il ne peut pas être interprété ainsi.
 
-				Flipped inward near the right edge, where a label drawn outward would
-				run off the frame.
+				Près du bord droit, le libellé est inversé vers l’intérieur
+				afin de ne pas dépasser du cadre.
 			#}
 			<g class="gen-median-values">
 				{%- for pair in crp.pairs %}
@@ -275,22 +274,23 @@ title: Charts
 		</div>
 
 		<figcaption class="plot-legend">
-			<span class="plot-key pair-key-secondary">Sites judged</span>
-			<span class="plot-key plot-poor">Drew nothing without JavaScript</span>
-			<span class="plot-key plot-scroll-note">Scroll sideways for the rest of the scale.</span>
+			<span class="plot-key pair-key-secondary">Sites évalués</span>
+			<span class="plot-key plot-poor">N’affichaient rien sans JavaScript</span>
+			<span class="plot-key plot-scroll-note">Faites défiler horizontalement pour voir la suite de l’échelle.</span>
 		</figcaption>
 	</figure>
 
 	{#
-		The rows that are not drawn, said rather than shown. Twenty-three
-		generators with nothing flagged would be twenty-three rows of a dot on a
-		dot at zero — and "Hugo, 0 of 2" drawn at the same weight as "Next.js, 4 of
-		13" claims a great deal more about Hugo than two sites can support.
+		Les lignes non représentées sont expliquées ici. Vingt-trois générateurs
+		sans aucun signalement formeraient vingt-trois lignes réduites à un point
+		à zéro. Afficher « Hugo, 0 sur 2 » avec la même importance que « Next.js,
+		4 sur 13 » donnerait à Hugo une portée que deux sites ne permettent pas
+		de justifier.
 	#}
 	<p class="muted small">
-		The other {{ cr.clean.generators }} {{ cr.clean.generators | plural("generator") }}
-		flagged nothing across {{ cr.clean.judged | num }} judged {{ cr.clean.judged | plural("site") }}
-		between them — mostly on samples of a handful of sites each.
+		Les {{ cr.clean.generators }} autres {{ cr.clean.generators | plural("générateur") }}
+		n’ont rien signalé sur {{ cr.clean.judged | num }} {{ cr.clean.judged | plural("site") }} évalués
+		au total — pour la plupart, des échantillons de quelques sites seulement.
 	</p>
 	{% endif %}
 </section>
@@ -300,45 +300,47 @@ title: Charts
 {% set th = sites.ttfbByHost %}
 <section class="group" id="ttfb-by-host">
 	<div class="group-head">
-		<h2>TTFB by Host <span class="tag">{{ th.count | num }} sites</span></h2>
+		<h2>TTFB selon l’hébergeur <span class="tag">{{ th.count | num }} sites</span></h2>
 	</div>
 	{#
-		Worth the number here more than anywhere: these medians sit within 1.5x of
-		each other with the rows almost entirely overlapping, so the tick is the
-		only thing telling one host from the next, and "almost the same" is exactly
-		the finding.
+		Il est particulièrement important d’indiquer les valeurs ici : les
+		médianes ne diffèrent que d’un facteur inférieur à 1,5 et les lignes
+		se chevauchent presque entièrement. Les graduations sont le seul moyen
+		de distinguer les hébergeurs — et le constat est justement qu’ils sont
+		presque équivalents.
 	#}
-	{{ stripfigure(th, "Time to First Byte", true) }}
+	{{ stripfigure(th, "Temps jusqu’au premier octet", true) }}
 </section>
 {% endif %}
-
 {% if sites.labFieldPairs %}
 {% set lf = sites.labFieldPairs %}
 <section class="group" id="lab-field">
 	<div class="group-head">
-		<h2>Field vs Lab LCP <span class="tag">{{ lf.count | num }} sites</span></h2>
+		<h2>LCP terrain et laboratoire <span class="tag">{{ lf.count | num }} sites</span></h2>
 	</div>
 	<p class="muted small">
-		One row per site, ordered by our throttled lab run: a dot for what the lab
-		measured, a dot for what real users actually saw (Chrome&rsquo;s field p75)
-		and a line joining them. Sorting by the lab figure straightens it into a
-		curve, and the field dots scatter across it.
+		Une ligne par site, classée selon notre mesure en laboratoire avec limitation
+		de débit : un point indique la mesure du laboratoire, un autre ce que les
+		utilisateurs ont réellement vu (p75 terrain de Chrome), et un trait les relie.
+		Le classement selon la mesure du laboratoire dessine une courbe, sur laquelle
+		les points terrain sont dispersés.
 	</p>
 	{#
-		The sampling bias is the first thing to say, not a footnote. CrUX only
-		reports sites with enough traffic to anonymize, so this is not a seventh of
-		the corpus chosen at random — it is the popular seventh, which is likely
-		the better-resourced one too. Any reading of the aggregate carries that.
+		Le biais d’échantillonnage doit être signalé d’emblée, et non relégué en note.
+		CrUX ne fournit des données que pour les sites qui ont assez de trafic pour
+		être anonymisés. Il ne s’agit donc pas d’un septième du corpus choisi au hasard,
+		mais de son septième le plus populaire, probablement aussi mieux doté en ressources.
+		Toute interprétation des données agrégées doit en tenir compte.
 	#}
 	<p class="muted small">
-		The lab is slower than reality on <strong>{{ lf.labSlower | num }}</strong>
-		of these and faster on {{ lf.labFaster | num }}.
+		La mesure en laboratoire est plus lente que la réalité pour
+		<strong>{{ lf.labSlower | num }}</strong> de ces sites, et plus rapide pour {{ lf.labFaster | num }}.
 	</p>
 
 	<figure class="plot">
 		<div class="plot-frame">
 		<svg viewBox="0 0 {{ lf.box.w }} {{ lf.box.h }}" role="img"
-			aria-label="Lab and field largest contentful paint for {{ lf.count | num }} sites, one row per site ordered by the lab run, each pair joined by a line. The lab figure is slower than the field figure on {{ lf.labSlower | num }} of them.">
+			aria-label="LCP en laboratoire et sur le terrain pour {{ lf.count | num }} sites, une ligne par site classée selon la mesure du laboratoire, chaque paire étant reliée par un trait. La mesure du laboratoire est plus lente que celle du terrain pour {{ lf.labSlower | num }} d’entre eux.">
 			<g class="plot-grid">
 				{%- for tick in lf.xTicks %}
 				<line x1="{{ tick.x }}" x2="{{ tick.x }}" y1="{{ lf.box.top }}" y2="{{ lf.box.top + lf.plot.h }}"/>
@@ -346,9 +348,10 @@ title: Charts
 			</g>
 
 			{#
-				On the same baseline as the decade ticks. The whole scale reads as one
-				row above the plot: split across the two ends of a chart this tall,
-				half of it is off screen for the entire read.
+				Sur la même ligne de base que les graduations par dizaines. L’échelle
+				se lit ainsi sur une seule ligne au-dessus du graphique : répartie aux
+				deux extrémités d’un graphique aussi haut, la moitié serait hors écran
+			 pendant toute la lecture.
 			#}
 			<g class="plot-threshold">
 				{%- for line in lf.thresholds %}
@@ -367,9 +370,9 @@ title: Charts
 			</g>
 
 			{#
-				Lines first, then the field dots, then the lab dots on top — the lab
-				end is the one the rows are ordered by, so nothing is allowed to sit
-				over it.
+				D’abord les traits, puis les points terrain, et enfin les points
+				du laboratoire par-dessus : c’est la valeur du laboratoire qui
+				détermine le classement des lignes, elle ne doit donc pas être masquée.
 			#}
 			<g class="pair-links">
 				{%- for pair in lf.pairs %}<line x1="{{ pair.labX }}" x2="{{ pair.fieldX }}" y1="{{ pair.y }}" y2="{{ pair.y }}"/>{% endfor %}
@@ -385,12 +388,13 @@ title: Charts
 		</svg>
 
 		{#
-			One hit target per row rather than per dot: the pair is the unit being
-			read, and a 4px row is already the smallest thing here worth aiming at.
+			Une zone interactive par ligne plutôt que par point : la paire forme
+			l’unité de lecture, et une ligne de 4 px est déjà la plus petite cible
+			qu’il soit utile de viser ici.
 
-			Only the rows the lab found fast are named, as on every chart here. The
-			others are still drawn, and still every bit as legible — they are simply
-			not identified.
+			Seules les lignes dont la mesure en laboratoire est rapide sont nommées,
+			comme dans les autres graphiques. Les autres sont tout de même tracées
+			et restent parfaitement lisibles, mais ne sont pas identifiées.
 		#}
 		<div class="plot-hits">
 			{%- for pair in lf.pairs %}{% if pair.named %}
@@ -399,7 +403,7 @@ title: Charts
 				tabindex="-1" aria-hidden="true">
 				<span class="plot-tip">
 					<span class="plot-tip-name">{{ pair.name }}</span>
-					<span class="plot-tip-stats">lab {{ pair.labText }} · field {{ pair.fieldText }}</span>
+					<span class="plot-tip-stats">laboratoire {{ pair.labText }} · terrain {{ pair.fieldText }}</span>
 				</span>
 			</a>
 			{%- endif %}{% endfor %}
@@ -407,10 +411,10 @@ title: Charts
 		</div>
 
 		<figcaption class="plot-legend">
-			<span class="plot-key pair-key-secondary">Field</span>
-			<span class="plot-key plot-good">Lab, within 2.5&nbsp;s</span>
-			<span class="plot-key plot-average">Lab, to 4&nbsp;s</span>
-			<span class="plot-key plot-poor">Lab, over 4&nbsp;s</span>
+			<span class="plot-key pair-key-secondary">Terrain</span>
+			<span class="plot-key plot-good">Laboratoire, jusqu’à 2,5&nbsp;s</span>
+			<span class="plot-key plot-average">Laboratoire, jusqu’à 4&nbsp;s</span>
+			<span class="plot-key plot-poor">Laboratoire, plus de 4&nbsp;s</span>
 		</figcaption>
 	</figure>
 </section>

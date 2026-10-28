@@ -1,43 +1,47 @@
 ---
 layout: base.njk
 permalink: /runs/index.html
-title: Runs
+title: Exécutions
 ---
 
 <header class="detail-head">
-	<h2 class="page-hed">Measurement runs</h2>
+	<h2 class="page-hed">Sessions de mesure</h2>
 	<p class="lede">
-		Every measurement pass, read from the NDJSON run log. When a number looks
-		wrong, the first question is whether that run actually finished — this
-		answers it without shell access to the build machine.
+		Chaque passage de mesure, lu à partir du journal d’exécution NDJSON. Lorsqu’un
+		résultat semble erroné, la première question est de savoir si cette exécution
+		s’est réellement terminée. Cette page permet de le vérifier sans accès au
+		shell de la machine de compilation.
 	</p>
 </header>
 
 {% from "contents.njk" import contents %}
 {% set toc = [] %}
-{% if sites.recentlyMeasured.length %}{% set toc = (toc.push({ id: "recently-measured", label: "Recently measured" }), toc) %}{% endif %}
-{% if sites.benchmark %}{% set toc = (toc.push({ id: "machines", label: "Measuring machines" }), toc) %}{% endif %}
+{% if sites.recentlyMeasured.length %}{% set toc = (toc.push({ id: "recently-measured", label: "Mesures récentes" }), toc) %}{% endif %}
+{% if sites.benchmark %}{% set toc = (toc.push({ id: "machines", label: "Machines de mesure" }), toc) %}{% endif %}
 {% if runs.recent.length %}
-	{% set toc = (toc.push({ id: "runs", label: "Runs" }), toc) %}
-	{% set toc = (toc.push({ id: "reading-logs", label: "Reading the logs" }), toc) %}
+{% set toc = (toc.push({ id: "runs", label: "Exécutions" }), toc) %}
+{% set toc = (toc.push({ id: "reading-logs", label: "Lire les journaux" }), toc) %}
 {% endif %}
 {{ contents(toc) }}
 
 {% if sites.recentlyMeasured.length %}
 <section class="panel" id="recently-measured">
 	{#
-		The same rows as the stat bar's card on the home page — the link, the six
-		band colors, the age — laid out across columns rather than down one.
+	Les mêmes lignes que dans la carte de la barre de statistiques sur la page
+	d’accueil — le lien, les six couleurs des bandes et l’ancienneté — présentées
+	en colonnes plutôt qu’en liste verticale.
 
-		This page is about the measurement loop, so the list earns more room here
-		than it gets in a card that has to share a scrolling row with five others.
-		Columns rather than a longer single list: sixty rows in one column is a
-		screen of scrolling to learn something a reader takes in at a glance.
+	Cette page porte sur le cycle de mesure : la liste mérite ici plus de place
+	que dans une carte qui doit partager une rangée défilante avec cinq autres.
+	Les colonnes évitent aussi une longue liste verticale : soixante lignes dans
+	une seule colonne imposeraient un long défilement pour une information que
+	le lecteur peut saisir d’un coup d’œil.
 	#}
-	<h2>Recently measured <span class="tag">{{ sites.recentlyMeasured | length }} sites</span></h2>
+	<h2>Mesures récentes <span class="tag">{{ sites.recentlyMeasured | length }} sites</span></h2>
 	<p class="muted small">
-		Newest first, across the whole corpus. The dots are the four Lighthouse
-		categories, then axe and Core Web Vitals, in the colors that run carried.
+		Du plus récent au plus ancien, dans l’ensemble du corpus. Les points
+		représentent les quatre catégories Lighthouse, puis axe et les Core Web Vitals,
+		dans les couleurs enregistrées lors de la mesure.
 	</p>
 	<ol class="recents recents-wide">
 		{% for site in sites.recentlyMeasured %}
@@ -54,88 +58,93 @@ title: Runs
 {% endif %}
 
 {#
-	The machines, before the runs on them.
+Les machines, avant les exécutions effectuées sur celles-ci.
 
-	This belongs here rather than on a site page because it is a fact about the
-	instrument, not about any site: every CPU-bound number published — TBT, the
-	performance score, anything derived from them — was produced on one of these,
-	and a run on a slow one reports a worse site having measured nothing
-	different.
+Cette information figure ici plutôt que sur la page d’un site, car elle
+concerne l’instrument de mesure, pas un site en particulier : chaque valeur
+publiée dépendante du processeur — TBT, le score de performance et toute valeur
+dérivée de ces mesures — a été produite sur l’une de ces machines. Une exécution
+sur une machine lente donne de moins bons résultats pour le site, même si rien
+d’autre n’a changé.
 #}
 {% if sites.benchmark %}
 <section class="panel" id="machines">
-	<h2>The measuring machines <span class="tag">Lighthouse benchmark index</span></h2>
+	<h2>Les machines de mesure <span class="tag">Indice de référence Lighthouse</span></h2>
 	<p class="muted small">
-		Recorded once per measurement, from the run whose numbers were kept.
-		Higher is faster.
+		Valeurs enregistrées une fois par mesure, à partir de l’exécution dont les
+		résultats ont été conservés. Plus l’indice est élevé, plus la machine est rapide.
 	</p>
 
 	<dl class="bench-stats">
 		<div>
-			<dt>Median</dt>
+			<dt>Médiane</dt>
 			<dd>{{ sites.benchmark.median | num }}</dd>
 		</div>
 		<div>
 			{#
-				Second, against the median it is drawn from: the pair reads as one
-				statement about which machines count as ordinary here.
+			Ensuite, la plage est comparée à la médiane dont elle est issue :
+			ensemble, elles indiquent quelles machines sont considérées comme
+			ordinaires dans ce projet.
 			#}
-			<dt>&plusmn;{{ sites.benchmark.driftBand.pct }}% Median</dt>
+			<dt>&plusmn;{{ sites.benchmark.driftBand.pct }}% de la médiane</dt>
 			<dd>{{ sites.benchmark.driftBand.low | num }}&ndash;{{ sites.benchmark.driftBand.high | num }}</dd>
 		</div>
 		<div>
-			<dt>Mean</dt>
+			<dt>Moyenne</dt>
 			<dd>{{ sites.benchmark.mean | num }}</dd>
 		</div>
 		<div>
-			<dt>Range</dt>
+			<dt>Étendue</dt>
 			<dd>{{ sites.benchmark.min | num }}&ndash;{{ sites.benchmark.max | num }}</dd>
 		</div>
 	</dl>
 
 	<p class="muted small">
 		{#
-			Both averages, because they disagree: the mean sits above the median
-			because a thin tail of fast runners pulls it there, while most runs
-			cluster within a few percent of each other. Saying so is the difference
-			between a statistic and a number.
+		Les deux moyennes sont présentées parce qu’elles diffèrent : la moyenne
+		arithmétique dépasse la médiane, car un petit nombre de machines très
+		rapides la tire vers le haut, tandis que la plupart des exécutions se
+		regroupent à quelques pourcents les unes des autres. L’expliquer fait
+		d’une statistique autre chose qu’un simple chiffre.
 		#}
-		From {{ sites.benchmark.count | num }} {{ sites.benchmark.count | plural("measurement") }}.
-		The mean sits above the median because a few unusually fast machines pull it
-		there; most runs land close together. A site is told
-		<em>&ldquo;the measuring machine was faster than most in this project&rdquo;</em>
-		when its run lands outside that band.
-		That is a distance rather than a percentile because the notice claims the
-		CPU-bound numbers moved, and how far off the machine was decides that; how
-		rare it was does not. These machines vary by running fast rather than slow,
-		so in practice the notice is a fast-machine one.
+		À partir de {{ sites.benchmark.count | num }} {{ sites.benchmark.count | plural("mesure") }}.
+		La moyenne arithmétique dépasse la médiane, car quelques machines
+		particulièrement rapides la tirent vers le haut ; la plupart des exécutions
+		obtiennent des résultats proches. Un site reçoit le message
+		<em>&ldquo;la machine de mesure était plus rapide que la plupart des machines
+			de ce projet&rdquo;</em> lorsque son exécution se situe en dehors de cette plage.
+		Ce seuil mesure un écart plutôt qu’un percentile, car l’avertissement signale
+		que les valeurs dépendantes du processeur ont été affectées, et c’est
+		l’importance de l’écart qui compte, pas sa rareté. Ces machines se distinguent
+		par leur vitesse, et non par leur lenteur : en pratique, l’avertissement
+		concerne donc les machines rapides.
 	</p>
 </section>
 {% endif %}
 
 {% if not runs.recent.length %}
 <div class="empty">
-	<p>No runs logged yet. Run <code>npm run measure</code> to create one.</p>
+	<p>Aucune exécution n’a encore été enregistrée. Lancez <code>npm run measure</code> pour en créer une.</p>
 </div>
 {% else %}
 
 <section class="panel" id="runs">
 	<div class="table-scroll">
-	<table class="grid">
-		<thead>
+		<table class="grid">
+			<thead>
 			<tr>
-				<th class="col-site">Started</th>
-				<th>Duration</th>
-				<th>Measured</th>
-				<th>Skipped</th>
-				<th>Failed</th>
-				<th>Warnings</th>
-				<th>Form factor</th>
-				<th>Log file</th>
+				<th class="col-site">Démarrée</th>
+				<th>Durée</th>
+				<th>Mesurés</th>
+				<th>Ignorés</th>
+				<th>Échecs</th>
+				<th>Avertissements</th>
+				<th>Format</th>
+				<th>Fichier journal</th>
 			</tr>
-		</thead>
-		<tbody>
-		{% for run in runs.recent %}
+			</thead>
+			<tbody>
+			{% for run in runs.recent %}
 			<tr{% if run.failed %} class="row-failing"{% endif %}>
 				<td class="col-site">{{ run.startedAt | date("long") }}</td>
 				<td class="num">{{ (run.durationMs / 1000) | round(1) }}s</td>
@@ -146,26 +155,27 @@ title: Runs
 				<td class="muted">{{ run.formFactor or "—" }}</td>
 				<td class="muted"><code>{{ run.logFile }}</code></td>
 			</tr>
-		{% endfor %}
-		</tbody>
-	</table>
+			{% endfor %}
+			</tbody>
+		</table>
 	</div>
 </section>
 
 <section class="panel" id="reading-logs">
-	<h2>Reading the logs</h2>
+	<h2>Lire les journaux</h2>
 	<p class="muted small">
-		Each run writes a full NDJSON log to <code>logs/&lt;runId&gt;.ndjson</code>,
-		one JSON object per line, plus a summary line appended to
-		<code>logs/runs.ndjson</code>. Both are greppable:
+		Chaque exécution écrit un journal NDJSON complet dans
+		<code>logs/&lt;runId&gt;.ndjson</code>, avec un objet JSON par ligne, ainsi
+		qu’une ligne de résumé ajoutée à <code>logs/runs.ndjson</code>. Les deux
+		fichiers peuvent être filtrés avec grep :
 	</p>
-	<pre><code># Every warning and error across all runs
+	<pre><code># Tous les avertissements et erreurs de toutes les exécutions
 grep -h '"level":"warn"\|"level":"error"' logs/*.ndjson | jq .
 
-# What happened to one site in one run
+# Résultat d’un site dans une exécution donnée
 jq 'select(.data.url == "https://example.com/")' logs/2026-01-01*.ndjson
 
-# Run history at a glance
+# Historique des exécutions en un coup d’œil
 npx speedlify runs</code></pre>
 </section>
 

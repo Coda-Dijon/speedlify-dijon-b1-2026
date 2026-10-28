@@ -7,17 +7,18 @@ permalink: "/api/site/{{ entry.slug }}.json"
 eleventyExcludeFromCollections: true
 ---
 {#
-  One small JSON document per site, so a widget can look up a single URL
-  without downloading the whole report. The full report.json is megabytes; each
-  of these is under a kilobyte.
+  Un petit document JSON par site, afin qu’un widget puisse récupérer une seule
+  URL sans télécharger l’intégralité du rapport. Le fichier report.json complet
+  pèse plusieurs mégaoctets ; chacun de ces documents fait moins d’un kilooctet.
 
-  Keyed by the same slug as the site's page. A consumer needs only the site
-  URL: the slug is derived from it with string operations alone, so the embed
-  component finds this file without an index to download and without
-  crypto.subtle — which means it also works on a page served over plain http.
+  Le document utilise le même slug que la page du site. Le consommateur n’a
+  besoin que de l’URL du site : le slug peut être déduit de cette URL uniquement
+  avec des opérations sur les chaînes de caractères. Le composant intégré peut
+  donc trouver ce fichier sans télécharger d’index ni utiliser crypto.subtle —
+  il fonctionne ainsi aussi sur une page servie en http non chiffré.
 
-  Stored history is still keyed by hash under results/, and a slug that
-  collides falls back to one, so this filename is presentation and the hash
-  remains the identity.
+  L’historique stocké reste indexé par hash dans results/. En cas de collision
+  entre deux slugs, l’un d’eux est modifié ; ce nom de fichier sert à la
+  présentation, tandis que le hash reste l’identifiant.
 -#}
 {{ entry | siteApi | json | safe }}

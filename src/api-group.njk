@@ -6,5 +6,5 @@ pagination:
 permalink: "/api/group/{{ group.id }}.json"
 eleventyExcludeFromCollections: true
 ---
-{#- One request for a whole category's ranks, with the same values as each site's /api/site/ file. -#}
+{#- Une seule requête pour récupérer les classements de toute une catégorie, avec les mêmes valeurs que dans le fichier /api/site/ de chaque site. -#}
 {{ group | groupApi | json | safe }}

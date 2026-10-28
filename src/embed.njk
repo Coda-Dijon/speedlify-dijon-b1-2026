@@ -1,15 +1,15 @@
 ---
 layout: base.njk
 permalink: /embed/index.html
-title: Embed
+title: Intégration
 ---
 
 <header class="detail-head">
-	<h2 class="page-hed">Embed a score</h2>
+	<h2 class="page-hed">Intégrer un score</h2>
 	<p class="lede">
-		A standalone custom element that shows one site's Lighthouse scores and
-		links to its full report. Drop it on any page — it needs nothing but the
-		script and this instance's URL.
+		Un élément personnalisé autonome qui affiche les scores Lighthouse d’un site
+		et renvoie vers son rapport complet. Ajoutez-le à n’importe quelle page :
+		il ne nécessite que le script et l’URL de cette instance.
 	</p>
 </header>
 
@@ -20,14 +20,14 @@ title: Embed
 	{% if entry.latest %}{% set measured = (measured.push(entry), measured) %}{% endif %}
 {% endfor %}
 
-{# The pinned URL is looked up rather than trusted, so it falls back to the first measured site if it leaves the corpus. #}
+{# L’URL épinglée est recherchée plutôt que considérée comme acquise : si elle ne figure plus dans le corpus, la première entrée mesurée est utilisée. #}
 {% set pinned = [] %}
 {% for entry in measured %}
 	{% if entry.url == "https://arielsalminen.com/" %}{% set pinned = (pinned.push(entry), pinned) %}{% endif %}
 {% endfor %}
 {% set featured = pinned[0] or measured[0] %}
 
-{# Every site has an embed (src/site-filmstrip.11tydata.js), with the featured site first as the default. #}
+{# Chaque site dispose d’une intégration (src/site-filmstrip.11tydata.js), et le site mis en avant est proposé par défaut. #}
 {% set strips = [] %}
 {% set stripSlugs = [] %}
 {% for entry in [featured].concat(sites.entries) %}
@@ -39,23 +39,24 @@ title: Embed
 
 {% from "contents.njk" import contents %}
 {% set toc = [
-	{ id: "try", label: "Live preview" },
-	{ id: "usage", label: "Usage" },
-	{ id: "finding-data", label: "How it finds the data" }
+	{ id: "try", label: "Aperçu interactif" },
+	{ id: "usage", label: "Utilisation" },
+	{ id: "finding-data", label: "Comment les données sont trouvées" }
 ] %}
-{% if strips.length %}{% set toc = (toc.push({ id: "filmstrip", label: "Filmstrip" }), toc) %}{% endif %}
+{% if strips.length %}{% set toc = (toc.push({ id: "filmstrip", label: "Bande de captures" }), toc) %}{% endif %}
 {{ contents(toc) }}
 
 <section class="panel" id="try">
-	<h2>Live preview</h2>
+	<h2>Aperçu interactif</h2>
 	<p class="muted small">
-		Pick any measured site, or type a URL, to see the component as it renders
-		against this instance. Hover or tab to the scores to see its summary.
+		Sélectionnez un site mesuré ou saisissez une URL pour voir le rendu du
+		composant sur cette instance. Survolez les scores ou placez-y le focus
+		du clavier pour afficher son résumé.
 	</p>
 
 	{% if featured %}
 	<form class="race-picker embed-picker" id="score-embed-picker" autocomplete="off">
-		<fieldset disabled title="Choosing a site needs JavaScript.">
+		<fieldset disabled title="JavaScript est nécessaire pour choisir un site.">
 			<div class="race-field">
 				<label class="race-field-label" for="score-embed-site">Site</label>
 				<input class="race-field-input" id="score-embed-site" type="url" list="score-embed-catalog" value="{{ featured.url }}">
@@ -77,7 +78,7 @@ title: Embed
 		var code = document.getElementById("score-embed-code");
 		var fieldset = form.querySelector("fieldset");
 
-		// The component reads its attributes once when connected, so a new site gets a new element.
+		// Le composant ne lit ses attributs qu’à sa connexion : pour afficher un autre site, il faut créer un nouvel élément.
 		function choose(url, write) {
 			var current = preview.querySelector("speedlify2-score");
 			var next = document.createElement("speedlify2-score");
@@ -127,109 +128,114 @@ title: Embed
 </section>
 
 <section class="panel" id="usage">
-	<h2>Usage</h2>
+	<h2>Utilisation</h2>
 
-	<p>Install it from npm — this is the version you want, pinned and served from your own site:</p>
+	<p>Installez le paquet depuis npm : cette version est épinglée et hébergée sur votre propre site :</p>
 
 	<pre><code>npm install speedlify2-score</code></pre>
 
-	<p>Import it once, anywhere in your bundle. The element registers itself:</p>
+	<p>Importez-le une seule fois, où que ce soit dans votre bundle. L’élément s’enregistre automatiquement :</p>
 
 	<pre><code>import "speedlify2-score";</code></pre>
 
 	<p class="muted small">
-		Zero dependencies, one file, and a standard ES module, so no build step is
-		required. <a href="https://www.npmjs.com/package/speedlify2-score">speedlify2-score on npm</a> ·
-		<a href="https://github.com/zachleat/speedlify2/tree/main/packages/speedlify2-score">source</a>
+		Aucune dépendance, un seul fichier et un module ES standard : aucune étape
+		de compilation n’est nécessaire. <a href="https://www.npmjs.com/package/speedlify2-score">speedlify2-score sur npm</a> ·
+		<a href="https://github.com/zachleat/speedlify2/tree/main/packages/speedlify2-score">code source</a>
 	</p>
 
 	<p>
-		Or skip the install and download the file manually:
+		Vous pouvez aussi éviter l’installation et télécharger le fichier manuellement :
 		<a href="{{ meta.url }}/js/speedlify2-score.js"><code>{{ meta.url }}/js/speedlify2-score.js</code></a>
 	</p>
 
 	<div class="notice notice-warn">
-		<strong>It would be unwise to hotlink the speedlify2-score component script.</strong>
+		<strong>Il est déconseillé d’inclure directement le script du composant speedlify2-score depuis un autre site.</strong>
 		<p>
-			Third party JavaScript is a big no-no! Hotlinking this copy also carries no versioning, no deprecation
-			policy and no uptime commitment: the file can change shape, move or stop
-			being served at any time, and a page embedding it directly would <strong>break with it and with no notice.</strong>
-			Installing from npm gives you a version you control.
+			Le JavaScript tiers est à éviter ! Cette copie intégrée directement n’offre
+			aucune gestion de versions, aucune politique de dépréciation et aucune
+			garantie de disponibilité : le fichier peut être modifié, déplacé ou ne
+			plus être distribué à tout moment. Une page qui l’intègre directement
+			<strong>pourrait alors ne plus fonctionner, sans avertissement.</strong>
+			En l’installant depuis npm, vous contrôlez la version utilisée.
 		</p>
 	</div>
 
-	<p>However you load it, the markup is the same:</p>
+	<p>Quelle que soit la méthode de chargement, le balisage reste le même :</p>
 
-	<pre><code>&lt;!-- If you are not bundling, point this at your own copy --&gt;
+	<pre><code>&lt;!-- Si vous n’utilisez pas de bundle, indiquez ici le chemin vers votre propre copie --&gt;
 &lt;script type="module" src="speedlify2-score.js"&gt;&lt;/script&gt;
 
-&lt;!-- Scores for the page it sits on --&gt;
+&lt;!-- Scores de la page où se trouve l’élément --&gt;
 &lt;speedlify2-score speedlify-url="{{ meta.url }}/"&gt;&lt;/speedlify2-score&gt;
 
-&lt;!-- Or a specific URL --&gt;
+&lt;!-- Ou scores d’une URL précise --&gt;
 &lt;speedlify2-score speedlify-url="{{ meta.url }}/" url="https://example.com/"&gt;&lt;/speedlify2-score&gt;</code></pre>
 
-	<h3>Attributes</h3>
+	<h3>Attributs</h3>
 	<p class="muted small">
-		Two, and one of them is optional. There is nothing to configure about the
-		output: every instance renders the same six circles — the four Lighthouse
-		categories, Core Web Vitals, and axe violations — so a page carrying
-		several reads as one table rather than a row of different shapes.
-		Everything else is one click away in the full report.
+		Deux attributs, dont un seul est facultatif. Le rendu n’est pas
+		personnalisable : chaque instance affiche les mêmes six cercles — les
+		quatre catégories Lighthouse, les Core Web Vitals et les violations
+		d’accessibilité détectées par axe. Ainsi, plusieurs instances sur une page
+		forment un tableau cohérent plutôt qu’une série de graphiques différents.
+		Tout le reste est accessible en un clic dans le rapport complet.
 	</p>
 	<div class="table-scroll">
 	<table class="grid">
 		<thead>
-			<tr><th class="col-site">Attribute</th><th class="col-site">Effect</th></tr>
+			<tr><th class="col-site">Attribut</th><th class="col-site">Effet</th></tr>
 		</thead>
 		<tbody>
-			<tr><td class="col-site"><code>speedlify-url</code></td><td class="col-site">Required. This instance's URL.</td></tr>
-			<tr><td class="col-site"><code>url</code></td><td class="col-site">Which site to show. Defaults to the current page.</td></tr>
+			<tr><td class="col-site"><code>speedlify-url</code></td><td class="col-site">Obligatoire. URL de cette instance.</td></tr>
+			<tr><td class="col-site"><code>url</code></td><td class="col-site">Site à afficher. Par défaut, la page actuelle.</td></tr>
 		</tbody>
 	</table>
 	</div>
 </section>
 
 <section class="panel" id="finding-data">
-	<h2>How it finds the data</h2>
+	<h2>Comment les données sont trouvées</h2>
 	<p class="muted small">
-		There is no index to download. The component slugifies the URL in the
-		browser with the same rules the generator uses and fetches
-		<code>/api/site/&lt;slug&gt;.json</code> directly. One request, under a
-		kilobyte, for exactly the site being shown.
+		Aucun index n’est à télécharger. Dans le navigateur, le composant transforme
+		l’URL en slug à l’aide des mêmes règles que le générateur, puis récupère
+		directement <code>/api/site/&lt;slug&gt;.json</code>. Une seule requête,
+		de moins d’un kilooctet, pour le site affiché.
 	</p>
 	<p class="muted small">
-		Several components on one page share a single fetch per URL. Normalization
-		matches the generator's, so <code>https://Example.com</code> and
-		<code>https://example.com/</code> resolve to the same record.
+		Plusieurs composants présents sur une même page partagent une seule requête
+		par URL. La normalisation correspond à celle du générateur : ainsi,
+		<code>https://Example.com</code> et <code>https://example.com/</code>
+		donnent accès au même enregistrement.
 	</p>
 	<p class="muted small">
-		Working out the filename is string manipulation, not cryptography, so the
-		component needs no secure context and runs on a page served over plain
-		http. If two sites ever claim one slug, both are published under a hash
-		instead and read here as unmeasured — a miss rather than another site's
-		numbers.
+		Le calcul du nom de fichier repose sur des manipulations de chaînes de
+		caractères, et non sur la cryptographie. Le composant n’a donc pas besoin
+		d’un contexte sécurisé et fonctionne aussi sur une page servie en HTTP
+		non chiffré. Si deux sites obtiennent un jour le même slug, ils sont tous
+		deux publiés avec un hachage et apparaissent ici comme non mesurés : le
+		résultat est une absence de données, jamais les scores d’un autre site.
 	</p>
 	<p class="muted small">
-		<a href="/api/site/{{ featured.slug }}.json">See {{ featured.displayUrl }}'s data file</a>
+		<a href="/api/site/{{ featured.slug }}.json">Voir le fichier de données de {{ featured.displayUrl }}</a>
 	</p>
 </section>
 
 {% if strips.length %}
 {% set strip = strips[0] %}
 <section class="panel" id="filmstrip">
-	<h2>Embed a filmstrip</h2>
+	<h2>Intégrer une bande de captures</h2>
 	<p class="muted small">
-		Every site has an animated copy of its filmstrip at
-		<code>/site/&lt;slug&gt;/filmstrip/</code>, sized for an iframe, or an
-		empty strip where none was captured. It needs no
-		script on your page, and plays once it scrolls into view. Add
-		<code>?theme=light</code> or <code>?theme=dark</code> to override the
-		reader's system theme.
+		Chaque site dispose d’une copie animée de sa bande de captures à
+		<code>/site/&lt;slug&gt;/filmstrip/</code>, dimensionnée pour une iframe,
+		ou d’une bande vide si aucune capture n’a été réalisée. Aucun script n’est
+		nécessaire sur votre page : l’animation démarre lorsque la bande entre dans
+		la zone visible. Ajoutez <code>?theme=light</code> ou
+		<code>?theme=dark</code> pour remplacer le thème système du lecteur.
 	</p>
-	{# Disabled until scripted, like the masthead's category switcher. #}
+	{# Désactivé jusqu’à l’activation de JavaScript, comme le sélecteur de catégorie de l’en-tête. #}
 	<form class="race-picker embed-picker" id="filmstrip-embed-picker" autocomplete="off">
-		<fieldset disabled title="Choosing a site needs JavaScript.">
+		<fieldset disabled title="JavaScript est nécessaire pour choisir un site.">
 			<div class="race-field">
 				<label class="race-field-label" for="filmstrip-embed-site">Site</label>
 				<input class="race-field-input" id="filmstrip-embed-site" type="text" list="filmstrip-embed-catalog" value="{{ strip.displayUrl }}">
@@ -239,9 +245,9 @@ title: Embed
 			</datalist>
 		</fieldset>
 	</form>
-	<iframe class="filmstrip-embed-frame" id="filmstrip-embed-frame" src="/site/{{ strip.slug }}/filmstrip/" title="{{ strip.displayUrl }} filmstrip" loading="lazy"
+	<iframe class="filmstrip-embed-frame" id="filmstrip-embed-frame" src="/site/{{ strip.slug }}/filmstrip/" title="Bande de captures de {{ strip.displayUrl }}" loading="lazy"
 		data-base="{{ '/' | htmlBaseUrl }}"></iframe>
-	<pre><code id="filmstrip-embed-code" data-origin="{{ meta.url }}/">&lt;iframe src="{{ meta.url }}/site/{{ strip.slug }}/filmstrip/" title="{{ strip.displayUrl }} filmstrip" width="100%" height="420" style="border: 0" loading="lazy"&gt;&lt;/iframe&gt;</code></pre>
+	<pre><code id="filmstrip-embed-code" data-origin="{{ meta.url }}/">&lt;iframe src="{{ meta.url }}/site/{{ strip.slug }}/filmstrip/" title="Bande de captures de {{ strip.displayUrl }}" width="100%" height="420" style="border: 0" loading="lazy"&gt;&lt;/iframe&gt;</code></pre>
 	<script>
 	(function () {
 		var form = document.getElementById("filmstrip-embed-picker");
@@ -266,8 +272,8 @@ title: Embed
 			input.value = name;
 			input.removeAttribute("aria-invalid");
 			frame.src = frame.dataset.base + path;
-			frame.title = name + " filmstrip";
-			code.textContent = '<iframe src="' + code.dataset.origin + path + '" title="' + name + ' filmstrip" width="100%" height="420" style="border: 0" loading="lazy"></iframe>';
+			frame.title = "Bande de captures de " + name;
+			code.textContent = '<iframe src="' + code.dataset.origin + path + '" title="Bande de captures de ' + name + '" width="100%" height="420" style="border: 0" loading="lazy"></iframe>';
 			if (write) {
 				var url = new URL(location.href);
 				url.searchParams.set("site", slug);

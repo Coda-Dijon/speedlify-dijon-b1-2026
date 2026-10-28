@@ -1,128 +1,87 @@
 # speedlify2
 
-Measure web performance across a list of sites and compare the results over
-time. Lighthouse for lab data, the Chrome UX Report for real-user field data,
-append-only JSON logs for history, and a static Build Awesome site for output.
+Mesurez les performances Web d’une liste de sites et comparez les résultats au fil du temps. Lighthouse pour les données de laboratoire, le Chrome UX Report pour les données de terrain issues d’utilisateurs réels, des journaux JSON en ajout seulement pour conserver l’historique, et un site statique Build Awesome pour afficher les résultats.
 
-- [See it live at `speedlify.dev`](https://www.speedlify.dev/)
-- The successor to [
-  `zachleat/speedlify`](https://github.com/zachleat/speedlify).
+- [Voir le site en direct sur `speedlify.dev`](https://www.speedlify.dev/)
+- Le successeur de [`zachleat/speedlify`](https://github.com/zachleat/speedlify).
 
 ```bash
 npm install
-npm run measure     # measure a batch of the stalest sites
-npm run backfill    # seed ~25 weeks of CrUX field history (needs CRUX_API_KEY)
-npm start           # generate the report, then build and serve at localhost:8080
+npm run measure     # mesure un lot des sites dont les données sont les plus anciennes
+npm run backfill    # initialise environ 25 semaines d’historique CrUX (nécessite CRUX_API_KEY)
+npm start           # génère le rapport, puis le construit et le sert sur localhost:8080
 ```
 
-## Starting your own instance
+## Créer votre propre instance
 
-**Use this template**, don't fork. A fork carries every commit of this
-repository
-and stays linked to it; the template button gives you a repository with a single
-commit that is yours. Nothing in this project can undo a fork's history from the
-inside, so this is the one step that has to happen on GitHub rather than here.
+**Utilisez ce modèle**, ne faites pas de fork. Un fork conserve tous les commits de ce dépôt et reste lié à celui-ci ; le bouton de création à partir d’un modèle vous fournit un dépôt avec un seul commit, qui vous appartient. Rien dans ce projet ne peut effacer l’historique d’un fork depuis l’intérieur : cette étape doit donc être effectuée sur GitHub, et non ici.
 
-Then, before you measure anything:
+Ensuite, avant de mesurer quoi que ce soit :
 
 ```bash
 npm install
 npm run reset
 ```
 
-`npm run reset` empties this instance out of your copy. Run it first — without
-it, `npm run measure` spends its first batch on sites from the list above rather
-than yours. It prints everything it intends to do and waits for you to type
-`reset`, and it:
+`npm run reset` vide votre instance. Exécutez-le d’abord : sans cela, `npm run measure` consacrera son premier lot aux sites de la liste ci-dessus plutôt qu’aux vôtres. La commande affiche toutes les opérations prévues et attend que vous saisissiez `reset`. Elle :
 
-- deletes `results/`, which is roughly 30 MB of measurements belonging to this
-  instance, and the run logs beside it
-- replaces `config/sites.js` with [
-  `config/sites.example.js`](config/sites.example.js)
-  — three sites in one category, enough to run
-- removes the imported site lists in `config/` (about 1,500 URLs from the
-  Eleventy community, starters and emeritus lists) and the scripts that generate
-  them
-- clears the priority queue and the built `report.json`
+- supprime `results/`, qui contient environ 30 Mo de mesures propres à cette instance, ainsi que les journaux d’exécution associés ;
+- remplace `config/sites.js` par [`config/sites.example.js`](config/sites.example.js) — trois sites dans une catégorie, suffisamment pour démarrer ;
+- supprime les listes de sites importées dans `config/` (environ 1 500 URL issues de la communauté Eleventy, des listes de sites de démarrage et des listes des anciens membres), ainsi que les scripts qui les génèrent ;
+- vide la file de priorité et le fichier `report.json` généré.
 
-It leaves the code, the workflows, `src/`, `lib/` and your git history alone.
-Run
-it twice and the second run tells you there is nothing to do.
+Le code, les workflows, `src/`, `lib/` et votre historique Git sont conservés. Si vous l’exécutez deux fois, le second lancement vous indiquera qu’il n’y a rien à faire.
 
 ```bash
-npm run reset -- --dry-run   # show the plan, change nothing
-npm run reset -- --yes       # skip the confirmation, for scripting
+npm run reset -- --dry-run   # affiche le plan sans rien modifier
+npm run reset -- --yes       # ignore la confirmation, pour les scripts
 ```
 
-Two things to set afterwards, both read from the environment with this
-instance's values as fallbacks — see [`src/_data/meta.js`](src/_data/meta.js):
+Deux paramètres sont à définir ensuite. Ils sont tous deux lus depuis l’environnement, avec les valeurs de cette instance comme valeurs de repli — voir [`src/_data/meta.js`](src/_data/meta.js) :
 
 ```bash
-SPEEDLIFY_SITE_URL=https://example.com   # where your instance is published
+SPEEDLIFY_SITE_URL=https://example.com   # adresse de publication de votre instance
 SPEEDLIFY_REPO_URL=https://github.com/you/your-repo
 ```
 
-Then edit `config/sites.js` and you are running your own instance:
+Modifiez ensuite `config/sites.js` : votre propre instance est prête à fonctionner.
 
 ```bash
 npm run measure
 npm start
 ```
 
-One inherited design worth knowing about: every measurement is committed, on
-purpose — `measure` and `publish` are separate workflows on separate checkouts,
-and the repository is the only channel between them. Your repository will grow
-the same way this one has. [`npm run clean`](#sizing-it) prunes old measurements
-when that starts to matter.
+Un choix de conception hérité mérite d’être connu : chaque mesure est volontairement ajoutée au dépôt. Les workflows `measure` et `publish` s’exécutent séparément, sur des clones distincts, et le dépôt est leur seul canal de communication. Votre dépôt prendra de l’ampleur comme celui-ci. [`npm run clean`](#dimensionnement) supprime les anciennes mesures lorsque cela devient nécessaire.
 
-## How it works
+## Fonctionnement
 
-Three independent steps. None waits for another, and none needs a previous one
-to have completed fully.
+Trois étapes indépendantes. Aucune n’attend les autres, et aucune n’exige qu’une étape précédente soit entièrement terminée.
 
 ```
-speedlify measure            →  results/      collect
-speedlify report             →  report.json   analyze
-npx @awesome.me/buildawesome →  _site/        render
+speedlify measure            →  results/      collecter
+speedlify report             →  report.json   analyser
+npx @awesome.me/buildawesome →  _site/        générer
 ```
 
-1. **`speedlify measure --limit=N`** measures the **N stalest sites** and stops.
-   Lighthouse N times per URL, median kept, one JSON file per measurement in
-   `results/`. Run it as often as you like, from as many machines as you like —
-   each invocation independently picks whatever is most out of date, so coverage
-   converges with no coordination, lock, or queue.
-2. **`speedlify report`** reads the measurements and does all the analysis —
-   trends, rankings, deltas, significance, coverage — writing a single
-   `report.json`.
-3. **`npx @awesome.me/buildawesome`** renders that one file. It opens **no**
-   measurements, so the build is a pure function of the report, works against a
-   read-only checkout, and can't mutate a cache as a side effect.
+1. **`speedlify measure --limit=N`** mesure les **N sites dont les mesures sont les plus anciennes**, puis s’arrête. Lighthouse est exécuté N fois par URL ; la médiane est conservée et chaque mesure est enregistrée dans un fichier JSON distinct de `results/`. Vous pouvez lancer cette commande aussi souvent que vous le souhaitez, depuis autant de machines que vous le souhaitez : chaque exécution sélectionne indépendamment les sites les plus en retard. La couverture s’améliore ainsi sans coordination, verrou ni file d’attente.
+2. **`speedlify report`** lit les mesures et effectue toutes les analyses — tendances, classements, écarts, significativité et couverture — puis écrit un unique fichier `report.json`.
+3. **`npx @awesome.me/buildawesome`** génère le site à partir de ce fichier. La commande n’ouvre **aucun** fichier de mesure : la génération dépend uniquement du rapport, fonctionne avec un clone en lecture seule et ne peut pas modifier un cache comme effet secondaire.
 
-`npm run build` runs steps 2 and 3.
+`npm run build` exécute les étapes 2 et 3.
 
-The report renders **whatever successful data exists, newest first**. Missing,
-stale, and currently-failing sites all render — labeled — rather than blocking
-the build. Nothing is fetched at runtime; the published site is plain HTML, CSS,
-and build-time inline SVG, with no client-side JavaScript, including for the
-sparklines.
+Le rapport affiche **toutes les données réussies disponibles, des plus récentes aux plus anciennes**. Les sites sans données, dont les données sont anciennes ou dont les mesures échouent actuellement sont quand même affichés, avec une étiquette, au lieu de bloquer la génération. Rien n’est récupéré lors de l’exécution : le site publié se compose de HTML, de CSS et de SVG intégrés au moment de la génération. Il ne contient aucun JavaScript côté client, pas même pour les graphiques en courbes.
 
-### The report
+### Le rapport
 
 ```bash
 speedlify report              # -> report.json
-speedlify report --pretty     # indented, for reading
-speedlify report --out=x.json # somewhere else (or set SPEEDLIFY_REPORT_FILE)
+speedlify report --pretty     # indentation pour faciliter la lecture
+speedlify report --out=x.json # autre emplacement (ou définir SPEEDLIFY_REPORT_FILE)
 ```
 
-It is self-describing: alongside the entries it carries the metric definitions
-(label, unit, note) the site renders with, so it can be consumed without this
-codebase. It is not published with the site — it is the build's input, and at
-full coverage it runs to tens of megabytes. What the site serves instead is one
-small file per site at **`/api/site/<slug>.json`**, which is what the embed
-component reads.
+Le rapport se décrit lui-même : en plus des entrées, il contient les définitions des métriques — libellé, unité et note — utilisées par le site. Il peut donc être exploité sans cette base de code. Il n’est pas publié avec le site : il sert d’entrée à la génération et, lorsque tous les sites sont couverts, il peut atteindre plusieurs dizaines de mégaoctets. Le site publie à la place un petit fichier par site à l’adresse **`/api/site/<slug>.json`**, que le composant d’intégration lit.
 
-For a whole category in one request there is **`/api/group/<group-slug>.json`**,
-built from the same projection as the per-site files so the values always match:
+Pour récupérer une catégorie entière en une seule requête, l’API propose **`/api/group/<group-slug>.json`**. Elle est générée à partir de la même projection que les fichiers individuels, afin que les valeurs correspondent toujours :
 
 ```json
 {
@@ -153,190 +112,130 @@ built from the same projection as the per-site files so the values always match:
 }
 ```
 
-`rank` is the site-wide rank, as in `/api/site/`, and `sites` is sorted by it
-with unranked sites last. Unmeasured sites are included with `"measured": false`
-and `null` scores. `requestedUrl` is the URL as written in the group's source
-list, which differs from `url` after normalizing or a redirect. `updated` is the
-newest measurement in the group.
+`rank` est le classement du site parmi tous les sites, comme dans `/api/site/`. La propriété `sites` est triée selon ce classement, les sites non classés étant placés à la fin. Les sites non mesurés sont inclus avec `"measured": false` et des scores `null`. `requestedUrl` est l’URL telle qu’elle apparaît dans la liste source de la catégorie ; elle peut différer de `url` après normalisation ou redirection. `updated` correspond à la mesure la plus récente de la catégorie.
 
-**`/api/groups.json`** lists every group's `group` name, `slug`, site `count`and
-`api` path.
+**`/api/groups.json`** répertorie le nom `group` de chaque catégorie, son `slug`, le nombre de sites `count` et le chemin de son API `api`.
 
-`report.json` is derived and gitignored. Size is ~24 kB per site with a
-120-point window, so roughly 26 MB at 1000 sites; if you publish at that scale,
-consider dropping the passthrough.
+`report.json` est généré à partir des données et ignoré par Git. Il pèse environ 24 ko par site avec une fenêtre de 120 points, soit environ 26 Mo pour 1 000 sites. Si vous publiez à cette échelle, envisagez de désactiver le transfert des données brutes (« passthrough »).
 
-Two things it deliberately does *not* duplicate: trends carry a bare `values`
-array rather than a point object per measurement (there are ~26 trends per site,
-so the naive version wrote each site's history 26 times), and `history` is
-capped to the rows the log table actually renders.
+Deux éléments ne sont volontairement pas dupliqués : les tendances contiennent un simple tableau `values`, et non un objet par point de mesure — chaque site compte environ 26 tendances, donc la version naïve réécrivait 26 fois son historique. L’historique `history` est limité aux lignes réellement affichées dans le tableau du journal.
 
-### Freshness on the page
+### Fraîcheur des données affichées
 
-Because sites are measured on a rolling schedule, the report is always a
-snapshot of an uneven dataset. Every table has an **Updated** column showing how
-old that site's figures are, amber past `staleAfterHours`, and each site page
-states the age of the data it's showing. The home page summarizes coverage: how
-many sites have data, the median age, how many are stale, how many have never
-been measured.
+Les sites étant mesurés selon un calendrier glissant, le rapport est toujours un instantané d’un ensemble de données inégalement actualisé. Chaque tableau comprend une colonne **Updated** indiquant l’ancienneté des chiffres du site. Ils passent en orange lorsque leur ancienneté dépasse `staleAfterHours`, et chaque page de site indique l’âge des données affichées. La page d’accueil résume la couverture : nombre de sites disposant de données, âge médian, nombre de sites dont les données sont anciennes et nombre de sites jamais mesurés.
 
-Sites are identified by their **URL** rather than a configured name —`11ty.dev`,
-`developer.mozilla.org/en-US`. If stripping `www.` would make two tracked URLs
-render identically, both keep it.
+Les sites sont identifiés par leur **URL**, et non par un nom configuré — `11ty.dev`, `developer.mozilla.org/en-US`. Si supprimer `www.` rendait deux URL suivies identiques à l’affichage, les deux le conservent.
 
-### Two layers of storage
+### Deux niveaux de stockage
 
-A stored measurement is ~4 kB of nested detail. The report needs all of that for
-exactly **one** measurement per site (the newest successful one); for charting
-it needs about two dozen scalars per point. So each site keeps both:
+Une mesure enregistrée contient environ 4 ko de détails imbriqués. Le rapport a besoin de toutes ces données pour exactement **une mesure par site** — la plus récente ayant réussi. Pour créer les graphiques, il lui faut environ deux douzaines de valeurs scalaires par point. Chaque site conserve donc les deux formats suivants :
 
 ```
-results/<url-hash>/<timestamp>.json    the archive — full detail, append-only
-results/<url-hash>/series.json         the projection — flat scalars, one per line
+results/<url-hash>/<timestamp>.json    les archives — détails complets, ajout seulement
+results/<url-hash>/series.json         la projection — valeurs scalaires à plat, une par ligne
 ```
 
-Measured at 1000 sites × 365 days:
+Mesures effectuées sur 1 000 sites pendant 365 jours :
 
-| Report read       | Time      | Heap       | Disk    |
-|-------------------|-----------|------------|---------|
-| via `series.json` | **1.3 s** | **152 MB** | 136 MB  |
-| via raw records   | 24.6 s    | 1053 MB    | 1482 MB |
+| Lecture du rapport     | Temps     | Mémoire vive | Disque   |
+|------------------------|-----------|--------------|----------|
+| via `series.json`      | **1,3 s** | **152 Mo**   | 136 Mo   |
+| via les données brutes | 24,6 s    | 1 053 Mo     | 1 482 Mo |
 
-Build cost is a function of *site count*, not history depth.
+Le coût de génération dépend du **nombre de sites**, et non de la profondeur de l’historique.
 
-`series.json` is a **derived cache** — every value can be recomputed from the
-archive:
+`series.json` est un **cache dérivé** : toutes ses valeurs peuvent être recalculées à partir des archives :
 
 ```bash
 speedlify reindex
 ```
 
-It rebuilds itself automatically when it is missing, corrupt, or behind the raw
-records, so an existing `results/` directory needs no migration. Points are
-written one per line, so a new measurement appends exactly one line to the diff.
+Le cache est automatiquement reconstruit s’il est manquant, corrompu ou en retard par rapport aux données brutes. Un dossier `results/` existant ne nécessite donc aucune migration. Les points étant écrits un par ligne, une nouvelle mesure ajoute exactement une ligne aux différences Git.
 
-Committing it is the default (fast builds from a fresh clone), but deleting it
-is always safe.
+Le conserver dans le dépôt est le comportement par défaut — cela accélère les générations à partir d’un nouveau clone —, mais le supprimer ne pose aucun problème.
 
-### Rolling measurement
+### Mesures glissantes
 
-There is no "full sweep" to finish or fail. A run that measures 20 of 1000 sites
-is a successful run.
+Il n’y a pas de « balayage complet » à terminer ni à réussir. Une exécution qui mesure 20 sites sur 1 000 est une exécution réussie.
 
 ```bash
-speedlify measure --limit=20        # 20 stalest sites, then stop
-speedlify measure --limit=40 --shard=2/4   # 40 stalest within a disjoint quarter
-speedlify list --stale              # what is falling behind
+speedlify measure --limit=20             # les 20 sites les plus en retard, puis arrêt
+speedlify measure --limit=40 --shard=2/4 # 40 sites les plus en retard dans un quart distinct
+speedlify list --stale                   # afficher les sites qui prennent du retard
 ```
 
-Batch selection, in priority order:
+Ordre de priorité pour sélectionner les lots :
 
-1. **Never measured** — a site with no data at all is the worst case.
-2. **Oldest measurement** — straight staleness.
+1. **Jamais mesurés** — un site sans aucune donnée est le cas le plus urgent.
+2. **Mesure la plus ancienne** — selon l’ancienneté.
 
-Skipped: anything measured within `freshnessHours`, and anything inside its
-failure backoff window. A URL that has been dead for a week backs off to a daily
-retry (1h → 2h → 4h → … → 24h) instead of consuming a slot in every batch ahead
-of sites with real data.
+Sont ignorés : les sites mesurés depuis moins de `freshnessHours` et ceux qui se trouvent dans leur période d’attente après un échec. Une URL hors service depuis une semaine passe à une nouvelle tentative quotidienne (1 h → 2 h → 4 h → … → 24 h), au lieu d’occuper un emplacement dans chaque lot avant les sites disposant de données réelles.
 
-Selection reads **no file contents** — staleness comes from the timestamp in
-each filename. Picking a batch out of 1000 sites costs ~0.5s and about 1 MB.
+La sélection ne lit **aucun contenu de fichier** : l’ancienneté est déterminée à partir de l’horodatage dans chaque nom de fichier. Sélectionner un lot parmi 1 000 sites prend environ 0,5 seconde et 1 Mo de mémoire.
 
-`--shard=i/n` partitions the list deterministically by URL hash, so several
-machines can measure at once without overlapping or coordinating. Shard
-assignment is stable when you reorder the config.
+`--shard=i/n` répartit la liste de façon déterministe à partir du hachage des URL, afin que plusieurs machines puissent effectuer des mesures en parallèle sans se chevaucher ni se coordonner. La répartition des fragments reste stable même si vous réordonnez la configuration.
 
-### Sizing it
+### Dimensionnement
 
-Measured on this machine: **~9.8s per Lighthouse run** (median 8.3s). At the
-default `runs: 3` that's ~30s per site.
+Mesuré sur cette machine : **environ 9,8 s par exécution Lighthouse** (médiane : 8,3 s). Avec la valeur par défaut `runs: 3`, cela représente environ 30 s par site.
 
-| Sites | Cadence  | Setup                  | Every site measured every |
-|-------|----------|------------------------|---------------------------|
-| 50    | hourly   | `--limit=20`           | ~2.5 hours                |
-| 200   | every 2h | `--limit=40`, 2 shards | ~5 hours                  |
-| 1000  | every 2h | `--limit=40`, 4 shards | ~12 hours                 |
+| Sites | Fréquence      | Configuration             | Chaque site est mesuré tous les… |
+|------:|----------------|---------------------------|----------------------------------|
+|    50 | chaque heure   | `--limit=20`              | environ 2,5 heures               |
+|   200 | toutes les 2 h | `--limit=40`, 2 fragments | environ 5 heures                 |
+| 1 000 | toutes les 2 h | `--limit=40`, 4 fragments | environ 12 heures                |
 
-Size `--limit` to how long you want **one invocation** to take, not to the
-length of your site list.
+Choisissez la valeur de `--limit` en fonction de la durée souhaitée pour **une exécution**, et non du nombre total de sites de votre liste.
 
-> **Do not run Lighthouse concurrently inside one process.** It shares global
-> state — `lighthouse-logger` uses `marky`, which registers global
-> `performance.mark()` names — and concurrent runs collide and throw.
-> Parallelism
-> must come from separate processes or separate machines, which is what
-> `--shard`
-> is for. Even then, 4-way parallelism on 12 cores measurably drops
-> `benchmarkIndex` by ~4% through CPU contention, which is exactly what the
-> environment-drift warning exists to catch.
+> **N’exécutez pas Lighthouse simultanément dans un même processus.** Il partage un état global : `lighthouse-logger` utilise `marky`, qui enregistre des noms globaux `performance.mark()`. Les exécutions simultanées entrent en conflit et échouent. Le parallélisme doit provenir de processus ou de machines distincts ; c’est le rôle de `--shard`. Même dans ce cas, un parallélisme par quatre sur 12 cœurs réduit mesurablement `benchmarkIndex` d’environ 4 % à cause de la concurrence pour le processeur. C’est précisément ce que l’avertissement sur la dérive de l’environnement est conçu pour détecter.
 
 ## Configuration
 
-Sites live in [`config/sites.js`](config/sites.js):
+Les sites se trouvent dans [`config/sites.js`](config/sites.js) :
 
 ```js
 export default {
-    runs: 3,               // Lighthouse runs per URL; the median is kept
-    formFactor: "mobile",  // or "desktop"
-    freshnessHours: 20,    // skip URLs measured more recently than this
-    batchSize: null,       // default --limit; null = no limit
-    staleAfterHours: 48,   // data older than this is flagged in the report
-    historyLimit: 120,     // measurements per site loaded by the build
+    runs: 3,               // exécutions Lighthouse par URL ; la médiane est conservée
+    formFactor: "mobile",  // ou "desktop"
+    freshnessHours: 20,    // ignorer les URL mesurées plus récemment
+    batchSize: null,       // limite --limit par défaut ; null = aucune limite
+    staleAfterHours: 48,   // les données plus anciennes sont signalées dans le rapport
+    historyLimit: 120,     // mesures par site chargées lors de la génération
 
     groups: {
         ssg: {
             name: "Static Site Generators",
-            showEmbed: true,     // offer the embed snippet on these sites' pages
+            showEmbed: true,     // proposer le code d’intégration sur les pages de ces sites
             sites: [{name: "Eleventy", url: "https://www.11ty.dev/"}],
         },
     },
 };
 ```
 
-History is keyed by URL, not by name. Renaming a site keeps its history.
+L’historique est associé à l’URL, et non au nom. Renommer un site ne supprime pas son historique.
 
-`showEmbed` is opt-in: a site page carries the "Embed this score" section only
-if
-one of its categories asks for it. The snippet invites a reader to publish a
-live
-badge for that site, which suits a register people submit their own sites to and
-does not suit a list of companies nobody here speaks for.
+`showEmbed` est désactivé par défaut : une page de site ne comporte la section « Embed this score » que si l’une de ses catégories l’active. Le code proposé invite le lecteur à publier un badge actualisé pour ce site. Cela convient à un répertoire auquel les personnes peuvent soumettre leur propre site, mais pas à une liste d’entreprises que personne ici ne représente.
 
-`showHiringStatus` is opt-in too: a site in that category with
-`<meta name="hiring-status" content="open">` (or `"open remote"`) gets an "Open
-to Work" (or "Open to Remote Work") tag beside its name.
+`showHiringStatus` est également désactivé par défaut : un site de cette catégorie dont le code contient `<meta name="hiring-status" content="open">` (ou `"open remote"`) reçoit une étiquette « Open to Work » (ou « Open to Remote Work ») à côté de son nom.
 
-### When a site moves
+### Lorsqu’un site change d’adresse
 
-Lighthouse follows redirects, so a site that changes address would otherwise
-keep filing results under its old URL — the metrics change and nothing says why.
-speedlify compares the requested and final URLs on every run and acts on the
-difference.
+Lighthouse suit les redirections. Un site qui change d’adresse continuerait donc autrement à enregistrer ses résultats sous son ancienne URL : les métriques changeraient sans qu’aucune explication ne soit donnée. speedlify compare l’URL demandée et l’URL finale à chaque exécution, puis réagit à leur différence.
 
-A redirect becomes a **confirmed move** only when both hold:
+Une redirection n’est considérée comme un **changement confirmé** que si les deux conditions suivantes sont réunies :
 
-- **It's permanent.** A 301 or 308, or an `http`→`https` upgrade of the same
-  URL. A 302/303/307 elsewhere is the site saying this is temporary.
-- **It's stable.** The same destination on `redirectConfirmations` consecutive
-  successful runs (default 3). This is the guard that catches A/B tests, geo
-  splits and maintenance pages, which look permanent for a run or two.
+- **Elle est permanente.** Il s’agit d’une redirection 301 ou 308, ou du passage de `http` à `https` pour la même URL. Une redirection 302, 303 ou 307 vers une autre adresse signifie que le changement est temporaire.
+- **Elle est stable.** La même destination est observée lors de `redirectConfirmations` exécutions consécutives réussies (3 par défaut). Cette vérification permet de détecter les tests A/B, les redirections géographiques et les pages de maintenance, qui peuvent sembler permanentes pendant une ou deux exécutions.
 
-Confirmed moves are recorded in `results/aliases.json` automatically. Point the
-config at the new URL and **history follows on its own** — no manual step:
+Les changements confirmés sont automatiquement enregistrés dans `results/aliases.json`. Modifiez la configuration pour utiliser la nouvelle URL : **l’historique suivra automatiquement**, sans intervention manuelle :
 
 ```bash
-speedlify redirects     # what is redirecting, what has been confirmed
+speedlify redirects     # afficher les redirections et celles qui ont été confirmées
 ```
 
-The site page then shows where the move happened, and history rows measured at
-the old address are marked, so a step-change reads as a change of address rather
-than a regression.
+La page du site indique alors où le changement d’adresse a eu lieu, et les lignes de l’historique correspondant à l’ancienne adresse sont marquées. Une variation brusque apparaît ainsi comme un changement d’adresse, et non comme une régression.
 
-Aliases live in `results/` rather than in `config/sites.js` deliberately: the
-config is hand-written and reviewed, this is observed state derived from
-measurements. A transient redirect can never silently rewrite something you
-wrote. To declare a move by hand — before it's been observed, or to overrule
-detection — use `previousUrls`:
+Les alias sont volontairement stockés dans `results/` plutôt que dans `config/sites.js` : la configuration est écrite et vérifiée manuellement, tandis que les alias sont un état observé, dérivé des mesures. Une redirection temporaire ne peut donc jamais modifier silencieusement quelque chose que vous avez écrit. Pour déclarer manuellement un changement d’adresse — avant qu’il ait été observé, ou pour remplacer la détection — utilisez `previousUrls` :
 
 ```js
 {
@@ -348,126 +247,56 @@ detection — use `previousUrls`:
 }
 ```
 
-A URL that is both measured on its own and claimed as another site's
-`previousUrls` is rejected at config load, since its history would otherwise be
-counted twice.
+Si une URL est à la fois mesurée directement et déclarée comme `previousUrls` pour un autre site, le chargement de la configuration est refusé, car son historique serait comptabilisé deux fois.
 
-If you change a URL without a redirect ever being observed, the old history
-isn't lost — it's listed on the home page as "orphaned" rather than deleted.
+Si vous changez une URL sans qu’aucune redirection n’ait été observée, l’ancien historique n’est pas perdu : il apparaît sur la page d’accueil comme « orphelin » au lieu d’être supprimé.
 
-## Appearance
+## Apparence
 
-Modeled on [the Eleventy Leaderboards](https://www.11ty.dev/speedlify/):centered
-masthead, URL-as-name in monospace with a favicon, `#1` ranks with 🥇🥈🥉 for the
-podium, and the four Lighthouse categories as score rings.
+Inspirée des [classements Eleventy](https://www.11ty.dev/speedlify/) : en-tête centré, URL affichée en monospace avec un favicon, rangs `#1` et médailles 🥇🥈🥉 pour le podium, ainsi que des anneaux de score pour les quatre catégories Lighthouse.
 
-**Dark by default, light on request.** Dark ignores the system preference. The
-footer's [
-`<solar-eclipse-toggle>`](https://github.com/zachleat/solar-eclipse-toggle),
-with `data-theme-default="dark"` on `<html>`, saves a light override as
-`data-theme="light"` on `<html>` and in `localStorage`; switching back to dark
-clears it. Color tokens use `light-dark()`, so `color-scheme` picks the palette.
+**Sombre par défaut, clair sur demande.** Le mode sombre ignore les préférences système. Le pied de page contient le composant [`<solar-eclipse-toggle>`](https://github.com/zachleat/solar-eclipse-toggle). Avec `data-theme-default="dark"` sur `<html>`, il enregistre le choix du thème clair dans `data-theme="light"` sur `<html>` et dans `localStorage`. Revenir au thème sombre supprime cette valeur. Les couleurs utilisent `light-dark()` : c’est `color-scheme` qui choisit la palette.
 
-An inline block in `<head>` applies a saved override before first paint. Without
-JS the toggle stays disabled and the page stays dark.
+Un bloc intégré dans `<head>` applique le thème enregistré avant le premier affichage. Sans JavaScript, le bouton reste désactivé et la page reste en mode sombre.
 
-The score rings are inline SVG generated at build time — Speedlify draws them
-with a web component that inlines the full result JSON per row, but an arc is
-just a `stroke-dasharray`, so the same picture costs no JavaScript.
+Les anneaux de score sont des SVG intégrés, générés lors de la compilation. Speedlify utilise un composant Web qui intègre le JSON complet des résultats dans chaque ligne, mais un arc se résume à un `stroke-dasharray` : obtenir la même image ne nécessite donc aucun JavaScript.
 
-The favicons are the **one external request** the built site makes, via the same
-avatar service Speedlify uses. Set `meta.avatarService` to `""` in [
-`src/_data/meta.js`](src/_data/meta.js) to drop them and keep the output fully
-self-contained — arguably the right call for a tool that measures third-party
-weight for a living.
+Les favicons constituent **l’unique requête externe** effectuée par le site généré : ils passent par le même service d’avatars que Speedlify. Définissez `meta.avatarService` sur `""` dans [`src/_data/meta.js`](src/_data/meta.js) pour les supprimer et rendre le résultat entièrement autonome — c’est probablement le choix qui convient à un outil qui mesure le poids des sites tiers.
 
-## Ranking
+## Classement
 
-Ports the leaderboard algorithm
-from [performance-leaderboard](https://github.com/zachleat/performance-leaderboard),
-as described
-in [Eleventy Leaderboard](https://www.zachleat.com/web/eleventy-leaderboard-speedlify/#the-algorithm-and-tiebreaker-changes):
+L’algorithme de classement est repris de [performance-leaderboard](https://github.com/zachleat/performance-leaderboard), tel qu’il est décrit dans [Eleventy Leaderboard](https://www.zachleat.com/web/eleventy-leaderboard-speedlify/#the-algorithm-and-tiebreaker-changes) :
 
-1. **Ring counts**, worst color first — the whole row of circles, read as counts
-   rather than as a total. All six rings — the four Lighthouse categories, axe,
-   and Core Web Vitals — are reduced to green / amber / red / gray and counted.
-   Fewest red wins, then fewest gray, then fewest amber, then most green. A site
-   showing any red ranks below a site showing none, whatever else it has.
-2. **The axe ring's color** — green, then amber, then gray, then red. The band,
-   not the count: two sites showing the same six colors can still differ in
-   *which* ring is the amber one, and this asks whose amber is the accessibility
-   ring. Second only to the rings, and ahead of every measure of speed: a slow
-   site is a better site than an inaccessible one.
-3. **Core Web Vitals** from real users — how badly first, then how many. A vital
-   that is merely short of the good threshold beats one that is poor. A site
-   CrUX has never sampled is not assessed here and falls through to the next
-   step, neither credited nor blamed for data that does not exist.
-4. **Sum of all four Lighthouse categories** (0–400), higher wins. Read only
-   once two sites have shown the same circles, the same accessibility ring and
-   the same real-user verdict — at which point the points are all that is left
-   to separate them.
-5. **Fewest axe violations**, counted as violating *nodes* — one rule broken
-   across eight elements is eight violations. The same ring as step 2 at full
-   resolution: up there one violation and thirty are the same color, and here
-   the difference between them decides. It settles about a fifth of the board,
-   and without it those pairs fall to speed — putting a site with four
-   violations above one with a single violation.
-6. **Tiebreaker value**, lower wins:
+1. **Nombre d’anneaux par couleur**, en commençant par la pire. On considère toute la rangée d’anneaux comme des nombres, et non comme un total. Les six anneaux — les quatre catégories Lighthouse, axe et Core Web Vitals — sont classés en vert, ambre, rouge ou gris, puis comptés. Le moins de rouges l’emporte, puis le moins de gris, ensuite le moins d’ambre, et enfin le plus de verts. Un site qui affiche du rouge est moins bien classé qu’un site sans rouge, quels que soient ses autres résultats.
+2. **Couleur de l’anneau axe** : vert, puis ambre, gris et rouge. On compare la couleur de l’anneau, pas le nombre de violations : deux sites qui affichent les mêmes six couleurs peuvent différer par l’anneau ambre. Ce critère demande si l’anneau de l’accessibilité est celui qui est ambre. Il arrive juste après le comptage des anneaux et avant toute mesure de vitesse : un site lent vaut mieux qu’un site inaccessible.
+3. **Core Web Vitals**, mesurés auprès de vrais utilisateurs : on compare d’abord la gravité des échecs, puis leur nombre. Une valeur juste en dessous du seuil « bon » vaut mieux qu’une valeur mauvaise. Un site que CrUX n’a jamais échantillonné n’est pas évalué à cette étape : il passe au critère suivant, sans bonus ni pénalité liée à l’absence de données.
+4. **Somme des quatre catégories Lighthouse** (de 0 à 400), la valeur la plus élevée l’emportant. Ce critère n’intervient que lorsque deux sites ont les mêmes anneaux, la même couleur pour l’anneau d’accessibilité et le même verdict sur les données réelles — les points sont alors le seul élément qui puisse les départager.
+5. **Nombre minimal de violations axe**, comptées comme des *nœuds en infraction* : une règle enfreinte sur huit éléments correspond à huit violations. Ce critère affine le résultat de l’étape 2 : à ce stade, une et trente violations ont la même couleur, mais leur nombre permet de trancher. Il départage environ un cinquième du classement. Sans lui, les sites concernés seraient départagés par la vitesse, ce qui placerait un site avec quatre violations devant un site qui n’en a qu’une.
+6. **Valeur de départage**, la plus faible l’emportant :
 
-```
-50000 * speedIndex / weight + TTFB + TBT
+```text
+50000 * speedIndex / poids + TTFB + TBT
 ```
 
-Speed Index per KB. A fast *heavy* site is more impressive than a fast empty
-one, so with Speed Index equal the larger site wins, and with weight equal the
-lower Speed Index wins. TTFB and TBT are added so server latency and main-thread
-blocking still cost you.
+Le Speed Index est rapporté au kilo-octet. À Speed Index égal, un site lourd est plus impressionnant qu’un site presque vide : à poids égal, le Speed Index le plus faible l’emporte. On ajoute TTFB et TBT pour tenir compte de la latence du serveur et du blocage du fil principal.
 
-The weight in that ratio counts document, CSS and JS in full but caps **images
-at 400 kB** and **fonts at 100 kB** — otherwise a site could climb the board by
-shipping enormous images it doesn't need.
+Le poids utilisé dans ce rapport inclut intégralement le document, le CSS et le JavaScript, mais plafonne les **images à 400 kB** et les **polices à 100 kB**. Ainsi, un site ne peut pas remonter dans le classement simplement en envoyant d’énormes images inutiles.
 
-Sites with no successful measurement sort last rather than being treated as a
-zero score. Row order *is* the ranking, so a row's position and its printed rank
-can never disagree.
+Les sites qui n’ont aucune mesure réussie sont classés en dernier, plutôt que de recevoir un score nul. L’ordre des lignes *est* le classement : la position d’une ligne et le rang affiché ne peuvent donc jamais diverger.
 
-### Why bands rank ahead of points
+### Pourquoi les bandes de couleur passent avant les points
 
-A total treats the categories as a currency, so one can be sold off to buy
-points elsewhere: 100/100/100/80 sums to 380 and beats 90/90/90/90 on 360, while
-showing an amber ring against four greens — a row that looks worse than the row
-beneath it. Banding first says that a ring dropping out of green is a fact about
-the site that no amount of points elsewhere buys back.
+Un total traite les catégories comme une monnaie d’échange : on peut sacrifier un résultat pour en améliorer un autre. Ainsi, 100/100/100/80 donne 380 et bat 90/90/90/90, qui donne 360, alors que le premier site affiche un anneau ambre, contre quatre anneaux verts pour le second — une ligne qui semble moins bonne que celle juste en dessous. Le classement par bandes considère qu’un anneau qui n’est plus vert révèle un problème que les points gagnés ailleurs ne peuvent pas compenser.
 
-The same reasoning puts the axe ring above the total. An axe violation costs
-nothing in the Lighthouse score — axe is a separate run — so a site could carry
-four violations alongside a perfect 400 and outrank a site whose only fault was
-the ring its total was docked for. preactjs.com sat six places above
-typescriptlang.org on exactly that trade. Reading the ring's color before the
-points ends it, and the violation count settles the rest below the total.
+La même logique place l’anneau axe avant le total. Une violation axe ne coûte aucun point au score Lighthouse — axe est exécuté séparément. Un site pourrait donc cumuler quatre violations avec un score parfait de 400 et dépasser un site dont le seul défaut est un anneau pénalisé dans son total. Dans les données d’exemple, preactjs.com se trouvait exactement six places au-dessus de typescriptlang.org à cause de cet échange. Comparer la couleur de l’anneau avant les points élimine cette incohérence, et le nombre de violations départage ensuite les sites, après le total.
 
-Gray — no data — is counted in its own bucket, between red and amber. A
-Lighthouse category with no score and an axe run that never happened are both
-unchecked, and unchecked is not clean: a site must not climb by failing to be
-measured. But a check that did not run is not a measured failure either, so it
-costs less than a red.
+Le gris — absence de données — est comptabilisé dans sa propre catégorie, entre le rouge et l’ambre. Une catégorie Lighthouse sans score et une exécution axe qui n’a jamais eu lieu sont toutes deux non vérifiées ; une mesure non effectuée ne signifie pas que le site est sans défaut et ne doit pas lui permettre de gagner des places. Mais une vérification qui n’a pas eu lieu ne constitue pas non plus un échec constaté : elle coûte donc moins qu’un résultat rouge.
 
-**Core Web Vitals is counted like any other ring**, with one exception: an
-unsampled vital counts as green. Most of this corpus is too small for CrUX to
-sample, and that is a fact about a site's traffic rather than about the site —
-where a missing axe run is a measurement that did not finish and does cost you.
-Counting it as absent instead sank 171 of the 179 perfect sites below rank 36,
-behind the eight that happened to have field data. A vital that *was* sampled
-and failed is a red circle like any other. It is also read again a step below
-the rings, where how badly a site fails separates two sites the counts could
-not.
+**Core Web Vitals est comptabilisé comme les autres anneaux**, avec une exception : un indicateur qui n’a pas été échantillonné compte comme vert. La plupart des sites de ce corpus n’ont pas assez de trafic pour être échantillonnés par CrUX, et cela renseigne sur leur trafic, pas sur leur qualité. À l’inverse, une mesure axe manquante signifie qu’une vérification n’a pas abouti et coûte des places. Traiter les données CrUX manquantes comme une absence a fait chuter 171 des 179 sites parfaits sous le rang 36, derrière les huit qui disposaient de données terrain. Un indicateur mesuré qui échoue affiche un anneau rouge, comme n’importe quel autre. Il est également réévalué à l’étape suivante, où la gravité de l’échec départage les sites que le comptage des couleurs n’a pas pu distinguer.
 
-### Archiving a URL
+### Archiver une URL
 
-`config/archived.json` takes a URL out of circulation without losing it. An
-archived site is not measured, not ranked, and not linked — it has no row and no
-page — but its stored measurements stay on disk and it is named as plain text at
-the bottom of the home page.
+`config/archived.json` permet de retirer une URL du classement sans la supprimer. Un site archivé n’est ni mesuré, ni classé, ni lié : il n’a aucune ligne ni page, mais ses mesures enregistrées restent sur le disque et son nom apparaît en texte brut au bas de la page d’accueil.
 
 ```json
 {
@@ -477,298 +306,220 @@ the bottom of the home page.
 }
 ```
 
-It is the middle option. Deleting a URL from a category loses its history and
-leaves an orphaned directory behind; leaving it in place keeps a dead site in
-the rankings and keeps sending traffic to it.
+C’est une solution intermédiaire. Supprimer une URL d’une catégorie fait perdre son historique et laisse un répertoire orphelin ; la laisser en place maintient un site inactif dans les classements et continue à lui envoyer du trafic.
 
-**Sites archive themselves after `archiveAfterFailures` consecutive failures**
-(14 by default; `0` turns it off). That half is derived from the stored failure
-count rather than written into `archived.json`, which is what makes it
-reversible — one successful measurement resets the count and the site is back on
-the board with no edit. Automatically archived sites *keep being measured*, on
-the backoff's daily cadence, because a site that stops being measured can never
-stop failing. Hand-archived sites do not.
+**Les sites sont automatiquement archivés après `archiveAfterFailures` échecs consécutifs** (14 par défaut ; la valeur `0` désactive cette fonction). Ce statut est déduit du nombre d’échecs enregistrés, plutôt que sauvegardé dans `archived.json`, ce qui le rend réversible : une mesure réussie remet le compteur à zéro et le site réintègre le classement sans modification manuelle. Les sites archivés automatiquement continuent d’être mesurés, au rythme quotidien prévu par le mécanisme de nouvelle tentative : un site qui cesse d’être mesuré ne peut jamais cesser d’échouer. Les sites archivés manuellement ne sont pas remesurés.
 
-**Not for sites that moved off Eleventy.** Those keep being measured and are
-reclassified into 11ty Emeritus on their own, by `requireGenerator` — archiving
-one would throw away the measurements that show the move. Archive a site whose
-domain has lapsed or is now parked.
+**N’utilisez pas cette fonction pour les sites qui ont abandonné Eleventy.** Ils continuent d’être mesurés et sont automatiquement reclassés dans 11ty Emeritus grâce à `requireGenerator`. Les archiver ferait perdre les mesures qui montrent ce changement. Archivez plutôt un site dont le domaine a expiré ou est désormais parqué.
 
-Listed here rather than removed from a category file because the community and
-starter lists are generated — a deletion there lasts until the next import. One
-entry covers every category the URL appears in.
+Les URL sont inscrites ici plutôt que supprimées d’un fichier de catégorie, car les listes de la communauté et des projets de démarrage sont générées : toute suppression dans ces fichiers disparaîtrait à la prochaine importation. Une seule entrée suffit pour une URL présente dans plusieurs catégories.
 
-### Accessibility comes from a real axe run
+### L’accessibilité est évaluée par une véritable exécution d’axe
 
-Step 2 uses a standalone [axe-core](https://github.com/dequelabs/axe-core) pass,
-not Lighthouse's accessibility score. Lighthouse runs a subset of axe's rules
-and folds the outcome into a weighted number; a page can score 93 there and
-still fail 13 axe checks — which is exactly what `jekyllrb.com` does in the
-sample data.
+L’étape 2 s’appuie sur une analyse axe-core autonome, et non sur le score d’accessibilité Lighthouse. Lighthouse n’exécute qu’un sous-ensemble des règles d’axe et intègre les résultats dans un score pondéré ; une page peut obtenir 93 tout en échouant à 13 vérifications axe — c’est précisément le cas de `jekyllrb.com` dans les données d’exemple.
 
-The pass connects to the Chrome that `chrome-launcher` already started for
-Lighthouse, so it costs one extra page load per site and no second browser
-download. It runs once per measurement rather than once per Lighthouse run,
-since it is a static analysis of the rendered DOM.
+L’analyse se connecte à l’instance de Chrome que `chrome-launcher` a déjà démarrée pour Lighthouse. Elle ajoute donc un chargement de page par site, sans nécessiter de second téléchargement du navigateur. Elle est exécutée une fois par mesure, plutôt qu’une fois par exécution Lighthouse, puisqu’il s’agit d’une analyse statique du DOM rendu.
 
-If axe fails or times out, the measurement is still kept — accessibility is a
-tiebreaker, and losing the whole record over it would be a bad trade. A site
-with no axe data sorts *after* one that has it, so a failed run never wins the
-tiebreaker by default.
+Si axe échoue ou dépasse le délai imparti, la mesure est tout de même conservée : l’accessibilité est un critère de départage, et perdre l’enregistrement entier serait un mauvais compromis. Un site sans données axe est classé après un site qui en possède, afin qu’une exécution ratée ne lui donne pas par défaut l’avantage lors du départage.
 
-The five per-metric rankings (performance, accessibility, LCP, weight, requests)
-are still computed and available in `report.json` as side rankings.
+Les cinq classements par indicateur (performance, accessibilité, LCP, poids et requêtes) continuent d’être calculés et sont disponibles dans `report.json` comme classements secondaires.
 
-### Configuration via .env
+### Configuration avec `.env`
 
-A `.env` file in the project root is loaded automatically by every command and
-by the build. Copy [`.env.example`](.env.example) to get started:
+Un fichier `.env` à la racine du projet est chargé automatiquement par chaque commande et par la compilation. Copiez [`.env.example`](.env.example) pour commencer :
 
 ```bash
 cp .env.example .env
 ```
 
-Two behaviors worth knowing:
+Deux comportements à connaître :
 
-- **Real environment variables win.** A value set by your shell or by CI is
-  never overwritten by the file, so a stray local `.env` cannot shadow a
-  `CRUX_API_KEY` secret in GitHub Actions. (Note that an *empty* variable still
-  counts as set.)
-- **A missing `.env` is not an error.** It is optional and gitignored; every
-  variable it can set has a working default.
+- **Les variables d’environnement réelles sont prioritaires.** Une valeur définie par le shell ou la CI n’est jamais remplacée par le fichier. Un `.env` local oublié ne peut donc pas masquer un secret `CRUX_API_KEY` dans GitHub Actions. (Une variable vide est tout de même considérée comme définie.)
+- **L’absence de `.env` n’est pas une erreur.** Ce fichier est facultatif et ignoré par Git ; toutes les variables qu’il peut définir ont une valeur par défaut fonctionnelle.
 
-This uses Node's built-in `process.loadEnvFile` (Node 20.12+), so it costs no
-dependency. Point it elsewhere with `SPEEDLIFY_ENV_FILE=.env.local`.
+Le chargement s’appuie sur `process.loadEnvFile`, intégré à Node (Node 20.12+), sans dépendance supplémentaire. Pour utiliser un autre fichier, définissez `SPEEDLIFY_ENV_FILE=.env.local`.
 
-| Variable                    | Default                                  | Purpose                                                |
-|-----------------------------|------------------------------------------|--------------------------------------------------------|
-| `CHROME_PATH`               | —                                        | Chrome (or compatible) binary path                     |
-| `CRUX_API_KEY`              | —                                        | Chrome UX Report field data, including INP             |
-| `SPEEDLIFY_RESULTS_DIR`     | `results`                                | Where measurements live                                |
-| `SPEEDLIFY_LOGS_DIR`        | `logs`                                   | Where NDJSON run logs are written                      |
-| `SPEEDLIFY_REPORT_FILE`     | `report.json`                            | What `speedlify report` writes and the build reads     |
-| `SPEEDLIFY_ENV_FILE`        | `.env`                                   | Load a different env file                              |
-| `SPEEDLIFY_SITE_URL`        | —                                        | Deployed origin, for page metadata                     |
-| `SPEEDLIFY_REPO_URL`        | `https://github.com/zachleat/speedlify2` | Repository link in the footer                          |
-| `SPEEDLIFY_GOATCOUNTER_URL` | —                                        | GoatCounter endpoint; adds the counter script when set |
+| Variable                    | Valeur par défaut                        | Fonction                                                                             |
+|-----------------------------|------------------------------------------|--------------------------------------------------------------------------------------|
+| `CHROME_PATH`               | —                                        | Chemin vers le binaire de Chrome ou d’un navigateur compatible                       |
+| `CRUX_API_KEY`              | —                                        | Données terrain du rapport Chrome UX, y compris INP                                  |
+| `SPEEDLIFY_RESULTS_DIR`     | `results`                                | Emplacement des mesures                                                              |
+| `SPEEDLIFY_LOGS_DIR`        | `logs`                                   | Emplacement des journaux d’exécution NDJSON                                          |
+| `SPEEDLIFY_REPORT_FILE`     | `report.json`                            | Fichier produit par `speedlify report` et lu lors de la compilation                  |
+| `SPEEDLIFY_ENV_FILE`        | `.env`                                   | Fichier d’environnement à charger                                                    |
+| `SPEEDLIFY_SITE_URL`        | —                                        | Origine du site déployé, utilisée pour les métadonnées                               |
+| `SPEEDLIFY_REPO_URL`        | `https://github.com/zachleat/speedlify2` | Lien vers le dépôt dans le pied de page                                              |
+| `SPEEDLIFY_GOATCOUNTER_URL` | —                                        | Point de terminaison GoatCounter ; ajoute le script de comptage lorsqu’il est défini |
 
-## Real-user data (recommended)
+## Données d’utilisateurs réels (recommandé)
 
-Lighthouse gives you lab data: a simulation, on one machine, with synthetic
-throttling. The Chrome UX Report gives you what actually happened to real Chrome
-users over a trailing 28 days.
+Lighthouse fournit des données de laboratoire : une simulation exécutée sur une machine, avec une limitation synthétique du débit. Le Chrome UX Report fournit des données issues de l’expérience réelle des utilisateurs de Chrome sur les 28 derniers jours.
 
-Two reasons this matters enough to set up:
+Deux raisons rendent ces données particulièrement utiles :
 
-- **INP is field-only.** Lighthouse cannot measure Interaction to Next Paint in
-  a lab run — a cold navigation has no interactions. Without CrUX you are
-  missing a third of Core Web Vitals and substituting TBT as a proxy.
-- **The lab/field gap is the interesting number.** Lab flat while field degrades
-  usually means a population you don't test on: slower devices, worse networks,
-  a region you just started serving.
+- **INP est mesuré uniquement sur le terrain.** Lighthouse ne peut pas mesurer l’Interaction to Next Paint en laboratoire : une navigation à froid ne comprend aucune interaction. Sans CrUX, il manque un tiers des Core Web Vitals, et TBT sert de substitut approximatif.
+- **L’écart entre laboratoire et terrain est révélateur.** Si les résultats de laboratoire restent stables alors que les résultats terrain se dégradent, le problème vient souvent d’un public que vous ne testez pas : appareils plus lents, réseaux de moindre qualité ou région que vous venez de commencer à desservir.
 
-Set it up:
+Pour configurer CrUX :
 
-1. Create an API key in
-   the [Google Cloud console](https://console.cloud.google.com/apis/credentials).
-2. Enable the **Chrome UX Report API** on that project.
-3. Export it and verify:
+1. Créez une clé API dans la console Google Cloud.
+2. Activez la **Chrome UX Report API** sur ce projet.
+3. Exportez la clé, puis vérifiez la configuration :
 
 ```bash
 export CRUX_API_KEY=your-key-here
 npx speedlify check
 ```
 
-Then seed history. The CrUX History API returns ~25 weekly data points per
-request, so a brand-new install gets six months of real-user trend immediately
-instead of waiting six months to grow one:
+Ensuite, préremplissez l’historique. L’API CrUX History renvoie environ 25 points de données hebdomadaires par requête. Une nouvelle installation peut ainsi disposer immédiatement de six mois de tendances terrain, au lieu d’attendre six mois pour les constituer :
 
 ```bash
 npx speedlify backfill
 ```
 
-### When there's no key
+### En l’absence de clé
 
-Core Web Vitals are **skipped entirely** — no panel, no badge, no home-page
-stat. Without CrUX there is no INP, so the only thing left to show would be a
-lab approximation, and labelling that "Core Web Vitals" implies a measurement
-that isn't happening. Everything else (scores, lab timings, weight, main thread,
-a11y, hygiene) is unaffected.
+Core Web Vitals est **entièrement ignoré** : aucun panneau, badge ni indicateur sur la page d’accueil. Sans CrUX, il n’y a pas d’INP ; la seule autre donnée disponible serait une approximation en laboratoire, et l’appeler « Core Web Vitals » laisserait croire à une mesure qui n’a pas été effectuée. Tout le reste — scores, temps de laboratoire, poids, fil principal, accessibilité et hygiène — reste inchangé.
 
-With a key set, sites that lack Chrome traffic return no data individually. That
-is expected, not an error — those fall back to a clearly-labeled lab
-approximation using TBT in place of INP, because in that case CrUX *is*
-configured and this URL simply isn't covered.
+Lorsqu’une clé est définie, certains sites ne renvoient aucune donnée, faute de trafic Chrome. C’est attendu et ce n’est pas une erreur : pour ces sites, une approximation clairement identifiée en laboratoire utilise TBT à la place d’INP, puisque CrUX est bien configuré, mais que cette URL n’est tout simplement pas couverte.
 
-Field data already stored in `results/` always renders, even if the key isn't
-present for a later build.
+Les données terrain déjà stockées dans `results/` sont toujours affichées, même si la clé est absente lors d’une compilation ultérieure.
 
-## What gets measured
+## Mesures effectuées
 
-Every run records far more than the four Lighthouse scores, because the scores
-are the *lagging* indicator — the leading indicators are what let you catch a
-regression while it's still small.
+Chaque exécution enregistre bien plus que les quatre scores Lighthouse, car les scores sont des **indicateurs retardés** : les indicateurs avancés permettent de détecter une régression avant qu’elle ne prenne de l’ampleur.
 
-| Group             | Metrics                                                                                                 |
-|-------------------|---------------------------------------------------------------------------------------------------------|
-| **Scores**        | Performance, Accessibility, Best Practices, SEO                                                         |
-| **Lab timings**   | LCP, CLS, TBT, FCP, Speed Index, TTFB, max potential FID, server response time, network RTT             |
-| **LCP subparts**  | TTFB, resource load delay, load duration, element render delay                                          |
-| **Field (CrUX)**  | LCP, **INP**, CLS, FCP, TTFB — p75 plus the full good/needs-work/poor distribution                      |
-| **Weight**        | Total bytes and requests, split by resource type; main document size                                    |
-| **Third parties** | Per-entity transfer size and main-thread time                                                           |
-| **Main thread**   | Script evaluation, style/layout, parse, GC; long task count and longest task                            |
-| **Waste**         | Unused JS/CSS, legacy JS, duplicated JS, unminified bytes, render-blocking, poorly-cached bytes         |
-| **DOM**           | Element count, depth, max children                                                                      |
-| **Accessibility** | Failing audit count and failing node count, plus which audits                                           |
-| **Hygiene**       | HTTPS, HSTS, CSP, clickjacking, origin isolation, Trusted Types, bfcache, HTTP protocol, console errors |
-| **Environment**   | Lighthouse version, form factor, throttling method, and **benchmark index**                             |
+| Groupe                     | Mesures                                                                                                                                   |
+|----------------------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| **Scores**                 | Performance, Accessibilité, Bonnes pratiques, SEO                                                                                         |
+| **Temps de laboratoire**   | LCP, CLS, TBT, FCP, Speed Index, TTFB, FID potentiel maximal, temps de réponse du serveur, RTT réseau                                     |
+| **Sous-parties du LCP**    | TTFB, délai de chargement de la ressource, durée de chargement, délai de rendu de l’élément                                               |
+| **Données terrain (CrUX)** | LCP, **INP**, CLS, FCP, TTFB — 75e percentile et répartition complète entre « bon », « à améliorer » et « mauvais »                       |
+| **Poids**                  | Nombre total d’octets et de requêtes, répartis par type de ressource ; taille du document principal                                       |
+| **Tiers**                  | Volume transféré et temps passé sur le fil principal, par entité                                                                          |
+| **Fil principal**          | Évaluation des scripts, styles et mise en page, analyse syntaxique, ramasse-miettes ; nombre de tâches longues et durée de la plus longue |
+| **Gaspillage**             | JavaScript et CSS inutilisés, JavaScript obsolète ou dupliqué, octets non minifiés, ressources bloquant le rendu, octets mal mis en cache |
+| **DOM**                    | Nombre d’éléments, profondeur, nombre maximal d’enfants                                                                                   |
+| **Accessibilité**          | Nombre d’audits échoués et de nœuds concernés, ainsi que les audits en question                                                           |
+| **Hygiène**                | HTTPS, HSTS, CSP, protection contre le clickjacking, isolation de l’origine, Trusted Types, bfcache, protocole HTTP, erreurs de console   |
+| **Environnement**          | Version de Lighthouse, facteur de forme, méthode de limitation du débit et **indice de référence**                                        |
 
-### Why benchmark index is recorded
+### Pourquoi enregistrer l’indice de référence
 
-`benchmarkIndex` scores the CPU of the machine that ran the test. A busy or
-slower CI runner inflates every CPU-bound metric — TBT, TTI, main thread work —
-and looks exactly like a real regression.
+`benchmarkIndex` mesure les performances du processeur de la machine qui a exécuté le test. Un exécuteur CI plus lent ou occupé dégrade toutes les mesures dépendantes du processeur — TBT, TTI et charge du fil principal, entre autres — et peut donner l’impression d’une véritable régression.
 
-speedlify tracks it as a first-class metric and shows a warning banner on a
-site's page when the measuring machine drifted more than 20% from its own
-baseline. It is the single most common cause of phantom regressions in synthetic
-monitoring, and most tools don't record it at all.
+speedlify enregistre cet indice comme une mesure à part entière et affiche une bannière d’avertissement sur la page d’un site si la machine de mesure s’est écartée de plus de 20 % de sa propre référence. C’est la cause la plus fréquente des fausses régressions dans le suivi synthétique, et la plupart des outils ne l’enregistrent pas du tout.
 
-### Signal vs noise
+### Signal et bruit
 
-Lab metrics jitter. Comparing one new measurement against one old one produces a
-stream of false regressions, which is how a performance dashboard trains people
-to ignore it.
+Les mesures en laboratoire fluctuent. Comparer une nouvelle mesure à une seule ancienne produit une série de fausses régressions, ce qui finit par apprendre aux utilisateurs à ignorer leur tableau de bord de performance.
 
-Two things guard against that:
+Deux mécanismes limitent ce problème :
 
-- Each measurement runs Lighthouse N times and keeps the **median**, not the
-  best.
-- A change is only flagged **significant** if it exceeds that metric's own
-  observed noise floor — the median absolute step between consecutive
-  measurements. This needs at least three data points, so the first couple of
-  runs deliberately flag nothing.
+- Lighthouse est exécuté N fois pour chaque mesure, et c’est la **médiane**, plutôt que le meilleur résultat, qui est conservée.
+- Un changement n’est signalé comme **significatif** que s’il dépasse le niveau de bruit observé pour cette mesure : la médiane des écarts absolus entre mesures consécutives. Il faut au moins trois points de données ; les premières exécutions ne signalent donc volontairement rien.
 
-## Logs
+## Journaux
 
-Every run writes NDJSON, one JSON object per line:
+Chaque exécution écrit des données NDJSON, avec un objet JSON par ligne :
 
-- `logs/<runId>.ndjson` — full event log for that run
-- `logs/runs.ndjson` — one summary line per run, appended forever
+- `logs/<runId>.ndjson` — journal complet des événements de l’exécution
+- `logs/runs.ndjson` — une ligne de résumé par exécution, ajoutée au fichier au fil du temps
 
-Both are greppable, and the run history is published at `/runs/` so you can
-answer "did that run actually finish?" without shell access to the build
-machine.
+Les deux fichiers permettent les recherches avec `grep`, et l’historique des exécutions est publié sur `/runs/`. Vous pouvez ainsi savoir si une exécution s’est réellement terminée, sans accès shell à la machine de compilation.
 
 ```bash
-# every warning and error across all runs
+# Tous les avertissements et toutes les erreurs de toutes les exécutions
 grep -h '"level":"warn"\|"level":"error"' logs/*.ndjson | jq .
 
-# what happened to one site in one run
+# Résultat d'un site pour une exécution donnée
 jq 'select(.data.url == "https://example.com/")' logs/2026-01-01*.ndjson
 
-# run history at a glance
+# Aperçu de l'historique des exécutions
 npx speedlify runs
 ```
 
-Failed measurements are stored as records with an `error` field rather than
-discarded — "this site was down on Tuesday" is data you want on the chart.
+Les mesures échouées sont enregistrées avec un champ `error` au lieu d’être supprimées : « ce site était hors ligne mardi » est une donnée utile à afficher sur le graphique.
 
-## Commands
+## Commandes
 
 ```bash
-speedlify measure [options]    # measure a batch of the stalest sites
-speedlify report [--out=F]     # generate the JSON report the site builds from
-speedlify backfill             # seed ~25 weeks of CrUX field history
-speedlify check                # verify the CrUX API key
-speedlify list [--stale]       # configured sites, stalest first
-speedlify runs [--limit=N]     # recent runs from the log
-speedlify redirects            # detected redirects and confirmed site moves
-speedlify reindex              # rebuild series.json from the raw records
-speedlify prune [options]      # delete old raw records (series is preserved)
+speedlify measure [options]    # Mesurer un lot des sites dont la dernière mesure est la plus ancienne
+speedlify report [--out=F]     # Générer le rapport JSON utilisé lors de la compilation du site
+speedlify backfill             # Préremplir environ 25 semaines d'historique CrUX
+speedlify check                # Vérifier la clé API CrUX
+speedlify list [--stale]       # Afficher les sites configurés, des plus anciens aux plus récents
+speedlify runs [--limit=N]     # Afficher les exécutions récentes à partir du journal
+speedlify redirects            # Afficher les redirections détectées et les changements de site confirmés
+speedlify reindex              # Reconstruire series.json à partir des enregistrements bruts
+speedlify prune [options]      # Supprimer les anciens enregistrements bruts (la série est conservée)
 ```
 
-Useful options:
+Options utiles :
 
-| Flag               | Effect                                           |
-|--------------------|--------------------------------------------------|
-| `--group=ssg,docs` | Only these config groups                         |
-| `--url=<url>`      | Only this URL                                    |
-| `--filter=<text>`  | Sites whose name or URL contains this            |
-| `--runs=<n>`       | Override runs per site                           |
-| `--desktop`        | Measure desktop instead of mobile                |
-| `--force`          | Ignore the freshness window                      |
-| `--no-field`       | Skip CrUX                                        |
-| `--quiet`          | No console output; the log file is still written |
+| Option             | Effet                                                                        |
+|--------------------|------------------------------------------------------------------------------|
+| `--group=ssg,docs` | Ne traiter que ces groupes de configuration                                  |
+| `--url=<url>`      | Ne traiter que cette URL                                                     |
+| `--filter=<text>`  | Sites dont le nom ou l’URL contient ce texte                                 |
+| `--runs=<n>`       | Remplacer le nombre d’exécutions par site                                    |
+| `--desktop`        | Mesurer la version pour ordinateur plutôt que pour mobile                    |
+| `--force`          | Ignorer le délai de fraîcheur                                                |
+| `--no-field`       | Ignorer CrUX                                                                 |
+| `--quiet`          | Ne rien afficher dans la console ; le fichier journal est tout de même écrit |
 
-Pruning deletes old **raw records** while leaving `series.json` intact, so
-charts and trends keep their full history even after the detailed archive behind
-them is gone. It also always keeps a minimum number of recent records per site,
-so a long-dormant URL never loses its detail entirely:
+L’élagage supprime les **enregistrements bruts** anciens, mais conserve `series.json`. Les graphiques et les tendances gardent donc tout leur historique, même lorsque l’archive détaillée a été supprimée. Un nombre minimal d’enregistrements récents par site est également conservé, pour qu’une URL inactive depuis longtemps ne perde jamais entièrement ses données détaillées :
 
 ```bash
 speedlify prune --days=365 --keep=30 --dry-run
 ```
 
-## Automation
+## Automatisation
 
-Two workflows, deliberately separate:
+Deux workflows distincts sont utilisés :
 
-- [`measure.yml`](.github/workflows/measure.yml) — every 2 hours, 4 shards in
-  parallel, a bounded batch each, committing results back to the repo. A shard
-  failing doesn't stop the others.
-- [`publish.yml`](.github/workflows/publish.yml) — hourly and on push, builds
-  and deploys whatever data exists. It never waits for a measurement run and
-  never fails because coverage is incomplete.
+- [`measure.yml`](.github/workflows/measure.yml) — toutes les deux heures, quatre fragments exécutés en parallèle traitent chacun un lot limité et enregistrent les résultats dans le dépôt. L’échec d’un fragment n’interrompt pas les autres.
+- [`publish.yml`](.github/workflows/publish.yml) — toutes les heures et à chaque push, compile et déploie les données disponibles. Il n’attend jamais qu’une exécution de mesure se termine et n’échoue jamais parce que la couverture est incomplète.
 
-To use them, add `CRUX_API_KEY` as a repository secret and enable GitHub Pages
-with "GitHub Actions" as the source. Without the secret both still run; field
-data is just skipped.
+Pour les utiliser, ajoutez `CRUX_API_KEY` aux secrets du dépôt et activez GitHub Pages en choisissant « GitHub Actions » comme source. Sans ce secret, les deux workflows continuent de fonctionner ; seules les données terrain sont ignorées.
 
-Shards write to disjoint directories but push to one branch, so the commit step
-rebases and retries on a race.
+Les fragments écrivent dans des répertoires distincts, mais envoient leurs modifications vers une seule branche. L’étape de commit rebase et réessaie donc en cas de conflit d’envoi.
 
-`results/` and `logs/` are intentionally **not** gitignored — they are the
-dataset. Committing them means history accumulates in version control, diffs
-cleanly, and can be rebuilt into the site from a fresh checkout.
+`results/` et `logs/` ne sont volontairement **pas** ignorés par Git : ils constituent le jeu de données. Les commiter permet à l’historique de s’accumuler dans le contrôle de version, aux différences d’être affichées clairement et au site d’être reconstruit à partir d’un nouveau clonage.
 
-## Project layout
+## Structure du projet
 
-```
-config/sites.js        the site list
+```text
+config/sites.js        liste des sites
 lib/
-  runner.js            drives headless Chrome + Lighthouse
-  metrics.js           LHR → the compact record we persist
-  crux.js              Chrome UX Report client (current + history)
-  redirect.js          redirect detection and move confirmation
-  aliases.js           learned URL moves, history stitching
-  schedule.js          which sites a limited batch should measure
-  series.js            record → flat series point projection
-  report.js            measurements -> report.json (all the analysis)
-  report-metrics.js    which metrics are charted, and how they are labeled
-  rank.js              the leaderboard algorithm and its tiebreakers
-  axe.js               standalone axe-core accessibility pass
-  env.js               loads .env, without clobbering real env vars
-  compare.js           trends, deltas, ranks, significance
-  store.js             append-only archive + derived series
-  log.js               NDJSON run logger
-bin/speedlify.js           CLI
-src/                   Build Awesome templates and build-time data
-report.json            the generated report (derived, gitignored)
-results/               the dataset (committed)
-logs/                  run logs (committed)
+  runner.js            pilote Chrome sans interface et Lighthouse
+  metrics.js           convertit LHR en enregistrement compact à conserver
+  crux.js              client Chrome UX Report (données actuelles et historique)
+  redirect.js          détection des redirections et confirmation des changements de site
+  aliases.js           changements d’URL détectés et assemblage de l’historique
+  schedule.js          sélection des sites à mesurer dans un lot limité
+  series.js            projection des enregistrements en points de série aplatis
+  report.js            mesures → report.json (analyse complète)
+  report-metrics.js    mesures affichées dans les graphiques et leurs libellés
+  rank.js              algorithme de classement et critères de départage
+  axe.js               analyse autonome de l’accessibilité avec axe-core
+  env.js               charge .env sans écraser les variables d’environnement réelles
+  compare.js           tendances, écarts, rangs et significativité
+  store.js             archive en ajout seulement et séries dérivées
+  log.js               journalisation des exécutions au format NDJSON
+bin/speedlify.js           interface en ligne de commande
+src/                   modèles de compilation Awesome et données de compilation
+report.json            rapport généré (dérivé, ignoré par Git)
+results/               jeu de données (suivi par Git)
+logs/                  journaux d’exécution (suivis par Git)
 ```
 
-## Notes
+## Remarques
 
-- Requires Node 22.19+ and a local Chrome/Chromium (`chrome-launcher` finds it).
-- Lighthouse 13 renamed many audits behind `*-insight` ids. `lib/metrics.js`
-  reads defensively and records `null` for anything missing, so a Lighthouse
-  upgrade degrades a metric rather than breaking the history.
-- The URL hash in `results/` must stay stable. Don't change `urlHash()` without
-  migrating the directory names.
+- Nécessite Node 22.19+ et une installation locale de Chrome ou Chromium (`chrome-launcher` la détecte).
+- Lighthouse 13 a renommé de nombreux audits avec des identifiants `*-insight`. `lib/metrics.js` gère ces changements avec prudence et enregistre `null` pour les données manquantes : une mise à niveau de Lighthouse dégrade une mesure, sans interrompre l’historique.
+- Le hachage d’URL utilisé dans `results/` doit rester stable. Ne modifiez pas `urlHash()` sans migrer les noms des répertoires.
 
-## License
+## Licence
 
 MIT

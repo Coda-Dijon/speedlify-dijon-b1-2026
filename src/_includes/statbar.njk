@@ -1,50 +1,50 @@
 {#
-	The stat bar, shared by the home page and every category page.
+	La barre de statistiques, commune à la page d’accueil et à chaque page de catégorie.
 
-	A macro rather than a copy in each: the two show the same figures over
-	different sets, and a second copy is how one of them ends up a release
-	behind. `stats` is whatever set is being summarized — `sites.stats` for the
-	whole fleet, `group.stats` for one category.
+	Une macro plutôt qu’une copie dans chaque page : les deux affichent les mêmes chiffres
+	sur des ensembles différents, et une seconde copie finirait par prendre du retard sur
+	une version. `stats` correspond à l’ensemble résumé : `sites.stats` pour tout le parc,
+	`group.stats` pour une catégorie.
 
-	Everything here degrades on its own: the perfect-score trend only exists for
-	the whole fleet, the Eleventy share only appears when there is one, and the
-	Core Web Vitals tile only appears where CrUX has sampled anything. So a
-	category page shows fewer tiles than the home page without the caller
-	deciding which.
+	Chaque élément fonctionne indépendamment : la tendance des scores parfaits n’existe
+	que pour l’ensemble du parc, la part d’Eleventy n’apparaît que si elle est non nulle,
+	et la tuile Core Web Vitals n’apparaît que si CrUX a recueilli des données. Une page de
+	catégorie affiche donc moins de tuiles que la page d’accueil, sans que l’appelant ait à
+	décider lesquelles.
 #}
 {#
-	Note the arguments. This is imported without `with context`, so the macro
-	sees nothing of the page's own data — `meta` in particular is not in scope
-	here, and reaching for it silently yields undefined rather than failing.
-	Everything the bar needs is therefore passed in.
+	À noter : les arguments. Cette macro est importée sans `with context` ; elle ne voit donc
+	pas les données propres à la page — `meta`, en particulier, n’est pas dans son espace de
+	portée, et y accéder renverrait silencieusement une valeur indéfinie au lieu de provoquer
+	une erreur. Tout ce dont la barre a besoin doit donc lui être transmis.
 #}
 {% macro statbar(stats, metrics, siteOfTheWeek=null, screenshotService=null) %}
 <section class="statbar">
 	{#
-		One of the perfect scores, held for the whole UTC week. Every eligible site
-		is featured once before any is featured twice — see siteOfTheWeek in
-		lib/report.js. A picture rather than a row, because the leaderboard below
-		already lists every one of them and the point of pulling one out is to
-		show what it looks like.
+		L’un des scores parfaits, mis à l’honneur pendant toute la semaine UTC. Chaque site
+		admissible est présenté une fois avant que l’un d’eux ne le soit une deuxième fois —
+		voir siteOfTheWeek dans lib/report.js. Une image plutôt qu’une ligne, car le classement
+		ci-dessous les répertorie déjà tous ; si l’on en met un en avant, c’est pour montrer
+		à quoi il ressemble.
 
-		Cropped to the top of the page: at this size the whole screenshot would be
-		a gray smudge, and the masthead is the recognizable part.
+		L’image est recadrée sur le haut de la page : à cette taille, la capture entière ne
+		serait qu’une tache grise, tandis que l’en-tête du site reste reconnaissable.
 	#}
 	{% if siteOfTheWeek %}
 	{% set sotw = siteOfTheWeek.entry %}
 	<div class="stat stat-sotw">
-		<span class="stat-label">Perfect site of the week</span>
+		<span class="stat-label">Site parfait de la semaine</span>
 		{#
-			Our own capture first: the same page load that produced the scores under
-			it, taken at Lighthouse's own pixel ratio because this site scored a
-			straight 400 — see isPerfectLighthouse in lib/runner.js, which exists so
-			that the one screenshot shown this large is the sharp one.
+			D’abord notre propre capture : elle provient du même chargement de page que celui
+			qui a produit les scores affichés juste en dessous. Elle est prise à la densité de
+			pixels utilisée par Lighthouse, car ce site a obtenu un score parfait de 400 —
+			voir isPerfectLighthouse dans lib/runner.js, qui permet d’obtenir une capture nette
+			pour cette image affichée en grand.
 
-			The service is the fallback, for a site that has not been re-measured
-			since captures were introduced. Guarded on it being configured: with
-			none, the filter returns an empty string, and `src=""` does not render
-			nothing — it resolves to the current page and fetches this whole
-			document as an image.
+			Le service de capture sert de solution de repli pour un site qui n’a pas été remesuré
+			depuis l’ajout des captures. Il est conditionné à sa configuration : sans service,
+			le filtre renvoie une chaîne vide et `src=""` ne signifie pas qu’aucune image ne
+			s’affiche — l’URL désigne alors la page actuelle, qui est récupérée comme une image.
 		#}
 		{% if sotw.ownScreenshot %}
 		<a class="sotw-shot" href="/site/{{ sotw.slug }}/" tabindex="-1" aria-hidden="true">
@@ -72,31 +72,31 @@
 	{% if stats.recentlyMeasured.length or stats.newlyPerfect.length %}
 	<div class="stat">
 		{#
-			What the measurement loop has just done. Everything else on this bar is
-			a state of the corpus; this is the only thing that shows it moving.
+			Ce que vient de produire la boucle de mesure. Tout le reste de cette barre décrit
+			l’état du corpus ; c’est le seul élément qui montre son évolution.
 
-			Gives up its rows to the newly-perfect list below when that one is long,
-			and drops out entirely rather than printing a heading over nothing — so
-			the card is gated on either list having something to say, not on this one.
+			Il cède sa place à la liste des nouveaux scores parfaits lorsque celle-ci est longue,
+			et disparaît complètement s’il n’a rien à afficher. La carte n’apparaît donc que si
+			l’une ou l’autre des listes a quelque chose à montrer, pas seulement si celle-ci en a.
 		#}
 		{% if stats.recentlyMeasured.length %}
-		<span class="stat-label">Recently measured</span>
+		<span class="stat-label">Mesurés récemment</span>
 		<ol class="recents">
 			{% for site in stats.recentlyMeasured %}
 			<li>
 				<a href="/site/{{ site.slug }}/">{{ site.displayUrl }}</a>
 				{#
-					The six rings reduced to their colors — the shape of that run at a
-					glance, in the width a number would need. Decorative on purpose:
-					the link beside it goes to the page with the actual figures, and
-					six unlabeled colors read aloud would be noise.
+					Les six anneaux sont réduits à leurs couleurs : un aperçu de cette mesure,
+					dans la largeur qu’occuperait un chiffre. Cet élément est volontairement
+					décoratif : le lien adjacent mène à la page contenant les valeurs réelles,
+					et six couleurs sans libellé seraient du bruit à la lecture vocale.
 				#}
 				{#
-					The span stays even when a run produced no bands at all. The row is
-					a three-column grid, and dropping a child moves the age into the
-					middle column, where the gap before the empty third one holds it
-					half a rem off the right edge — so that row would sit out of line
-					with the rest.
+					La balise `span` reste présente même si une mesure n’a produit aucune bande.
+					La ligne utilise une grille à trois colonnes ; si un élément enfant disparaît,
+					l’âge se retrouve dans la colonne du milieu, et l’espace avant la troisième
+					colonne vide le décale d’un demi-rem vers la droite. La ligne ne serait alors
+					plus alignée avec les autres.
 				#}
 				<span class="recents-dots" aria-hidden="true">
 					{% for band in site.bands %}<span class="recents-dot recents-dot-{{ band }}"></span>{% endfor %}
@@ -108,21 +108,23 @@
 		{% endif %}
 
 		{#
-			The other half of the same story. The list above says what was measured;
-			this says what changed — a site that was a point short and now is not.
+			L’autre moitié de la même histoire. La liste ci-dessus indique les sites mesurés ;
+			celle-ci indique ce qui a changé : un site qui était à un point du maximum et qui
+			l’a maintenant atteint.
 
-			Every site that qualifies, however many that is — a site whose scores just
-			went green should be able to find itself here, and a cap ordered by recency
-			meant that on a busy day it silently missed the cut. On a quiet day this is
-			a footnote under a list of twelve; on a busy one it is the whole card, and
-			the list above stands down. Absent entirely where nothing has flipped, which
-			is most category pages most days.
+			Tous les sites admissibles sont inclus, quel que soit leur nombre : un site dont les
+			scores viennent de passer au vert doit pouvoir se retrouver ici. Un plafond fondé
+			sur la récence aurait discrètement écarté des sites les jours de forte activité.
+			Les jours calmes, cette liste est une note de bas de page sous une liste de douze
+			éléments ; les jours chargés, elle occupe toute la carte et la liste ci-dessus
+			s’efface. Elle disparaît entièrement quand rien n’a changé, ce qui est le cas la
+			plupart du temps sur la plupart des pages de catégorie.
 		#}
 		{% if stats.newlyPerfect.length %}
-		{#- Count and window in one pill: two chips said one thing twice, and the
-		    window is what the count is counting over. The number comes from the
-		    report so it cannot drift. -#}
-		<span class="stat-label">Newly perfect <span class="tag stat-count" title="{{ stats.newlyPerfect | length }} {{ "site" if stats.newlyPerfect | length == 1 else "sites" }} reached perfect scores in the last {{ stats.newlyPerfectWindowHours }} hours">&times;{{ stats.newlyPerfect | length }} in {{ stats.newlyPerfectWindowHours }}h</span></span>
+		{#- Le nombre et la période dans une seule pastille : deux badges répétaient la même
+		    information, alors que la période indique ce que compte le nombre. La valeur vient
+		    du rapport, elle ne peut donc pas diverger. -#}
+		<span class="stat-label">Nouveaux scores parfaits <span class="tag stat-count" title="{{ stats.newlyPerfect | length }} {{ "site" if stats.newlyPerfect | length == 1 else "sites" }} ont obtenu des scores parfaits au cours des {{ stats.newlyPerfectWindowHours }} dernières heures">&times;{{ stats.newlyPerfect | length }} en {{ stats.newlyPerfectWindowHours }} h</span></span>
 		<ol class="recents recents-flipped">
 			{% for site in stats.newlyPerfect %}
 			<li>
@@ -139,62 +141,63 @@
 	{% endif %}
 
 	{#
-		Six medians, each computed on its own column — so this is a summary of the
-		fleet rather than a portrait of any one site, and no site necessarily has
-		this exact row.
+		Six médianes, chacune calculée séparément sur sa propre colonne : il s’agit donc d’un
+		résumé de l’ensemble des sites, et non du portrait d’un site en particulier. Aucun site
+		n’a nécessairement cette ligne de valeurs exacte.
 
-		The Core Web Vitals ring rests on far fewer sites than the other five,
-		since most of this corpus is too small for CrUX to sample. Its own tooltip
-		says how many rather than letting the row imply they are all equally
-		grounded.
+		L’anneau Core Web Vitals repose sur bien moins de sites que les cinq autres, car la
+		plupart de ceux du corpus sont trop petits pour être échantillonnés par CrUX. Son
+		infobulle indique le nombre de sites concernés, plutôt que de laisser croire que les
+		résultats reposent tous sur autant de données.
 	#}
 	{#
-		Two verdicts on the same fleet, in one card. They answer the same question
-		from opposite ends — how many sites clear every bar, and how the rest
-		divide on the one bar real users set — and reading them side by side is
-		the point: 155 perfect against 1,261 CrUX has never heard of.
+		Deux verdicts sur le même ensemble de sites, dans une seule carte. Ils répondent à la
+		même question par deux extrêmes : combien de sites franchissent tous les seuils, et
+		comment se répartissent les autres selon le seul critère établi par les utilisateurs
+		réels. C’est tout l’intérêt de les lire côte à côte : 155 sites parfaits contre 1 261
+		que CrUX n’a jamais détectés.
 	#}
 	{#
-		Two thumbnails of the charts on /charts/, over this set's own sites.
+		Deux miniatures des graphiques de /charts/, calculées à partir des sites de cet ensemble.
 
-		A macro because they are the same picture of different columns — no axes,
-		no labels, no hit targets, none of which survive at 240px. The shape is the
-		whole point: a smear that turns amber as it climbs, or one that falls away
-		as it runs right.
+		Une macro, car il s’agit de la même représentation de colonnes différentes : ni axes,
+		ni libellés, ni zones cliquables, puisque rien de tout cela ne reste lisible à 240 px.
+		Seule compte la forme : une masse qui vire à l’ambre en montant, ou une autre qui
+		s’amenuise vers la droite.
 	#}
 	{#
-		The two thumbnails share one card rather than taking a tile each.
+		Les deux miniatures partagent une carte plutôt que d’occuper chacune une tuile.
 
-		They are one thought — what a page's own weight costs it, and what other
-		people's code costs it — and they link to the same place. Two tiles would
-		have spent two of the bar's slots saying "there are charts over there".
+		Elles expriment une seule idée — le poids d’une page et le coût du code des autres —
+		et renvoient au même endroit. Deux tuiles auraient gaspillé deux places de la barre
+		pour dire la même chose : « les graphiques sont là-bas ».
 
-		Each keeps its own heading, and they stack rather than sitting side by side
-		— two 240px charts in a row need a card twice the width of every other tile
-		on the bar, and one of them would have been the odd shape out.
+		Chacune garde son propre titre, et elles sont empilées plutôt que placées côte à côte :
+		deux graphiques de 240 px sur une même ligne nécessiteraient une carte deux fois plus
+		large que toutes les autres, et l’une des deux aurait eu un format différent.
 	#}
 	{#
-		A banded distribution: one bar per verdict, over the sites that have one.
+		Une distribution par bandes : une barre par verdict, sur les sites qui en possèdent un.
 
-		Three of these now — performance, axe, Core Web Vitals — so it is a macro
-		rather than a fourth copy of the same twenty lines. A bar may carry
-		`segments`, in which case it is one column divided rather than several
-		stacked beside each other; the segment heights are shares of that bar and
-		the bar's height is its share of the tallest.
+	Il y en a maintenant trois — performance, axe et Core Web Vitals —, d’où l’utilisation
+	d’une macro plutôt que la répétition des mêmes vingt lignes. Une barre peut avoir des
+	`segments` ; dans ce cas, elle forme une seule colonne divisée, plutôt que plusieurs
+	colonnes empilées les unes à côté des autres. La hauteur de chaque segment représente
+	sa part de la barre, et la hauteur de la barre représente sa part de la plus grande.
 	#}
 	{% macro tierbars(tiers, label) %}
 	{% if tiers and tiers.rated %}
 	<span class="stat-label">{{ label }} <span class="tag stat-count">&times;{{ tiers.rated | num }}</span></span>
 	{% set tierMax = tiers.bars | maxValue("count") %}
 	<span class="histogram histogram-tiers" role="img"
-		aria-label="{{ label }} across {{ tiers.rated | num }} sites{% for b in tiers.bars %}. {{ b.tick }}, {{ b.label }}: {{ b.count | num }}{% endfor %}">
+		aria-label="{{ label }} sur {{ tiers.rated | num }} sites{% for b in tiers.bars %}. {{ b.tick }}, {{ b.label }} : {{ b.count | num }}{% endfor %}">
 		{% for b in tiers.bars %}
-		<span class="histogram-col" title="{{ b.tick }} — {{ b.label }}: {{ b.count | num }} {{ b.count | plural('site') }} ({{ b.share }}%)">
+		<span class="histogram-col" title="{{ b.tick }} — {{ b.label }} : {{ b.count | num }} {{ b.count | plural('site') }} ({{ b.share }} %)">
 			<span class="histogram-track">
 				<span class="histogram-bar histogram-bar-{{ b.key }}" style="height:{{ (b.count / tierMax * 100) | round(1) }}%">
 					{%- for seg in b.segments %}
 					<span class="histogram-seg histogram-bar-{{ seg.key }}" style="height:{{ seg.height }}%"
-						title="{{ seg.label }}: {{ seg.count | num }} {{ seg.count | plural('site') }}"></span>
+						title="{{ seg.label }} : {{ seg.count | num }} {{ seg.count | plural('site') }}"></span>
 					{%- endfor %}
 				</span>
 			</span>
@@ -209,12 +212,12 @@
 	<div class="stat-chart-item">
 	<span class="stat-label stat-chart-label">{{ label }}</span>
 	{#
-		Straight to its own section rather than the top of the page. There are
-		eight charts there, and landing on the first one leaves a reader who
-		clicked the second thumbnail to go looking for what they just pointed at.
+		Le lien mène directement à la section correspondante plutôt qu’en haut de la page.
+		Il y a huit graphiques : arriver au premier après avoir cliqué sur la deuxième
+		miniature obligerait le lecteur à chercher celui qu’il vient de sélectionner.
 	#}
 	<a class="stat-chart" href="/charts/#{{ anchor }}"
-		aria-label="{{ mini.count | num }} {{ mini.count | plural('site') }} by {{ xTitle | lower }} and {{ yTitle | lower }} — see the full chart">
+		aria-label="{{ mini.count | num }} {{ mini.count | plural('site') }} selon {{ xTitle | lower }} et {{ yTitle | lower }} — voir le graphique complet">
 		<svg viewBox="0 0 {{ mini.w }} {{ mini.h }}" aria-hidden="true" focusable="false">
 			{%- for band in ["poor", "average", "good"] %}
 			<g class="plot-{{ band }}">
@@ -222,9 +225,9 @@
 			</g>
 			{%- endfor %}
 			{#
-				Names only, no numbers: at this size tick values are illegible, but
-				which scale is which still has to be said — the more so with two
-				charts side by side whose vertical axes run opposite ways.
+				Les noms seulement, sans chiffres : à cette taille, les valeurs des graduations
+				sont illisibles, mais il faut tout de même indiquer l’échelle de chaque axe —
+				d’autant plus que les deux graphiques côte à côte ont des axes verticaux inversés.
 			#}
 			<g class="mini-axis">
 				<text x="{{ mini.axis.xLabel.x }}" y="{{ mini.axis.xLabel.y }}" text-anchor="middle">{{ xTitle }}</text>
@@ -239,63 +242,65 @@
 	{% if stats.scatterPreview or stats.thirdPartyPreview %}
 	<div class="stat stat-plot">
 		<div class="stat-charts">
-			{% if stats.scatterPreview %}{{ minichart(stats.scatterPreview, "Page weight vs LCP", "weight-lcp", "Page Weight", "LCP") }}{% endif %}
-			{% if stats.thirdPartyPreview %}{{ minichart(stats.thirdPartyPreview, "Third party vs performance", "third-party", "Third Party", "Score") }}{% endif %}
+			{% if stats.scatterPreview %}{{ minichart(stats.scatterPreview, "Poids de la page vs LCP", "weight-lcp", "Poids de la page", "LCP") }}{% endif %}
+			{% if stats.thirdPartyPreview %}{{ minichart(stats.thirdPartyPreview, "Tiers vs performance", "third-party", "Tiers", "Score") }}{% endif %}
 		</div>
 	</div>
 	{% endif %}
 	<div class="stat">
 		{#
-			Label and figure on one line, the figure pushed to the right edge — the
-			card carries four sections now, and a heading that owns a line of its
-			own before its own number made the first of them the tallest.
+			Le libellé et la valeur sur une même ligne, la valeur repoussée à droite :
+			la carte comporte maintenant quatre sections. Quand le titre occupait sa propre
+			ligne, avant le chiffre correspondant, la première section était la plus haute.
 		#}
 		<span class="stat-headline stat-headline-inline">
-			<span class="stat-label">Perfect {{ stats.perfect | plural("score") }}</span>
+			<span class="stat-label">{{ stats.perfect | plural("score parfait") }}</span>
 			{#
-				How the count has moved. Every site, judged on its most recent
-				measurement as of each day — the same rule as the number beside it,
-				so the last point of the line is that number. Absent until there are
-				enough days to be a trend — see MIN_HISTORY_DAYS in lib/report.js.
+				L’évolution du nombre. Chaque site est évalué d’après sa mesure la plus récente
+			à la date de chaque jour, selon la même règle que le nombre affiché à côté :
+				le dernier point de la courbe correspond donc à ce nombre. La courbe n’apparaît
+				qu’une fois qu’il y a assez de jours pour dégager une tendance — voir
+				MIN_HISTORY_DAYS dans lib/report.js.
 
-				Left of the number rather than right of it: the line ends where the
-				figure begins, so the two read as one sentence about the same count
-				rather than as a number with a decoration after it.
+				Placée à gauche du nombre plutôt qu’à sa droite : la courbe se termine là où
+				commence la valeur. Les deux se lisent ainsi comme une phrase sur le même nombre,
+				plutôt que comme un chiffre accompagné d’un ornement.
 			#}
 			{% if stats.perfectHistory.length %}
 			{% set perfectTrend = { values: [] } %}
 			{% for point in stats.perfectHistory %}
 				{% set perfectTrend = (perfectTrend.values.push(point.perfect), perfectTrend) %}
 			{% endfor %}
-			<span class="stat-spark" title="Perfect scores from {{ stats.perfectHistory[0].date }} to {{ stats.perfectHistory[stats.perfectHistory.length - 1].date }}">
+			<span class="stat-spark" title="Scores parfaits du {{ stats.perfectHistory[0].date }} au {{ stats.perfectHistory[stats.perfectHistory.length - 1].date }}">
 				{% sparkline perfectTrend, { width: 64, height: 14 } %}
 			</span>
 			{% endif %}
 			<span class="stat-value">{{ stats.perfect | num }}<span class="stat-suffix">/{{ stats.measured | num }}</span></span>
 		</span>
 		{#
-			What built them, rather than one figure for Eleventy and nothing about
-			the rest. The rows sum to the number above — a site with no generator
-			tag is counted under its own row instead of being dropped, which is
-			what would make the two disagree.
+			Ce qui les a générés, plutôt qu’un chiffre pour Eleventy sans information sur
+			les autres. La somme des lignes correspond au nombre affiché au-dessus : un site
+			sans balise de générateur figure dans sa propre ligne au lieu d’être omis, ce qui
+			désalignerait les deux totaux.
 
-			A presumption counts the same as a detection, as it does everywhere
-			else on this site: most static sites emit no generator tag, so
-			detections alone would credit the wrong thing.
+			Une attribution présumée compte autant qu’une détection, comme partout ailleurs
+			sur ce site : la plupart des sites statiques n’émettent aucune balise de générateur.
+			Ne compter que les détections attribuerait donc le mérite au mauvais générateur.
 		#}
 		{% if stats.perfectGenerators.length %}
 		{#
-			The same pill list the Technology section uses, over the generators that
-			produced a perfect score. A row of pills rather than a two-column table:
-			this is three or four short names and their counts, which reads as a set
-			rather than as a ranking, and it wraps where a table would not.
+			La même liste de pastilles que dans la section Technologies, mais pour les
+			générateurs des sites ayant obtenu un score parfait. Une liste de pastilles plutôt
+			qu’un tableau à deux colonnes : il n’y a que trois ou quatre noms courts et leurs
+			comptes. Cela se lit comme un ensemble, et les éléments passent à la ligne, ce qu’un
+			tableau ne ferait pas.
 		#}
 		<ul class="tally-list">
 			{% for g in stats.perfectGenerators %}
-			<li class="tally-item" title="{{ g.count | num }} of the {{ stats.perfect | num }} perfect {{ stats.perfect | plural('score') }} ({{ (g.count / stats.perfect * 100) | round }}%)">
+			<li class="tally-item" title="{{ g.count | num }} sur les {{ stats.perfect | num }} {{ stats.perfect | plural('score parfait') }} ({{ (g.count / stats.perfect * 100) | round }} %)">
 				{% for mark in g.marks %}{% stackIcon mark, 14 %}{% endfor %}
-				{#- No generator at all is the absence of a value, not a brand called
-				    "None" — italics say so without a second column. #}
+				{#- L’absence de générateur est une valeur manquante, pas une marque appelée
+				    « Aucun » : l’italique l’indique sans nécessiter de deuxième colonne. -#}
 				<span class="tally-name">{% if g.id %}{{ g.name }}{% else %}<em>{{ g.name }}</em>{% endif %}</span>
 				<span class="tally-count">{{ g.count | num }}</span>
 			</li>
@@ -304,30 +309,30 @@
 		{% endif %}
 
 		{#
-			Each Lighthouse circle as a distribution, banded the way the ring beside
-			every row is banded — so a bar here cannot disagree with the circle it
-			summarizes. Built in lib/report.js.
+			Chaque cercle Lighthouse présenté sous forme de distribution, avec les mêmes
+			catégories de couleur que l’anneau affiché à côté de chaque ligne — la barre ne
+			peut donc pas contredire le cercle qu’elle résume. Calculé dans lib/report.js.
 		#}
 
 		{% if stats.measured %}
 		<div class="ring-row">
-			<span class="stat-label">Median Score <span class="tag stat-count">&times;{{ stats.medians.counts.scores | num }}</span></span>
+			<span class="stat-label">Score médian <span class="tag stat-count">&times;{{ stats.medians.counts.scores | num }}</span></span>
 			<span class="rings">
 				{% for score in metrics.SCORES %}
-				{% scoreRing stats.medians.scores[score.key], "Median " + score.label, score.short %}
+				{% scoreRing stats.medians.scores[score.key], "Médiane : " + score.label, score.short %}
 				{% endfor %}
-				{% axeRing stats.medians.axe, 37, "Median axe violations: " + (stats.medians.axe | default("no data")) + ", across " + (stats.medians.counts.axe | num) + " sites" %}
-				{% cwvRing stats.medians.cwvFailures, null, "poor", 37, "Median Core Web Vitals: " + (stats.medians.cwvFailures | default("no data")) + " failing, across " + (stats.medians.counts.cwv | num) + " sites with real-user data" %}
+				{% axeRing stats.medians.axe, 37, "Violations axe médianes : " + (stats.medians.axe | default("aucune donnée")) + ", sur " + (stats.medians.counts.axe | num) + " sites" %}
+				{% cwvRing stats.medians.cwvFailures, null, "poor", 37, "Core Web Vitals médians : " + (stats.medians.cwvFailures | default("aucune donnée")) + " en échec, sur " + (stats.medians.counts.cwv | num) + " sites avec des données d’utilisateurs réels" %}
 			</span>
 		</div>
 
 		{{ tierbars(stats.ringTiers, "Performance") }}
 		{#
-			"Axe", not "Accessibility". Lighthouse has an accessibility category of
-			its own, and its ring is in the median row a few lines above — labelling
-			this one "Accessibility" would put two different measurements under one
-			word inside a single card. The scores are a sampled subset of the rules;
-			this is the full violation count.
+			« Axe », et non « Accessibilité ». Lighthouse possède sa propre catégorie
+			Accessibilité, dont l’anneau se trouve dans la ligne des médianes quelques lignes
+			plus haut. Appeler celui-ci « Accessibilité » réunirait deux mesures différentes
+			sous un seul terme dans une même carte. Les scores ne couvrent qu’un sous-ensemble
+			des règles ; ici, il s’agit du nombre total de violations.
 		#}
 		{{ tierbars(stats.axeTiers, "Axe") }}
 
@@ -336,17 +341,18 @@
 	</div>
 	<div class="stat">
 		{#
-			A distribution rather than an average. The mean here is 1.11 MB and the
-			median 256 kB — four times apart, because a handful of sites in the tens
-			of megabytes drag the average somewhere almost no site actually sits. A
-			single number could not say that; the shape does, at a glance.
+			Une distribution plutôt qu’une moyenne. La moyenne est ici de 1,11 Mo et la médiane
+			de 256 ko — un écart de quatre fois, car quelques sites pesant plusieurs dizaines
+			de mégaoctets tirent la moyenne vers une valeur qui ne correspond presque à aucun
+			site. Un seul chiffre ne pourrait pas montrer cela ; la forme du graphique le révèle
+			d’un coup d’œil.
 		#}
-		<span class="stat-label">Page weight</span>
+		<span class="stat-label">Poids de la page</span>
 		{% set weightMax = stats.weightBuckets | maxValue("count") %}
 		<span class="histogram" role="img"
-			aria-label="Page weight distribution across {{ stats.measured | num }} sites{% for b in stats.weightBuckets %}. {{ b.label }}: {{ b.count | num }}{% endfor %}">
+			aria-label="Répartition du poids des pages sur {{ stats.measured | num }} sites{% for b in stats.weightBuckets %}. {{ b.label }} : {{ b.count | num }}{% endfor %}">
 			{% for b in stats.weightBuckets %}
-			<span class="histogram-col" title="{{ b.label }} — {{ b.count | num }} {{ b.count | plural("site") }} ({{ b.share }}%)">
+			<span class="histogram-col" title="{{ b.label }} — {{ b.count | num }} {{ b.count | plural('site') }} ({{ b.share }} %)">
 				<span class="histogram-track">
 					<span class="histogram-bar" style="height:{{ (b.count / weightMax * 100) | round(1) }}%"></span>
 				</span>
@@ -355,18 +361,18 @@
 			{% endfor %}
 		</span>
 		{#
-			JavaScript on its own, under the total. Its own bucket edges, because it
-			is an order of magnitude smaller than the page around it — see
-			SCRIPT_BUCKETS in lib/report.js — and its own leading bucket for the
-			sites that ship none at all.
+			JavaScript seul, sous le poids total. Des intervalles qui lui sont propres, car son
+			poids est d’un ordre de grandeur inférieur à celui de la page qui l’entoure — voir
+			SCRIPT_BUCKETS dans lib/report.js —, ainsi qu’une première catégorie pour les sites
+			qui n’en chargent aucun.
 		#}
 		{% if stats.scriptBuckets.length %}
 		{% set scriptMax = stats.scriptBuckets | maxValue("count") %}
-		<span class="stat-label stat-label-sub">JavaScript Weight</span>
+		<span class="stat-label stat-label-sub">Poids du JavaScript</span>
 		<span class="histogram" role="img"
-			aria-label="JavaScript weight distribution across {{ stats.measured | num }} sites{% for b in stats.scriptBuckets %}. {{ b.label }}: {{ b.count | num }}{% endfor %}">
+			aria-label="Répartition du poids du JavaScript sur {{ stats.measured | num }} sites{% for b in stats.scriptBuckets %}. {{ b.label }} : {{ b.count | num }}{% endfor %}">
 			{% for b in stats.scriptBuckets %}
-			<span class="histogram-col" title="{{ b.label }} — {{ b.count | num }} {{ b.count | plural("site") }} ({{ b.share }}%)">
+			<span class="histogram-col" title="{{ b.label }} — {{ b.count | num }} {{ b.count | plural('site') }} ({{ b.share }} %)">
 				<span class="histogram-track">
 					<span class="histogram-bar histogram-bar-script" style="height:{{ (b.count / scriptMax * 100) | round(1) }}%"></span>
 				</span>
@@ -376,16 +382,17 @@
 		</span>
 
 		{#
-			Bytes from somebody else's domain, on the same scale as the two above it.
-			The zero bucket is a real answer here — a third of these sites load
-			nothing third-party at all — rather than a rounding of something small.
+			Les octets chargés depuis un domaine tiers, sur la même échelle que les deux
+			graphiques précédents. Ici, la catégorie zéro représente un résultat réel :
+			un tiers de ces sites ne charge aucun contenu tiers — ce n’est pas un simple
+			arrondi d’une petite valeur.
 		#}
-		<span class="stat-label stat-label-sub">Third Party Weight</span>
+		<span class="stat-label stat-label-sub">Poids des ressources tierces</span>
 		{% set thirdPartyMax = stats.thirdPartyBuckets | maxValue("count") %}
 		<span class="histogram" role="img"
-			aria-label="Third party weight distribution across {{ stats.measured | num }} sites{% for b in stats.thirdPartyBuckets %}. {{ b.label }}: {{ b.count | num }}{% endfor %}">
+			aria-label="Répartition du poids des ressources tierces sur {{ stats.measured | num }} sites{% for b in stats.thirdPartyBuckets %}. {{ b.label }} : {{ b.count | num }}{% endfor %}">
 			{% for b in stats.thirdPartyBuckets %}
-			<span class="histogram-col" title="{{ b.label }} — {{ b.count | num }} {{ b.count | plural("site") }} ({{ b.share }}%)">
+			<span class="histogram-col" title="{{ b.label }} — {{ b.count | num }} {{ b.count | plural('site') }} ({{ b.share }} %)">
 				<span class="histogram-track">
 					<span class="histogram-bar histogram-bar-thirdparty" style="height:{{ (b.count / thirdPartyMax * 100) | round(1) }}%"></span>
 				</span>
@@ -395,17 +402,17 @@
 		</span>
 		{% endif %}
 		{#
-			Largest Contentful Paint, on the time scale rather than the byte one —
-			its ladder carries 2.5s and 4s, Google's good and poor boundaries, so
-			the thresholds land on the axis instead of inside a bar.
+			Largest Contentful Paint, présenté sur une échelle de temps plutôt que de poids :
+			ses graduations incluent 2,5 s et 4 s, les seuils que Google considère bons et
+			mauvais. Les seuils apparaissent ainsi sur l’axe, et non à l’intérieur d’une barre.
 		#}
 		{% if stats.lcpBuckets.length %}
 		{% set lcpMax = stats.lcpBuckets | maxValue("count") %}
 		<span class="stat-label stat-label-sub">LCP</span>
 		<span class="histogram" role="img"
-			aria-label="Largest Contentful Paint distribution across {{ stats.measured | num }} sites{% for b in stats.lcpBuckets %}. {{ b.label }}: {{ b.count | num }}{% endfor %}">
+			aria-label="Répartition du Largest Contentful Paint sur {{ stats.measured | num }} sites{% for b in stats.lcpBuckets %}. {{ b.label }} : {{ b.count | num }}{% endfor %}">
 			{% for b in stats.lcpBuckets %}
-			<span class="histogram-col" title="{{ b.label }} — {{ b.count | num }} {{ b.count | plural("site") }} ({{ b.share }}%)">
+			<span class="histogram-col" title="{{ b.label }} — {{ b.count | num }} {{ b.count | plural('site') }} ({{ b.share }} %)">
 				<span class="histogram-track">
 					<span class="histogram-bar histogram-bar-lcp" style="height:{{ (b.count / lcpMax * 100) | round(1) }}%"></span>
 				</span>

@@ -7,96 +7,102 @@ pagination:
 permalink: "/site/{{ entry.slug }}/"
 eleventyComputed:
   title: "{{ entry.displayUrl }}"
-  # The measured site's own mark, so a tab full of these is readable by icon
-  # rather than by a truncated domain. base.njk falls back to the project's
-  # favicon wherever a page does not set one.
+# La marque du site mesuré, pour que l’onglet soit identifiable par son icône
+# plutôt que par un nom de domaine tronqué. base.njk utilise l’icône du projet
+# par défaut lorsqu’une page n’en définit pas.
   pageFavicon: "{{ entry.url | avatar(meta.avatarService) }}"
 ---
 
 <article class="detail">
 
-{#
-	One screenshot per site page, from 11ty's service. Deliberately not on the
-	leaderboards: those run to a thousand rows, and a thousand screenshot
-	requests is not a page, it is a load test pointed at someone else's server.
+	{#
+	Une seule capture d’écran par page de site, via le service de 11ty. Pas sur
+	les classements : ils comptent jusqu’à mille lignes, et mille demandes de
+	capture, ce n’est pas une page, c’est un test de charge dirigé vers le serveur
+	de quelqu’un d’autre.
 
-	Not our own Lighthouse capture, though the Filmstrip section below is exactly
-	that. Those frames are thumbnails sized to the emulated viewport — 250px wide
-	on a mobile run — which is right for a strip of eight and too small for the
-	one picture at the top of the page.
+	Ce n’est toutefois pas notre propre capture Lighthouse, même si la section
+	Filmstrip ci-dessous en est bien issue. Ces images sont des vignettes à la
+	taille de la fenêtre émulée — 250 px de large pour un test mobile —, ce qui
+	convient à une bande de huit images, mais pas à l’image principale en haut de
+	page.
 
-	Only above a performance score of 75, and only once there is a measurement.
-	The service renders the page on a timer, so the slower the site the more
-	likely the capture is of a half-drawn or empty page — a picture of our own
-	screenshot timeout rather than of the site. Below the threshold there is
-	nothing worth showing and a request not worth making.
+	Seulement au-dessus d’un score de performance de 75, et uniquement si une
+	mesure existe. Le service effectue le rendu de la page après un délai ; plus
+	le site est lent, plus la capture risque de montrer une page incomplète ou
+	vide — une image de notre propre délai d’attente plutôt que du site. Sous ce
+	seuil, il n’y a rien d’utile à montrer, ni de raison d’envoyer une requête.
 
-	Lazy, and sized in the markup so the text beside it does not jump when the
-	image lands. Decorative rather than described: what the site looks like is
-	not information this page is making a claim about, and "screenshot of
-	example.com" read aloud tells you nothing you did not just hear from the
-	heading above it.
-#}
-{% set SCREENSHOT_MIN_PERFORMANCE = 75 %}
-{% set screenshot = "" %}
-{#
-	Nothing at all when the page we measured was a bot check. The screenshot
-	service is as automated as we are, so it meets the same waiting room — and a
-	picture of Cloudflare captioned with this site's name claims we saw something
-	we did not.
-#}
-{% set shotWidth = 650 %}
-{% set shotHeight = 650 %}
-{#
-	Our own capture first, where we have one: the picture our own Chrome saw,
-	taken on the same page load as the numbers beside it. Every site gets one
-	from the axe pass now, so the service below is only for sites that have not
-	come round for measurement since — see lib/axe.js.
+	Chargement différé, et dimensions précisées dans le balisage afin que le texte
+	à côté ne bouge pas à l’arrivée de l’image. Décorative plutôt que décrite :
+	l’apparence du site n’est pas une information que cette page prétend fournir,
+	et « capture d’écran de example.com » ne dit rien qu’on n’ait déjà entendu
+	dans le titre juste au-dessus.
+	#}
+	{% set SCREENSHOT_MIN_PERFORMANCE = 75 %}
+	{% set screenshot = "" %}
+	{#
+	Aucune image si la page mesurée était une vérification anti-robot. Le service
+	de capture est automatisé, tout comme nous, et se retrouve donc dans la même
+	salle d’attente — afficher une image de Cloudflare sous le nom de ce site
+	reviendrait à prétendre avoir vu une page que nous n’avons pas vue.
+	#}
+	{% set shotWidth = 650 %}
+	{% set shotHeight = 650 %}
+	{#
+	D’abord notre propre capture, si nous en avons une : l’image vue par notre
+	propre navigateur Chrome, prise pendant le même chargement de page que les
+	chiffres affichés à côté. Chaque site en reçoit désormais une lors du passage
+	d’axe ; le service ci-dessous ne sert donc qu’aux sites qui n’ont pas encore
+	été mesurés depuis — voir lib/axe.js.
 
-	No performance floor on this branch: that floor exists because the service
-	renders on a timer and photographs half-drawn pages, and our capture is a
-	byproduct of a measurement that already finished.
-#}
-{#
-	Behind a bot check this is the previous capture of the site, which the notice below says.
+	Aucun seuil de performance pour cette branche : ce seuil existe parce que le
+	service effectue le rendu après un délai et capture des pages incomplètes, alors
+	que notre capture est un sous-produit d’une mesure déjà terminée.
+	#}
+	{#
+	En cas de vérification anti-robot, il s’agit de la capture précédente du site,
+	comme l’indique la notification ci-dessous.
 
-	Only our own capture, never the screenshot service: that service would be
-	photographing the site as *it* sees it, which may be the real page or the check.
-#}
-{% if entry.ownScreenshot %}
+	Uniquement notre propre capture, jamais celle du service : il photographierait
+	le site tel qu’il le voit, c’est-à-dire la vraie page ou la vérification.
+	#}
+	{% if entry.ownScreenshot %}
 	{% set screenshot = entry.ownScreenshot.src %}
 	{% set shotWidth = entry.ownScreenshot.width or 650 %}
 	{% set shotHeight = entry.ownScreenshot.height or 650 %}
-{% elif not entry.interstitial and entry.latest.lab.scores.performance >= SCREENSHOT_MIN_PERFORMANCE %}
+	{% elif not entry.interstitial and entry.latest.lab.scores.performance >= SCREENSHOT_MIN_PERFORMANCE %}
 	{% set screenshot = entry.url | screenshot(meta.screenshotService) %}
-{% endif %}
+	{% endif %}
 
-<header class="detail-head{{ ' has-shot' if screenshot }}">
-	<div class="detail-head-text">
-	{#
-		The site's own mark beside its name — the same image the tab shows, so the
-		page and the tab agree about what you are looking at.
+	<header class="detail-head{{ ' has-shot' if screenshot }}">
+		<div class="detail-head-text">
+			{#
+			La marque du site à côté de son nom — la même image que celle de l’onglet,
+			pour que la page et l’onglet correspondent bien au site consulté.
 
-		Decorative: the domain is right next to it, and "favicon for example.com"
-		read aloud adds nothing to a heading that already says example.com. Sized
-		in the markup as well as in CSS so the heading does not reflow when the
-		image lands, and lazy would be wrong for something above the fold.
-	#}
-	<h2 class="page-hed">
-		{%- set siteIcon = entry.url | avatar(meta.avatarService) -%}
-		{%- if siteIcon %}<img class="page-hed-mark" src="{{ siteIcon }}" width="32" height="32" alt="" decoding="async">{% endif -%}
-		{{ entry.displayUrl }}
-		{%- if entry.hiring %} <span class="badge badge-hiring">{{ entry.hiring.label }}</span>{% endif %}
-	</h2>
-	<p class="detail-url"><a href="{{ entry.url }}">{{ entry.url }}</a></p>
-	{#
-		The same six rings the leaderboard shows for this row, so arriving from a
-		table lands on the figures you clicked. Only the header summary — the
-		Scores section below carries the trends and deltas, which is what you came
-		to a detail page for.
-	#}
-	{% if entry.latest %}
-	<div class="detail-rings">
+			Décorative : le nom de domaine est juste à côté, et « favicon de example.com »
+			lu à voix haute n’ajoute rien à un titre qui indique déjà example.com.
+			Dimensions précisées dans le balisage comme dans le CSS, pour éviter que le
+			titre ne se réorganise à l’arrivée de l’image ; pas de chargement différé
+			pour un élément situé au-dessus de la ligne de flottaison.
+			#}
+			<h2 class="page-hed">
+				{%- set siteIcon = entry.url | avatar(meta.avatarService) -%}
+				{%- if siteIcon
+				%}<img class="page-hed-mark" src="{{ siteIcon }}" width="32" height="32" alt="" decoding="async">{%
+				endif -%}
+				{{ entry.displayUrl }}
+				{%- if entry.hiring %} <span class="badge badge-hiring">{{ entry.hiring.label }}</span>{% endif %} </h2>
+			<p class="detail-url"><a href="{{ entry.url }}">{{ entry.url }}</a></p>
+			{#
+			Les six mêmes indicateurs que sur le classement pour cette ligne, afin
+			qu’un clic depuis un tableau mène directement aux chiffres consultés. Seul
+			le résumé de l’en-tête est affiché ici — la section Scores ci-dessous
+			présente les tendances et les écarts, qui sont l’intérêt de la page détaillée.
+			#}
+			{% if entry.latest %}
+			<div class="detail-rings">
 		<span class="rings">
 			{% for score in metrics.SCORES %}
 			{% scoreRing entry.latest.lab.scores[score.key], score.label, score.short %}
@@ -104,1018 +110,1108 @@ eleventyComputed:
 			{% axeRing entry.axe %}
 			{% cwvRing entry.cwvFailures, entry.cwv.assessed, entry.cwvWorst %}
 		</span>
+			</div>
+			{% endif %}
+			<p>
+				{#
+				La position actuelle de ce site dans chacune de ses catégories — ce
+				n’est pas son rang général et c’est souvent un classement bien plus
+				informatif : un site peut être 61e sur 1 134 dans une liste et 1er sur
+				19 dans une autre.
+
+				Uniquement pour les catégories présentées comme des classements. 11ty
+				Emeritus définit `ranked: false` précisément pour éviter qu’on y lise
+				un rang ; en afficher un ici contredirait cette intention.
+				#}
+				{#
+				Le rang général d’abord, avant ceux des catégories — le même classement
+				que celui de la page d’accueil, qui rassemble tous les sites mesurés.
+				En texte brut, contrairement aux noms des catégories, car ceux-ci
+				pointent vers une page qui répertorie le site, alors que ce rang n’a
+				pas de page dédiée.
+
+				Uniquement pour la moitié supérieure du classement. « Mieux que 12 %
+				des sites » est certes vrai, mais personne ne s’inscrit à cette liste
+				pour lire cela ; les six indicateurs ci-dessus décrivent déjà clairement
+				les résultats — cette ligne sert à valoriser les bons classements, pas
+				à rappeler leur position aux sites en bas du tableau.
+				#}
+				<strong>Classements</strong>
+				{% if entry.ranks.overall %}
+				Général
+				<span class="cat-rank" title="Classé {{ entry.ranks.overall | num }} sur {{ sites.stats.measured | num }} sites mesurés au total">#{{ entry.ranks.overall | num }}</span>
+				{% endif %}
+				{#- D’abord la catégorie la plus importante, comme les pastilles du classement. #}
+				{% for cat in entry.categories %}
+				{% set g = cat.id %}
+				{% set grp = sites.groups | groupById(g) %}
+				<a href="/group/{{ g }}/">{{ cat.name }}</a>
+				{%- if grp.ranked and entry.groupRanks[g].overall %}
+				<span class="cat-rank" title="Classé {{ entry.groupRanks[g].overall | num }} sur {{ grp.measured | num }} sites mesurés dans {{ cat.name }}">#{{ entry.groupRanks[g].overall | num }}</span>
+				{#- Pas de séparateur entre eux : chaque nom est suivi de sa propre pastille de rang,
+				et une virgule après la pastille semblerait faire partie du nombre plutôt que de la liste. #}
+				{%- endif %}
+				{% endfor %} </p>
+			<p class="muted data-age {{ 'stale-age' if entry.dataStale }}">
+				{% if entry.latest %}
+				{#- Pas de tiret ni de point final : l’ancienneté est affichée dans une pastille,
+				et la ponctuation de part et d’autre semblerait superflue. #}
+				Données du {{ entry.latest.date | date("long") }}
+				<span class="age-pill{{ ' stale' if entry.dataStale }}"><time datetime="{{ entry.latest.date | iso }}">{{ entry.latest.date | since }}</time> d’ancienneté</span>
+				{%- if entry.dataStale %}, au-delà de l’objectif de fraîcheur de {{ entry.staleAfterHours | duration }}
+				de cette catégorie{% endif %}
+				{% else %}
+				Aucune mesure concluante pour le moment.
+				{% endif %}
+				{#
+				La fréquence de mesure du site, à côté de l’ancienneté des données —
+				c’est ce second chiffre qui donne du sens au premier. Des données vieilles
+				de six jours sont inquiétantes pour un site mesuré chaque jour, mais
+				normales pour un site mesuré chaque semaine.
+
+				La fenêtre correspond à la plus stricte parmi les catégories auxquelles
+				appartient le site ; l’infobulle indique celles qui la déterminent, au
+				lieu d’afficher un chiffre sans en préciser l’origine.
+				#}
+				{% if entry.freshnessHours %}Mesuré {{ entry.freshnessHours | cadence }}{% endif %}
+				· {{ entry.totalCount }} mesure{{ "s" if entry.totalCount != 1 }}
+				{% if entry.windowed
+				%}<span title="Le rapport présente les {{ entry.historyCount }} mesures les plus récentes ; les autres sont conservées">(graphique des {{ entry.historyCount }} dernières)</span>{%
+				endif %}
+				{% if entry.firstMeasured %} depuis {{ entry.firstMeasured | date }}{% endif %}
+			</p>
+			{#
+			Un autre endroit où effectuer la même vérification.
+
+			Ces liens ne sont pas des concurrents. Les chiffres de cette page sont des
+			médianes calculées à partir de mesures répétées sur une machine maintenue
+			volontairement identique : une variation indique donc un changement du site.
+			C’est une question différente de « quel score obtient-il maintenant ? »,
+			question que tout le monde se pose d’abord quand un chiffre semble erroné.
+
+			Quatre liens, car ils répondent à des aspects différents. PageSpeed Insights
+			lance Lighthouse à la demande sur les machines de Google et présente les
+			données de terrain CrUX pour cette URL ; `analysis?url=` est le format de lien
+			direct de PSI, qui ouvre donc un rapport plutôt que le formulaire. Les trois
+			autres fournissent des données de terrain — Calibre et Treo utilisent le nom
+			d’hôte, CrUX Vis l’origine de l’URL —, d’où le recours au nom d’hôte pour les
+			premiers, et le fait que ce sont eux qu’il faut consulter lorsque le tableau
+			d’historique de terrain ci-dessous est vide. Calibre puis Treo, simplement
+			parce que l’ordre se lit mieux ainsi.
+
+			CrUX Vis place ses paramètres dans le fragment de l’URL, qui n’est donc pas
+			transmis au serveur : la page les lit elle-même. `periodStart=0` et
+			`periodEnd=-1` demandent l’historique complet plutôt qu’une période fixe ;
+			le lien reste ainsi valable au fil des mois au lieu de devenir obsolète.
+			#}
+			{#
+			Chaque service a sa propre icône, fournie par le même service d’avatars que
+			celui utilisé pour les noms des sites ci-dessus. Cinq liens alignés
+			ressemblent sinon à cinq mots ; les icônes permettent de repérer celui qu’on
+			reconnaît déjà.
+
+			Décoratives, et leur nom est juste à côté : « logo PageSpeed Insights,
+			PageSpeed Insights » est une répétition inutile à l’oral. Pas de chargement
+			différé : ces liens se trouvent dans l’en-tête, au-dessus de la ligne de
+			flottaison, où un chargement différé se remarquerait.
+			#}
+			<p class="detail-actions">
+				Ailleurs :
+				<a href="https://pagespeed.web.dev/analysis?url={{ entry.url | urlencode }}" title="Analyse Lighthouse à la demande par Google, avec les données de terrain CrUX de cette URL"><img class="action-mark" src="{{ " https://pagespeed.web.dev/"
+					| avatar(meta.avatarService) }}" width="16" height="16" alt="" decoding="async">PageSpeed
+					Insights</a> ·
+				<a href="https://calibreapp.com/tools/core-web-vitals-test/{{ entry.url | hostname }}" title="Vérification gratuite des Core Web Vitals de {{ entry.url | hostname }} par Calibre"><img class="action-mark" src="{{ " https://calibreapp.com/"
+					| avatar(meta.avatarService) }}" width="16" height="16" alt="" decoding="async">Calibre</a> ·
+				<a href="https://treo.sh/sitespeed/{{ entry.url | hostname }}" title="Données de terrain CrUX représentées en graphique pour {{ entry.url | hostname }} — historique plutôt qu’une nouvelle mesure en laboratoire"><img class="action-mark" src="{{ " https://treo.sh/"
+					| avatar(meta.avatarService) }}" width="16" height="16" alt="" decoding="async">Treo</a> ·
+				<a href="https://cruxvis.withgoogle.com/#/?view=cwvsummary&amp;url={{ entry.url | urlencode }}&amp;identifier=origin&amp;device=ALL&amp;periodStart=0&amp;periodEnd=-1&amp;display=p75s" title="Tous les mois de p75 CrUX de cette origine, représentés dans CrUX Vis de Google"><img class="action-mark" src="{{ " https://cruxvis.withgoogle.com/"
+					| avatar(meta.avatarService) }}" width="16" height="16" alt="" decoding="async">CrUX Vis</a> ·
+				<a href="https://tamethebots.com/tools/cwv-history?url={{ entry.url | urlencode }}&amp;originOrUrl=0&amp;formFactor=PHONE&amp;hist=1&amp;collectionPeriodCount=40&amp;scaleCharts=1" title="Historique hebdomadaire CrUX sur téléphone pour cette origine, représenté dans Tame the Bots"><img class="action-mark" src="{{ " https://tamethebots.com/"
+					| avatar(meta.avatarService) }}" width="16" height="16" alt="" decoding="async">Tame the Bots</a> ·
+				{#
+				Pas un second avis comme les autres liens : ce sont les mêmes chiffres
+				que ceux affichés sur cette page, présentés sous la forme du calcul qui
+				les transforme en score. C’est utile à côté d’un score de performance :
+				le score seul n’indique jamais quelle métrique lui a coûté des points.
+				#}
+				{% set scorecalc = entry.latest | scoreCalculator %}
+				{% if scorecalc %}
+				<a href="{{ scorecalc }}" title="Métriques de cette mesure chargées dans le calculateur de score Lighthouse — coût de chacune pour le score de performance">{%
+					brandMark "Lighthouse" %}Calculateur de score</a> ·
+				{% endif %}
+				{#
+				En dernier, car c’est le seul lien tourné vers le passé : tout ce qui
+				précède concerne le site tel qu’il est aujourd’hui, tandis que celui-ci
+				permet de voir à quoi ressemblait la page auparavant. Pour un site
+				disparu, ou dont les scores ont changé sans explication dans les
+				données, son apparence passée est parfois tout ce qui reste à examiner.
+				Le libellé « Ailleurs » plutôt que « Tester ailleurs » laisse aussi de
+				la place à ce lien.
+
+				`/web/*/` est le format utilisé par la Wayback Machine pour afficher
+				toutes les captures d’une URL — un calendrier plutôt qu’une capture
+				unique, car trouver la date pertinente est précisément l’objectif.
+				#}
+				<a href="{{ entry.url | wayback }}" title="Toutes les captures archivées de cette URL dans la Wayback Machine de l’Internet Archive"><img class="action-mark" src="{{ " https://web.archive.org/"
+					| avatar(meta.avatarService) }}" width="16" height="16" alt="" decoding="async">Wayback Machine</a>
+			</p>
+		</div>
+		{#
+		Après le texte, et non avant : le titre indique le sujet de la page et doit
+		être lu en premier par un lecteur d’écran ; ainsi, l’ordre du document et
+		l’ordre d’affichage sur mobile sont identiques.
+		#}
+		{% if screenshot %}
+		{#
+		Masquée aux technologies d’assistance et retirée de l’ordre de tabulation :
+		cette image mène à la même destination que l’URL affichée juste à côté, et
+		un second lien serait redondant à écouter comme à parcourir avec la touche
+		Tab. La masquer ne prive donc les lecteurs d’écran d’aucune information :
+		le lien reste disponible sous forme de texte.
+		#}
+		<a class="detail-shot-link" href="{{ entry.url }}" tabindex="-1" aria-hidden="true">
+			<img class="detail-shot" src="{{ screenshot }}" width="{{ shotWidth }}" height="{{ shotHeight }}" alt="" loading="lazy" decoding="async">
+		</a>
+		{% endif %}
+	</header>
+
+	{#
+	Une vérification anti-robot a été renvoyée lors du contrôle d’accessibilité,
+	après une nouvelle tentative.
+
+	Les chiffres de performance proviennent des analyses Lighthouse et ne sont
+	pas affectés. Les captures utilisées ici proviennent du dernier chargement
+	ayant atteint le véritable site.
+
+	Un site qui affiche un contrôle à chaque chargement n’a aucune mesure : son
+	enregistrement est conservé comme une erreur, et les chiffres présentés ici
+	sont ceux de la dernière mesure réussie.
+	#}
+	{% if entry.interstitial %}
+	<div class="notice notice-warn">
+		<strong>Le contrôle d’accessibilité le plus récent a reçu une vérification anti-robot.</strong>
+		<p>
+			Ce site est chargé plusieurs fois lors de chaque mesure, et l’un de ces
+			chargements — celui du contrôle d’accessibilité — a reçu
+			<code>{{ entry.interstitial }}</code>, une vérification du trafic automatisé
+			plutôt que {{ entry.displayUrl }}. Deux tentatives ont été effectuées. </p>
+		<p>
+			Les chiffres de performance ci-dessous ne sont pas affectés. Les captures
+			d’écran, la bande de captures et la comparaison avec JavaScript désactivé
+			proviennent de résultats antérieurs, issus du dernier chargement qui a
+			atteint le site, le cas échéant. </p>
 	</div>
 	{% endif %}
-	<p>
-		{#
-			Where this site currently places inside each category it belongs to —
-			which is not its global rank, and is usually a much better position:
-			a site can be 61st of 1,134 in one list and 1st of 19 in another.
 
-			Only for categories that present as rankings. 11ty Emeritus sets
-			`ranked: false` precisely so nobody reads a placing into it, and
-			printing one here would say the thing that page refuses to.
-		#}
-		{#
-			The unified rank first, before the per-category ones — the same board
-			the home page shows, across every measured site. Plain text, unlike the
-			category names beside it: those lead somewhere that lists the site,
-			and this one has no page of its own to point at.
+	{% if entry.stale and entry.latest %}
+	<div class="notice notice-warn">
+		<strong>Ces données datent de
+			<time datetime="{{ entry.latest.date | iso }}">{{ entry.latest.date | since }}</time>
+			.</strong>
+		<p>
+			Les sites sont mesurés selon un calendrier glissant. Les chiffres affichés
+			correspondent donc à la mesure la plus récente ayant abouti, et non à une
+			lecture effectuée à l’instant. Les comparaisons avec d’autres sites peuvent
+			port­er sur des périodes différentes. </p>
+	</div>
+	{% endif %}
 
-			Only for the top half. "Better than 12% of sites" is a true sentence
-			that nobody put their site on this list to read, and the six rings
-			above already say plainly how it is doing — this line exists to give
-			credit, not to rank the bottom of the board to its face.
-		#}
-		<strong>Ranks</strong>
-		{% if entry.ranks.overall %}
-		Overall
-		<span class="cat-rank" title="Ranked {{ entry.ranks.overall | num }} of {{ sites.stats.measured | num }} measured sites overall">#{{ entry.ranks.overall | num }}</span>
-		{% endif %}
-		{#- Biggest first, matching the chips on the leaderboard. #}
-		{% for cat in entry.categories %}
-		{% set g = cat.id %}
-		{% set grp = sites.groups | groupById(g) %}
-		<a href="/group/{{ g }}/">{{ cat.name }}</a>
-		{%- if grp.ranked and entry.groupRanks[g].overall %}
-		<span class="cat-rank" title="Ranked {{ entry.groupRanks[g].overall | num }} of {{ grp.measured | num }} measured sites in {{ cat.name }}">#{{ entry.groupRanks[g].overall | num }}</span>
-		{#- No separator between them: each name is followed by its own rank pill,
-		    and a comma after the pill reads as punctuation belonging to the
-		    number rather than to the list. #}
-		{%- endif %}
-		{% endfor %}
-	</p>
-	<p class="muted data-age {{ 'stale-age' if entry.dataStale }}">
+	{% if entry.redirectTo %}
+	<div class="notice notice-warn">
+		<strong>Cette URL redirige vers <code>{{ entry.redirectTo }}</code>.</strong>
+		<p>
+			Lighthouse suit la redirection : les chiffres ci-dessous décrivent la page
+			de destination, et non cette page.
+			{% if entry.redirectConfirmed %}
+			Le déplacement est confirmé : la mesure suit déjà la redirection. Aucune
+			modification de configuration n’est nécessaire, et l’historique a été conservé.
+			{% elif entry.redirectReason == "temporary" %}
+			La redirection est temporaire (302/303/307). Elle est considérée comme un
+			détour plutôt que comme un déplacement, et l’historique reste ici.
+			{% elif entry.redirectReason == "unstable" %}
+			La destination n’a pas été constante lors des dernières mesures. Ce type de
+			comportement indique généralement un test A/B ou une redirection selon la
+			région, plutôt qu’un déplacement.
+			{% else %}
+			Le déplacement n’est pas encore confirmé : la redirection doit mener au
+			même endroit pendant plusieurs mesures consécutives.
+			{% endif %} </p>
+	</div>
+	{% endif %}
+
+	{% if entry.canonicalUrl and not entry.redirectTo %}
+	<div class="notice notice-info">
+		<strong>Cette URL redirige vers <code>{{ entry.canonicalUrl }}</code>.</strong>
+		<p>
+			{% if entry.canonicalKind == "landing" %}
+			La page d’accueil du site pointe vers la page qu’il propose à cet endroit :
+			il s’agit d’une page d’accueil liée à une langue ou à un CMS, et non d’un
+			déplacement. L’origine reste l’adresse du site ; l’historique y est donc
+			conservé au lieu d’être séparé sur un chemin qui dépendrait du lieu où la
+			mesure a été effectuée.
+			{% else %}
+			Il s’agit de la même URL sous une forme différente — avec une barre oblique
+			finale — : les deux sont traitées comme un seul site, avec un historique
+			commun et une seule mesure.
+			{% endif %}
+			Lighthouse suit la redirection : les chiffres décrivent la page réellement
+			servie. Le seul coût est un saut supplémentaire à chaque mesure. </p>
+	</div>
+	{% endif %}
+
+	{% if entry.movedFrom %}
+	<div class="notice notice-info">
+		<strong>Déplacé depuis <code>{{ entry.movedFrom }}</code>.</strong>
+		<p>
+			L’historique de l’ancienne URL est inclus ci-dessous{% if entry.moveAt %}, avec
+			le déplacement du {{ entry.moveAt | date }}{% endif %}. Un changement brusque
+			autour de cette date est probablement dû au changement d’adresse plutôt qu’à
+			une régression. </p>
+	</div>
+	{% endif %}
+
+	{% if entry.currentlyFailing %}
+	<div class="notice notice-error">
+		<strong>
+			La dernière tentative a échoué{% if entry.consecutiveFailures > 1 %} ({{ entry.consecutiveFailures }} échecs
+			consécutifs){% endif %}.
+		</strong>
+		<code>{{ entry.lastError }}</code>
 		{% if entry.latest %}
-			{#- No dash and no full stop: the age is a pill rather than the end of a
-			    sentence, and punctuation either side of it reads as stray marks. #}
-			Data from {{ entry.latest.date | date("long") }}
-			<span class="age-pill{{ ' stale' if entry.dataStale }}"><time datetime="{{ entry.latest.date | iso }}">{{ entry.latest.date | since }}</time> old</span>
-			{%- if entry.dataStale %}, older than this category's {{ entry.staleAfterHours | duration }} freshness target{% endif %}
+		<p>Les chiffres ci-dessous proviennent de la dernière mesure réussie, qui date de
+			<time datetime="{{ entry.latest.date | iso }}">{{ entry.latest.date | since }}</time>
+			.
+		</p>
 		{% else %}
-			No successful measurement yet.
+		<p>Aucune mesure réussie n’est encore disponible pour ce site.</p>
 		{% endif %}
-		{#
-			How often this site comes round, beside how old its data is — the
-			second number is what makes the first readable. Six days old is
-			alarming on a daily site and ordinary on a weekly one.
-
-			The window is the strictest across the categories it belongs to, so
-			the title names which ones set it rather than stating a figure with
-			no provenance.
-		#}
-		{% if entry.freshnessHours %}Measured {{ entry.freshnessHours | cadence }}{% endif %}
-		· {{ entry.totalCount }} run{{ "s" if entry.totalCount != 1 }}
-		{% if entry.windowed %}<span title="The report charts the most recent {{ entry.historyCount }}; the rest stay on disk">(charting last {{ entry.historyCount }})</span>{% endif %}
-		{% if entry.firstMeasured %} since {{ entry.firstMeasured | date }}{% endif %}
-	</p>
-	{#
-		Somewhere else to run the same question.
-
-		These are links rather than rivals. The numbers on this page are a median
-		of repeated runs on one rig held deliberately still, so that a change in
-		them means a change in the site — a different question from "what does it
-		score right now", which is the one anyone asks first when a figure here
-		looks wrong.
-
-		Four because they answer different halves of it. PageSpeed Insights runs
-		Lighthouse on demand on Google's machines and reports this URL's CrUX field
-		data beside it; `analysis?url=` is PSI's own permalink shape, so it arrives
-		at a report rather than at the form. The other three are field data — Calibre
-		and Treo keyed on a host, CrUX Vis on the origin behind the URL — which
-		is why they take the hostname, and why they are the ones to reach for when
-		the Field history table below is empty. Calibre and Treo in that order for
-		no better reason than that it reads better.
-
-		CrUX Vis carries its parameters in the fragment, so they never reach a
-		server: the whole query is read by the page itself. `periodStart=0` and
-		`periodEnd=-1` ask for the full history rather than a fixed window, so the
-		link keeps working as months pass instead of aging into a stale range.
-	#}
-	{#
-		Each service wearing its own mark, from the same avatar service the site
-		names above use. Five links in a row read as five words otherwise, and the
-		marks are how you find the one you already know by sight.
-
-		Decorative, and named in text right beside them: "PageSpeed Insights logo,
-		PageSpeed Insights" is a thing to listen past. Not lazy — this sits in the
-		header, above the fold, where lazy means visibly late.
-	#}
-	<p class="detail-actions">
-		Elsewhere:
-		<a href="https://pagespeed.web.dev/analysis?url={{ entry.url | urlencode }}"
-			title="Lighthouse run on demand by Google, with this URL's CrUX field data beside it"><img class="action-mark" src="{{ "https://pagespeed.web.dev/" | avatar(meta.avatarService) }}" width="16" height="16" alt="" decoding="async">PageSpeed Insights</a> ·
-		<a href="https://calibreapp.com/tools/core-web-vitals-test/{{ entry.url | hostname }}"
-			title="Calibre's free Core Web Vitals check for {{ entry.url | hostname }}"><img class="action-mark" src="{{ "https://calibreapp.com/" | avatar(meta.avatarService) }}" width="16" height="16" alt="" decoding="async">Calibre</a> ·
-		<a href="https://treo.sh/sitespeed/{{ entry.url | hostname }}"
-			title="CrUX field data charted for {{ entry.url | hostname }} — history rather than a fresh lab run"><img class="action-mark" src="{{ "https://treo.sh/" | avatar(meta.avatarService) }}" width="16" height="16" alt="" decoding="async">Treo</a> ·
-		<a href="https://cruxvis.withgoogle.com/#/?view=cwvsummary&amp;url={{ entry.url | urlencode }}&amp;identifier=origin&amp;device=ALL&amp;periodStart=0&amp;periodEnd=-1&amp;display=p75s"
-			title="Every month of CrUX p75s for this origin, charted by Google's CrUX Vis"><img class="action-mark" src="{{ "https://cruxvis.withgoogle.com/" | avatar(meta.avatarService) }}" width="16" height="16" alt="" decoding="async">CrUX Vis</a> ·
-		<a href="https://tamethebots.com/tools/cwv-history?url={{ entry.url | urlencode }}&amp;originOrUrl=0&amp;formFactor=PHONE&amp;hist=1&amp;collectionPeriodCount=40&amp;scaleCharts=1"
-			title="Weekly phone CrUX history for this origin, charted by Tame the Bots"><img class="action-mark" src="{{ "https://tamethebots.com/" | avatar(meta.avatarService) }}" width="16" height="16" alt="" decoding="async">Tame the Bots</a> ·
-		{#
-			Not a second opinion like the others — the same numbers this page
-			already shows, in the arithmetic that turns them into a score. Which is
-			the useful thing to have beside a performance figure: the score alone
-			never says which metric spent it.
-		#}
-		{% set scorecalc = entry.latest | scoreCalculator %}
-		{% if scorecalc %}
-		<a href="{{ scorecalc }}"
-			title="This measurement's metrics loaded into Lighthouse's scoring calculator — what each one costs the performance score">{% brandMark "Lighthouse" %}Scoring Calculator</a> ·
+		{% if entry.consecutiveFailures > 2 %}
+		<p class="small">Les nouvelles tentatives sont de plus en plus espacées : ce site est mesuré moins souvent que
+			les autres.</p>
 		{% endif %}
-		{#
-			Last, because it is the only one that looks backwards: everything above
-			is about the site as it is now, and this asks what the page used to be.
-			A site that has gone, or one whose scores moved for no reason the data
-			explains, is a case where what it looked like is the only thing left to
-			look at. "Elsewhere" rather than "Test elsewhere" above is what
-			makes room for it.
-
-			`/web/*/` is the Wayback Machine's own shape for "every snapshot of
-			this URL" — a calendar rather than one capture, since which date
-			matters is the thing you came to find out.
-		#}
-		<a href="{{ entry.url | wayback }}"
-			title="Every archived snapshot of this URL in the Internet Archive's Wayback Machine"><img class="action-mark" src="{{ "https://web.archive.org/" | avatar(meta.avatarService) }}" width="16" height="16" alt="" decoding="async">Wayback Machine</a>
-	</p>
 	</div>
-	{#
-		After the text, not before it: the heading is what the page is about and
-		should come first to a screen reader, and this way the source order and
-		the stacked mobile order are the same thing.
-	#}
-	{% if screenshot %}
-	{#
-		Hidden from assistive technology and out of the tab order: this is the
-		same destination as the URL linked in text directly beside it, and a
-		second link to it would be a duplicate to read past and a duplicate to
-		tab through. Removing it costs a screen reader nothing — the link is
-		still there, in words.
-	#}
-	<a class="detail-shot-link" href="{{ entry.url }}" tabindex="-1" aria-hidden="true">
-		<img class="detail-shot" src="{{ screenshot }}" width="{{ shotWidth }}" height="{{ shotHeight }}"
-			alt="" loading="lazy" decoding="async">
-	</a>
 	{% endif %}
-</header>
 
-{#
-	A bot check on the accessibility pass, after one retry.
-
-	The performance figures come from the Lighthouse runs and stand. The captures
-	that pass produces are kept from the last load that got the real site.
-
-	A site challenged on every load has no measurement at all — that record is
-	stored as an error and the figures here are from the last one that succeeded.
-#}
-{% if entry.interstitial %}
-<div class="notice notice-warn">
-	<strong>The most current accessibility pass was served a bot check.</strong>
-	<p>
-		This site is loaded several times per measurement, and one of those loads
-		&mdash; the accessibility pass &mdash; was answered with
-		<code>{{ entry.interstitial }}</code>, an automated-traffic check rather
-		than {{ entry.displayUrl }}. It was tried twice.
-	</p>
-	<p>
-		The performance figures below are unaffected. The screenshots, filmstrip
-		and without-JavaScript comparison are older results from the last load
-		that reached the site, where there was one.
-	</p>
-</div>
-{% endif %}
-
-{% if entry.stale and entry.latest %}
-<div class="notice notice-warn">
-	<strong>This data is <time datetime="{{ entry.latest.date | iso }}">{{ entry.latest.date | since }}</time> old.</strong>
-	<p>
-		Sites are measured on a rolling schedule, so figures here are the newest
-		successful measurement rather than a reading taken just now. Comparisons
-		against other sites may span different points in time.
-	</p>
-</div>
-{% endif %}
-
-{% if entry.redirectTo %}
-<div class="notice notice-warn">
-	<strong>This URL redirects to <code>{{ entry.redirectTo }}</code>.</strong>
-	<p>
-		Lighthouse follows the redirect, so the numbers below describe the
-		<em>destination</em> page, not this one.
-		{% if entry.redirectConfirmed %}
-		The move is confirmed, so measurement has already followed it — no config
-		change needed, and the history came along.
-		{% elif entry.redirectReason == "temporary" %}
-		The redirect is temporary (302/303/307), so it is treated as a detour
-		rather than a move and history stays here.
-		{% elif entry.redirectReason == "unstable" %}
-		The destination has not been consistent across recent runs — that pattern
-		usually means an A/B test or a geo split rather than a move.
-		{% else %}
-		Not yet confirmed as a move; it needs to lead to the same place on
-		several consecutive runs first.
-		{% endif %}
-	</p>
-</div>
-{% endif %}
-
-{% if entry.canonicalUrl and not entry.redirectTo %}
-<div class="notice notice-info">
-	<strong>This URL redirects to <code>{{ entry.canonicalUrl }}</code>.</strong>
-	<p>
-		{% if entry.canonicalKind == "landing" %}
-		The site&rsquo;s front door pointing at the page it serves there &mdash; a
-		locale or CMS landing path, not a move. The origin is still the address of
-		the site, so history stays under it rather than forking to a path that
-		depends on where the measurement ran.
-		{% else %}
-		The same URL in a different form &mdash; a trailing slash &mdash; so both
-		are treated as one site rather than two: one history, measured once.
-		{% endif %}
-		Lighthouse follows the redirect, so the numbers below describe the page
-		actually served; the only cost is an extra hop on each run.
-	</p>
-</div>
-{% endif %}
-
-{% if entry.movedFrom %}
-<div class="notice notice-info">
-	<strong>Moved from <code>{{ entry.movedFrom }}</code>.</strong>
-	<p>
-		History from the previous URL is included below{% if entry.moveAt %}, with the
-		move on {{ entry.moveAt | date }}{% endif %}. A step-change around that point is
-		likely the change of address rather than a regression.
-	</p>
-</div>
-{% endif %}
-
-{% if entry.currentlyFailing %}
-<div class="notice notice-error">
-	<strong>
-		The most recent attempt failed{% if entry.consecutiveFailures > 1 %} ({{ entry.consecutiveFailures }} in a row){% endif %}.
-	</strong>
-	<code>{{ entry.lastError }}</code>
-	{% if entry.latest %}
-	<p>Numbers below are from the last successful run, <time datetime="{{ entry.latest.date | iso }}">{{ entry.latest.date | since }}</time> old.</p>
-	{% else %}
-	<p>There is no successful measurement for this site yet.</p>
-	{% endif %}
-	{% if entry.consecutiveFailures > 2 %}
-	<p class="small">Retries are backing off, so this site is being attempted less often than the rest.</p>
-	{% endif %}
-</div>
-{% endif %}
-
-{% if entry.environmentDrift and entry.environmentDrift.suspect %}
-<div class="notice notice-warn">
-	{#
-		"Than usual" would be a claim about this site's own past. The baseline is
-		the median across every measurement in the project, so the comparison is
-		against the fleet — said plainly, because a reader who assumes the wrong
-		baseline draws the wrong conclusion from the same number.
-	#}
-	<strong>
-		The measuring machine was {{ entry.environmentDrift.direction }} than
-		{% if entry.environmentDrift.scope == "fleet" %}most in this project{% else %}usual for this site{% endif %}.
-	</strong>
-	<p>
-		Lighthouse benchmark index was {{ entry.environmentDrift.current | num }},
+	{% if entry.environmentDrift and entry.environmentDrift.suspect %}
+	<div class="notice notice-warn">
 		{#
-			The percentage was parenthesised in an earlier version, and the reason
-			survives the rewrite: a filter binds tighter than the multiplication in
-			Nunjucks, so `ratio * 100 | round` rounded 100 and left the product
-			alone — printing "34.300000000000004%".
+		« Que d’habitude » ferait référence à l’historique propre à ce site. La
+		référence est la médiane de toutes les mesures du projet : la comparaison
+		porte donc sur l’ensemble des sites, ce qui est formulé explicitement pour
+		éviter toute mauvaise interprétation.
 		#}
-		{{ (entry.environmentDrift.ratio * 100) | round | abs }}%
-		{{ entry.environmentDrift.direction }} than
-		{% if entry.environmentDrift.scope == "fleet" %}
-			this project's median of {{ entry.environmentDrift.baseline | num }}.
-		{% else %}
-			this site's baseline of {{ entry.environmentDrift.baseline | num }}.
-		{% endif %}
-		CPU-bound metrics — TBT, TTI,
-		main thread work — are affected by this and may have moved without the site
-		changing at all.
-	</p>
-</div>
-{% endif %}
+		<strong>
+			La machine de mesure était {{ entry.environmentDrift.direction }} que
+			{% if entry.environmentDrift.scope == "fleet" %}la plupart des machines de ce projet{% else %}d’habitude
+			pour ce site{% endif %}.
+		</strong>
+		<p>
+			L’indice de référence Lighthouse était de {{ entry.environmentDrift.current | num }},
+			{#
+			Le pourcentage était entre parenthèses dans une version précédente,
+			mais la raison de cette écriture demeure : dans Nunjucks, un filtre
+			s’applique avant la multiplication. Ainsi, `ratio * 100 | round`
+			arrondissait 100 et laissait le produit tel quel, ce qui affichait
+			« 34.300000000000004% ».
+			#}
+			soit {{ (entry.environmentDrift.ratio * 100) | round | abs }} %
+			{{ entry.environmentDrift.direction }} que
+			{% if entry.environmentDrift.scope == "fleet" %}
+			la médiane de ce projet, qui est de {{ entry.environmentDrift.baseline | num }}.
+			{% else %}
+			la référence de ce site, qui est de {{ entry.environmentDrift.baseline | num }}.
+			{% endif %}
+			Les métriques qui dépendent du processeur — TBT, TTI et travail du thread
+			principal — sont influencées par cet écart et peuvent avoir changé sans que
+			le site ait lui-même changé. </p>
+	</div>
+	{% endif %}
 
-{% if not entry.latest %}
-<div class="empty"><p>No successful measurements recorded for this site yet.</p></div>
-{% else %}
+	{% if not entry.latest %}
+	<div class="empty"><p>Aucune mesure réussie n’a encore été enregistrée pour ce site.</p></div>
+	{% else %}
 
-{#
-	Built from the same conditions the sections use, held in variables so each
-	one is written once. A hardcoded list would link to Field data on the nine
-	sites in ten that CrUX has never heard of — a table of contents whose entries
-	sometimes go nowhere is worse than none.
+	{#
+	Les sections de la table des matières sont créées à partir des mêmes
+	conditions que celles utilisées pour afficher leur contenu. Les variables
+	évitent de répéter chaque condition. Une liste codée en dur créerait un lien
+	vers les données de terrain pour neuf sites sur dix dont CrUX ne dispose
+	d’aucune donnée : mieux vaut ne pas avoir de table des matières que d’en avoir
+	une dont certains liens ne mènent nulle part.
 
-	Only rendered for a measured site: the branch above is the whole page
-	otherwise.
-#}
-{% set hasStack = entry.generator or entry.host or entry.tools.length %}
-{% set hasCwv = entry.cwv %}
-{#
-	Whether there is field data to show a column for. Not simply `hasField`: a
-	site measured before the CrUX key existed has no field record on the
-	measurement, and its real-user numbers reach the table through the backfilled
-	week the assessment fell back to.
-#}
-{% set cwvSource = entry.cwv.source if hasCwv else null %}
-{% set showField = hasField or cwvSource == "field" or cwvSource == "field-history" %}
-{#
-	An assessment CrUX actually made, as against the lab approximation the report
-	falls back to. Only the former is shown as a Core Web Vitals verdict.
-#}
-{% set hasRealCwv = cwvSource == "field" or cwvSource == "field-history" %}
-{% set fieldPeriod = entry.latest.field.collectionPeriod if hasField else (entry.cwv.period if hasCwv else null) %}
-{% set fieldScope = entry.latest.field.scope if hasField else (fieldPeriod.scope if fieldPeriod else null) %}
-{% set hasField = entry.latest.field %}
-{% set hasFieldHistory = entry.fieldHistory and entry.fieldHistory.series.length %}
-{#
-	One picture is a screenshot, not a filmstrip. A page that painted before the
-	first sample repeats that one frame for the rest of the strip, and the
-	section would be a heading over the same image eight times.
-#}
-{% set hasFilmstrip = entry.filmstrip and entry.filmstrip.distinct > 1 %}
+	La table des matières n’est affichée que pour un site mesuré : sinon, la
+	branche ci-dessus constitue toute la page.
+	#}
+	{% set hasStack = entry.generator or entry.host or entry.tools.length %}
+	{% set hasCwv = entry.cwv %}
+	{#
+	Détermine s’il existe des données de terrain à afficher. Il ne suffit pas
+	d’avoir `hasField` : une mesure effectuée avant l’ajout de la clé CrUX ne
+	contient pas d’enregistrement de terrain, et les données d’utilisation réelle
+	sont alors ajoutées au tableau par l’intermédiaire de la semaine de référence
+	à laquelle l’évaluation a été rattachée.
+	#}
+	{% set cwvSource = entry.cwv.source if hasCwv else null %}
+	{% set showField = hasField or cwvSource == "field" or cwvSource == "field-history" %}
+	{#
+	Indique si l’évaluation repose sur des données CrUX réelles, par opposition à
+	l’approximation de laboratoire utilisée en leur absence. Seule la première
+	peut être présentée comme une évaluation des Core Web Vitals.
+	#}
+	{% set hasRealCwv = cwvSource == "field" or cwvSource == "field-history" %}
+	{% set fieldPeriod = entry.latest.field.collectionPeriod if hasField else (entry.cwv.period if hasCwv else null) %}
+	{% set fieldScope = entry.latest.field.scope if hasField else (fieldPeriod.scope if fieldPeriod else null) %}
+	{% set hasField = entry.latest.field %}
+	{% set hasFieldHistory = entry.fieldHistory and entry.fieldHistory.series.length %}
+	{#
+	Une capture d’écran est une image fixe, pas un film. Si la page s’est affichée
+	avant le premier échantillon, cette même image est répétée jusqu’à la fin de
+	la séquence. La section n’aurait alors qu’un titre au-dessus de huit copies
+	de la même image.
+	#}
+	{% set hasFilmstrip = entry.filmstrip and entry.filmstrip.distinct > 1 %}
 
-{% set hasNoJs = entry.ownScreenshot.noJs %}
+	{% set hasNoJs = entry.ownScreenshot.noJs %}
 
-{#
-	How the scored runs were throttled. "simulate" loads at full speed and models a
-	slow phone afterwards, so its figures are Simulated and anything read straight
-	off that load is Unthrottled.
-#}
-{% set labMethod = entry.latest.lab.environment.throttlingMethod %}
-{% set labKind = ("simulated" if labMethod == "simulate" else "throttled") if labMethod else null %}
-{% set observedKind = ("unthrottled" if labMethod == "simulate" else "throttled") if labMethod else null %}
+	{#
+	Mode de limitation des mesures notées. En mode « simulate », la page est
+	chargée à pleine vitesse et les conditions d’un téléphone lent sont simulées
+	ensuite. Les chiffres sont donc simulés, tandis que les mesures directement
+	observées pendant le chargement ne sont pas limitées.
+	#}
+	{% set labMethod = entry.latest.lab.environment.throttlingMethod %}
+	{% set labKind = ("simulated" if labMethod == "simulate" else "throttled") if labMethod else null %}
+	{% set observedKind = ("unthrottled" if labMethod == "simulate" else "throttled") if labMethod else null %}
 
-{% from "throttle-tag.njk" import throttleTag, filmstripThrottleTag %}
+	{% from "throttle-tag.njk" import throttleTag, filmstripThrottleTag %}
 
-{#
-	The page in the order a reader works through it: what the site is built on,
-	the load as a picture, the scores, then the numbers behind it — weight, then
-	what the page does to the browser — and last the runs they were all read from.
+	{#
+	La page est présentée dans l’ordre de lecture : les technologies utilisées,
+	le chargement sous forme d’images, les scores, puis les données détaillées —
+	d’abord le poids, ensuite l’activité de la page dans le navigateur — et
+	enfin les mesures ayant servi à les calculer.
 
-	One entry per panel. Field data is a subsection of Metrics, Hygiene one of
-	Page health and Field history one of the log, and a table of contents listing
-	a heading beside its own subheading reads as two destinations when it is one.
-#}
-{% set toc = [] %}
-{% if hasStack %}{% set toc = (toc.push({ id: "stack", label: "Stack" }), toc) %}{% endif %}
-{% if hasFilmstrip %}{% set toc = (toc.push({ id: "filmstrip", label: "Filmstrip" }), toc) %}{% endif %}
-{% set toc = (toc.push({ id: "scores", label: "Scores" }), toc) %}
-{#
-	The Core Web Vitals verdict opens this section rather than owning one, so it
-	is not a destination of its own either.
-#}
-{% set toc = (toc.push({ id: "lab", label: "Metrics" }), toc) %}
-{% set toc = (toc.push({ id: "weight", label: "Page weight" }), toc) %}
-{% if hasNoJs %}{% set toc = (toc.push({ id: "without-javascript", label: "Without JavaScript" }), toc) %}{% endif %}
-{% set toc = (toc.push({ id: "health", label: "Page health" }), toc) %}
-{% set toc = (toc.push({ id: "log", label: "Measurement log" }), toc) %}
-{% if entry.showEmbed %}{% set toc = (toc.push({ id: "embed", label: "Embed" }), toc) %}{% endif %}
+	Une entrée par panneau. Les données de terrain sont une sous-section des
+	métriques, l’hygiène une sous-section de l’état de la page, et l’historique
+	des données de terrain une sous-section du journal. Mettre une section de la
+	table des matières à côté de son propre sous-titre donnerait l’impression
+	qu’il s’agit de deux destinations distinctes.
+	#}
+	{% set toc = [] %}
+	{% if hasStack %}{% set toc = (toc.push({ id: "stack", label: "Technologies" }), toc) %}{% endif %}
+	{% if hasFilmstrip %}{% set toc = (toc.push({ id: "filmstrip", label: "Séquence d’images" }), toc) %}{% endif %}
+	{% set toc = (toc.push({ id: "scores", label: "Scores" }), toc) %}
+	{#
+	L’évaluation Core Web Vitals ouvre cette section, sans constituer une section
+	à part entière : elle n’a donc pas sa propre entrée dans la table des matières.
+	#}
+	{% set toc = (toc.push({ id: "lab", label: "Métriques" }), toc) %}
+	{% set toc = (toc.push({ id: "weight", label: "Poids de la page" }), toc) %}
+	{% if hasNoJs %}{% set toc = (toc.push({ id: "without-javascript", label: "Sans JavaScript" }), toc) %}{% endif %}
+	{% set toc = (toc.push({ id: "health", label: "État de la page" }), toc) %}
+	{% set toc = (toc.push({ id: "log", label: "Journal des mesures" }), toc) %}
+	{% if entry.showEmbed %}{% set toc = (toc.push({ id: "embed", label: "Intégration" }), toc) %}{% endif %}
 
-{% from "contents.njk" import contents %}
-{{ contents(toc) }}
+	{% from "contents.njk" import contents %}
+	{{ contents(toc) }}
 
-<p class="muted small">Lab data is measured using Lighthouse, {{ entry.latest.formFactor | capitalize }} mode unless otherwise specified. Field data is reported from Chrome UX Report (using p75 measurements).</p>
+	<p class="muted small">Les données de laboratoire sont mesurées avec Lighthouse, en mode {{ entry.latest.formFactor
+		| capitalize }} sauf indication contraire. Les données de terrain proviennent du Chrome UX Report (mesures au
+		75e percentile, p75).</p>
 
-{% if hasStack %}
-<section class="panel" id="stack">
-	<h2>Stack</h2>
-	<div class="stack-list">
-		{% if entry.generator %}
-		<div class="stack-item">
-			{% stackIcon entry.generator, 24 %}
-			<span>
-				<span class="stack-label block">Built with</span>
+	{% if hasStack %}
+	<section class="panel" id="stack">
+		<h2>Technologies</h2>
+		<div class="stack-list">
+			{% if entry.generator %}
+			<div class="stack-item">
+				{% stackIcon entry.generator, 24 %}
+				<span>
+				<span class="stack-label block">Créé avec</span>
 				{{ entry.generator.name }}{% if entry.generator.version %} {{ entry.generator.version }}{% endif %}
 			</span>
-		</div>
-		{% endif %}
-		{% if entry.tools.length %}
-		<div class="stack-item">
+			</div>
+			{% endif %}
+			{% if entry.tools.length %}
+			<div class="stack-item">
 			<span>
-				<span class="stack-label block">Uses</span>
+				<span class="stack-label block">Utilise</span>
 				<span class="stack-tools">
-					{#- An implied tool says which tool brings it, so it reads as part of that
-					    choice rather than as a second one. -#}
-					{% for tool in entry.tools %}<span class="stack-tool{% if tool.implied %} stack-tool-implied{% endif %}"{% if tool.implied %} title="Comes with {{ tool.implied }}"{% endif %}>{% stackIcon tool, 18 %}{{ tool.name }}{% if tool.version %} {{ tool.version }}{% endif %}</span>{% endfor %}
+					{#- Un outil implicite indique quel autre outil l’inclut : il est donc présenté
+					    comme faisant partie de celui-ci, et non comme un choix distinct. -#}
+					{% for tool in entry.tools %}<span class="stack-tool{% if tool.implied %} stack-tool-implied{% endif %}" {% if tool.implied %} title="Fourni avec {{ tool.implied }}" {% endif %}>{% stackIcon tool, 18 %}{{ tool.name }}{% if tool.version %} {{ tool.version }}{% endif %}</span>{% endfor %}
 				</span>
 			</span>
-		</div>
-		{% endif %}
-		{% if entry.host %}
-		<div class="stack-item">
-			{% stackIcon entry.host, 24 %}
-			<span>
-				<span class="stack-label block">Hosted by</span>
+			</div>
+			{% endif %}
+			{% if entry.host %}
+			<div class="stack-item">
+				{% stackIcon entry.host, 24 %}
+				<span>
+				<span class="stack-label block">Hébergé par</span>
 				{{ entry.host.name }}
 			</span>
-		</div>
-		{% endif %}
-	</div>
-</section>
-{% endif %}
-
-
-{% if hasFilmstrip %}
-{#
-	The page drawing itself, from the same Lighthouse run the scores below came
-	from. Frames are named by a hash of their bytes, so a page that finished
-	early and repeated its last frame to the end of the strip stores that frame
-	once — the strip still renders at full length from a fraction of the files.
-
-	Horizontally scrollable rather than wrapped: a filmstrip read in two rows is
-	no longer a timeline, and the frames are tall and narrow enough that eight of
-	them will not fit across a phone.
-
-	Decorative, like the screenshot at the top. The timings under each frame are
-	the information here and they are text.
-#}
-<section class="panel" id="filmstrip">
-	{#
-		Throttled or not, said plainly beside the frames. Lighthouse's default
-		"simulate" does not slow the browser down — it loads the page at full speed
-		and models the metrics afterwards — so an unthrottled strip is a fast load,
-		and reading it as what a phone on a slow connection sees is the mistake
-		this label exists to prevent.
-	#}
-	<h2>Filmstrip <span class="tag">LAB</span>{{ filmstripThrottleTag(entry.filmstrip) }}</h2>
-	<p class="muted small">
-		How the page drew during the measured load, at
-		{{ entry.filmstrip.frames.length }} points across
-		{{ entry.filmstrip.frames[entry.filmstrip.frames.length - 1].timing | unit("ms") }}.
-		{#
-			Every site with a filmstrip section is in the compare catalog — that
-			catalog is built from the same stored strips — so the link can be
-			offered wherever this section renders. `compareEligible` only decides
-			what that page shuffles up unprompted; a link to a named site always
-			resolves.
-		#}
-		<a href="/compare/?sites={{ entry.slug | urlencode }}">Compare this filmstrip against another site</a>.
-	</p>
-	{% include "filmstrip-player.njk" %}
-</section>
-{% endif %}
-
-{#
-	Lab and field in one table, a row per metric.
-
-	They were two tables reading top to bottom, which put the two measurements
-	of LCP a screen apart and left the reader to hold one in their head while
-	scrolling to the other — the comparison the page exists to make. Side by
-	side it is a glance.
-
-	Every metric gets a row, including one neither half can fill. INP on a site
-	CrUX has never heard of is an empty row, and that is the honest rendering:
-	the metric exists, it is a Core Web Vital, and nothing here measures it —
-	which a reader should be told rather than left to notice the absence of.
-#}
-{% macro metricstable(rows, entryData, showField, labTag) %}
-<div class="table-scroll">
-<table class="grid grid-grouped">
-	<thead>
-		<tr class="group-head">
-			<th rowspan="2" class="col-site">Metric</th>
-			<th colspan="3">Lab{{ labTag }}</th>
-			{% if showField %}<th colspan="2" class="col-group-start">Field</th>{% endif %}
-		</tr>
-		<tr>
-			<th>Value</th>
-			<th>Change / range</th>
-			<th class="col-trend">Trend</th>
-			{% if showField %}
-			<th class="col-group-start">p75</th>
-			<th class="col-dist">Distribution</th>
+			</div>
 			{% endif %}
-		</tr>
-	</thead>
-	<tbody>
-	{% for row in rows %}
-	{% set t = entryData.trends[row.trendKey] %}
-		<tr>
-			<td class="col-site">
-				<strong>{{ row.label }}</strong>
-				{#
-					A Core Web Vital graded on the lab number because CrUX has nothing
-					for it. The pill beside it is a real rating on real thresholds, and
-					reads exactly like the field-backed one — the word on the badge is
-					what separates the measurement of this site's users from a
-					measurement of one simulated phone.
+		</div>
+	</section>
+	{% endif %}
 
-					Per row, not per table: CrUX will report a site's LCP and stay
-					silent on its CLS, and only the silent one is an estimate.
-				#}
-				{% set cwvEstimated = row.coreWebVital and row.lab and row.lab.value !== null and not (row.field and row.field.value !== null) %}
-				{% if row.coreWebVital %}<span class="badge badge-cwv"{% if cwvEstimated %} title="No Chrome UX Report data for this metric, so the rating comes from the Lighthouse run rather than from real users"{% endif %}>CWV{% if cwvEstimated %} <span class="badge-qualifier">(estimate)</span>{% endif %}</span>{% endif %}
-				{% if row.note %}<span class="muted small block">{{ row.note }}</span>{% endif %}
-			</td>
+
+	{% if hasFilmstrip %}
+	{#
+	La page en train de s’afficher, à partir de la même mesure Lighthouse que
+	celle utilisée pour les scores ci-dessous. Les images sont nommées à partir
+	d’une empreinte de leur contenu. Si la page a fini de s’afficher tôt et que
+	la dernière image a été répétée jusqu’à la fin de la séquence, une seule copie
+	de cette image est stockée : la séquence s’affiche tout de même dans sa
+	longueur complète, avec beaucoup moins de fichiers.
+
+	La séquence défile horizontalement plutôt que de passer à la ligne : répartie
+	sur deux lignes, elle ne serait plus une chronologie, et les images sont assez
+	hautes et étroites pour que huit d’entre elles ne tiennent pas sur un écran de
+	téléphone.
+
+	Comme la capture d’écran en haut de page, elle est décorative. Les horaires
+	indiqués sous chaque image constituent les informations utiles et restent du
+	texte.
+	#}
+	<section class="panel" id="filmstrip">
+		{#
+		Le libellé précise si la mesure a été limitée ou non. Le mode Lighthouse
+		« simulate » par défaut ne ralentit pas le navigateur : la page est chargée
+		à pleine vitesse, puis les métriques sont simulées. Une séquence non limitée
+		représente donc un chargement rapide ; l’interpréter comme ce qu’observerait
+		un téléphone sur une connexion lente serait une erreur. Ce libellé vise à
+		l’éviter.
+		#}
+		<h2>Séquence d’images <span class="tag">LAB</span>{{ filmstripThrottleTag(entry.filmstrip) }}</h2>
+		<p class="muted small">
+			Affichage de la page pendant le chargement mesuré, à
+			{{ entry.filmstrip.frames.length }} instants répartis sur
+			{{ entry.filmstrip.frames[entry.filmstrip.frames.length - 1].timing | unit("ms") }}.
 			{#
-				The value and its verdict in one cell, so the eye does not travel to
-				a rating column and back to work out which number it grades.
+			Tous les sites pour lesquels cette section s’affiche figurent dans le
+			catalogue de comparaison, créé à partir des mêmes séquences. Le lien
+			peut donc être proposé partout où la section apparaît.
+			`compareEligible` détermine seulement quels sites sont proposés
+			spontanément sur cette page ; un lien vers un site précis fonctionne
+			toujours.
 			#}
-			<td class="num">
-				{% if not row.lab %}
-				<span class="muted" title="Lighthouse cannot measure this in a lab run">n/a</span>
-				{% elif row.lab.value === null %}
-				&mdash;
-				{% else %}
-				<span class="metric-pair">
+			<a href="/compare/?sites={{ entry.slug | urlencode }}">Comparer cette séquence d’images à celle d’un autre
+				site</a>. </p>
+		{% include "filmstrip-player.njk" %}
+	</section>
+	{% endif %}
+
+	{#
+	Les données de laboratoire et de terrain sont réunies dans un même tableau,
+	avec une ligne par métrique.
+
+	Auparavant, elles étaient présentées dans deux tableaux successifs. Les deux
+	mesures du LCP se retrouvaient alors à une page d’écart, et le lecteur devait
+	se souvenir de la première en faisant défiler la page pour trouver la seconde.
+	Les présenter côte à côte permet de les comparer d’un coup d’œil.
+
+	Chaque métrique a sa ligne, même si aucune des deux sources ne fournit de
+	valeur. Sur un site que CrUX n’a jamais mesuré, la ligne INP reste vide. C’est
+	la façon honnête de présenter les choses : la métrique existe et fait partie
+	des Core Web Vitals, mais aucune donnée ne la mesure ici. Mieux vaut le
+	signaler que laisser le lecteur constater son absence.
+	#}
+	{% macro metricstable(rows, entryData, showField, labTag) %}
+	<div class="table-scroll">
+		<table class="grid grid-grouped">
+			<thead>
+			<tr class="group-head">
+				<th rowspan="2" class="col-site">Métrique</th>
+				<th colspan="3">Labo{{ labTag }}</th>
+				{% if showField %}
+				<th colspan="2" class="col-group-start">Terrain</th>
+				{% endif %}
+			</tr>
+			<tr>
+				<th>Valeur</th>
+				<th>Variation / plage</th>
+				<th class="col-trend">Tendance</th>
+				{% if showField %}
+				<th class="col-group-start">75e percentile</th>
+				<th class="col-dist">Répartition</th>
+				{% endif %}
+			</tr>
+			</thead>
+			<tbody>
+			{% for row in rows %}
+			{% set t = entryData.trends[row.trendKey] %}
+			<tr>
+				<td class="col-site">
+					<strong>{{ row.label }}</strong>
+					{#
+					Un Core Web Vital évalué à partir de la valeur mesurée en laboratoire,
+					car CrUX ne dispose pas de données pour cette métrique. Le badge
+					adjacent indique une note calculée à partir de seuils réels et
+					s’affiche comme celui associé aux données de terrain. C’est la
+					mention du badge qui distingue la mesure de ce site par de vrais
+					utilisateurs de celle d’un téléphone simulé.
+
+					L’évaluation se fait métrique par métrique : CrUX peut fournir le LCP
+					d’un site sans données pour son CLS ; seule la métrique sans données
+					est alors une estimation.
+					#}
+					{% set cwvEstimated = row.coreWebVital and row.lab and row.lab.value !== null and not (row.field and
+					row.field.value !== null) %}
+					{% if row.coreWebVital
+					%}<span class="badge badge-cwv" {% if cwvEstimated %} title="Aucune donnée Chrome UX Report pour cette métrique : la note provient donc de l’exécution Lighthouse et non de vrais utilisateurs" {% endif %}>CWV{% if cwvEstimated %} <span class="badge-qualifier">(estimation)</span>{% endif %}</span>{%
+					endif %}
+					{% if row.note %}<span class="muted small block">{{ row.note }}</span>{% endif %}
+				</td>
+				{#
+				La valeur et son évaluation figurent dans la même cellule, afin d’éviter
+				au lecteur de devoir parcourir une colonne de notes puis revenir à la
+				valeur pour comprendre à quel nombre elle s’applique.
+				#}
+				<td class="num">
+					{% if not row.lab %}
+					<span class="muted" title="Lighthouse ne peut pas mesurer cette donnée lors d’une exécution en laboratoire">s. o.</span>
+					{% elif row.lab.value === null %} &mdash; {% else %}
+					<span class="metric-pair">
 					{{ row.lab.value | unit(row.unit) }}
 					{% if row.lab.rating %}<span class="pill pill-{{ row.lab.rating | ratingClass }}">{{ row.lab.rating | ratingLabel }}</span>{% endif %}
 				</span>
-				{% endif %}
-			</td>
-			{#
-				The move since the last run, over the range across the whole window.
-				One cell rather than three columns: best and worst state the ends of
-				a range, which is one fact, and both are context for the change
-				rather than figures anyone scans a column of. The sparkline beside
-				them already draws the same shape.
+					{% endif %}
+				</td>
+				{#
+				La variation depuis l’exécution précédente et la plage observée sur
+				l’ensemble de la période sont regroupées. Les valeurs minimale et
+				maximale constituent les bornes d’une plage, et servent de contexte à
+				la variation plutôt que de colonnes distinctes à parcourir. La
+				microscopique courbe adjacente représente déjà cette même évolution.
 
-				Only the change line is colored — the range is neither good nor bad,
-				it is where this metric has been.
+				Seule la ligne de variation est colorée : la plage n’est ni bonne ni
+				mauvaise, elle indique les valeurs observées pour cette métrique.
 
-				And pink rather than red while either rating on the row says good. The
-				pills grade where the metric stands; a move inside the good band is
-				movement, not a regression, and red argues with the pill sitting two
-				cells to the left. The sparkline beside it is softened the same way.
-			#}
-			{% set stillGood = (row.lab and row.lab.rating == "good") or (row.field and row.field.rating == "good") %}
-			<td class="num">
+				On utilise le rose plutôt que le rouge lorsqu’une des évaluations de
+				la ligne reste bonne. Les badges indiquent l’état actuel de la
+				métrique ; une variation qui reste dans la zone « bonne » est un
+				changement, pas une régression. Le rouge contredirait le badge situé
+				deux cellules plus à gauche. La courbe adjacente est atténuée de la
+				même façon.
+				#}
+				{% set stillGood = (row.lab and row.lab.rating == "good") or (row.field and row.field.rating == "good")
+				%}
+				<td class="num">
 				<span class="cell-main{% if t %} {{ t.vsPrevious | deltaClass(stillGood) }}{% endif %}">
 					{% if t and t.vsPrevious %}{{ t.vsPrevious | deltaArrow }} {{ t.vsPrevious | deltaText(row.unit) }}{% else %}&mdash;{% endif %}
 				</span>
-				{#
-					Under the change it qualifies rather than trailing it: the badge is
-					a whole word against a number a few characters long, and inline it
-					set the width of the column to its own.
-				#}
-				{% if t and t.significant %}
-				<span class="cell-flag"><span class="badge badge-sig" title="Larger than this metric's normal run-to-run noise">significant</span></span>
-				{% endif %}
-				{% if t %}
-				<span class="cell-sub" title="Best and worst across the measured window">
+					{#
+					Le badge se trouve sous la variation qu’il qualifie. Placé sur la
+					même ligne, un mot entier pourrait élargir la colonne alors que la
+					variation ne comporte que quelques caractères.
+					#}
+					{% if t and t.significant %}
+					<span class="cell-flag"><span class="badge badge-sig" title="Variation supérieure au bruit habituel d’une exécution à l’autre pour cette métrique">significative</span></span>
+					{% endif %}
+					{% if t %}
+					<span class="cell-sub" title="Valeurs minimale et maximale sur la période mesurée">
 					{{ (t.min if t.lowerIsBetter else t.max) | unit(row.unit) }} &ndash; {{ (t.max if t.lowerIsBetter else t.min) | unit(row.unit) }}
 				</span>
-				{% endif %}
-			</td>
-			<td class="col-trend">{% if t %}{% sparkline t, { good: stillGood } %}{% endif %}</td>
-			{% if showField %}
-			<td class="num col-group-start">
-				{% if not row.field %}
-				<span class="muted" title="Not reported by the Chrome UX Report">n/a</span>
-				{% elif row.field.value === null %}
-				&mdash;
-				{% else %}
-				<span class="metric-pair">
+					{% endif %}
+				</td>
+				<td class="col-trend">{% if t %}{% sparkline t, { good: stillGood } %}{% endif %}</td>
+				{% if showField %}
+				<td class="num col-group-start">
+					{% if not row.field %}
+					<span class="muted" title="Non communiqué par le Chrome UX Report">s. o.</span>
+					{% elif row.field.value === null %} &mdash; {% else %}
+					<span class="metric-pair">
 					{{ row.field.value | unit(row.unit) }}
 					{% if row.field.rating %}<span class="pill pill-{{ row.field.rating | ratingClass }}">{{ row.field.rating | ratingLabel }}</span>{% endif %}
 					{#
-						A value borrowed from the origin is the whole site's number, not
-						this page's — CrUX had too few samples here.
+						Une valeur provenant de l’origine concerne le site entier, et non
+						cette page : CrUX ne disposait pas d’assez d’échantillons pour
+						cette page.
 					#}
-					{% if row.field.scope == "origin" %}<span class="tag" title="Not enough samples for this page, so this is the figure for the whole origin">site-wide</span>{% endif %}
+					{% if row.field.scope == "origin" %}<span class="tag" title="Il n’y avait pas assez d’échantillons pour cette page : la valeur affichée concerne l’ensemble du site">site entier</span>{% endif %}
 				</span>
-				{% endif %}
-			</td>
-			{#
-				The bar over its own legend, which is why the header is one word now:
-				each share names its band with an icon instead of the column heading
-				spelling all three out. It also shows all three, where the line under
-				the bar used to show only the good share.
+					{% endif %}
+				</td>
+				{#
+				La barre se trouve au-dessus de sa légende, d’où l’intitulé court de la
+				colonne. Chaque proportion est associée à sa catégorie grâce à une
+				icône, plutôt que d’énumérer les trois catégories dans l’en-tête. La
+				barre affiche aussi les trois proportions, alors que la ligne sous la
+				barre ne montrait auparavant que la proportion de résultats bons.
 
-				The icons carry the meaning for a reader who cannot tell the three
-				colors apart, so they are not decorative — each has its band in the
-				text beside it via the title, and the bar keeps its own summary.
-			#}
-			<td class="col-dist">
-				{% if row.field and row.field.distribution %}
-				{% set d = row.field.distribution %}
-				<span class="dist" title="{{ d.good }}% good, {{ d.needsImprovement }}% needs improvement, {{ d.poor }}% poor">
+				Les icônes aident à comprendre les catégories sans distinguer les
+				couleurs. Elles ne sont donc pas décoratives : leur infobulle indique
+				la catégorie, tandis que la barre conserve son propre résumé.
+				#}
+				<td class="col-dist">
+					{% if row.field and row.field.distribution %}
+					{% set d = row.field.distribution %}
+					<span class="dist" title="{{ d.good }} % bons, {{ d.needsImprovement }} % à améliorer, {{ d.poor }} % mauvais">
 					<span class="dist-good" style="width:{{ d.good }}%"></span>
 					<span class="dist-avg" style="width:{{ d.needsImprovement }}%"></span>
 					<span class="dist-poor" style="width:{{ d.poor }}%"></span>
 				</span>
-				<span class="dist-key">
-					<span class="dist-key-good" title="{{ d.good }}% of loads were good"><i class="fa-solid fa-circle-check" width="10" height="10" aria-hidden="true"></i>{{ d.good }}%</span>
-					<span class="dist-key-avg" title="{{ d.needsImprovement }}% of loads needed work"><i class="fa-solid fa-triangle-exclamation" width="10" height="10" aria-hidden="true"></i>{{ d.needsImprovement }}%</span>
-					<span class="dist-key-poor" title="{{ d.poor }}% of loads were poor"><i class="fa-solid fa-circle-xmark" width="10" height="10" aria-hidden="true"></i>{{ d.poor }}%</span>
+					<span class="dist-key">
+					<span class="dist-key-good" title="{{ d.good }} % des chargements étaient bons"><i class="fa-solid fa-circle-check" width="10" height="10" aria-hidden="true"></i>{{ d.good }} %</span>
+					<span class="dist-key-avg" title="{{ d.needsImprovement }} % des chargements nécessitaient des améliorations"><i class="fa-solid fa-triangle-exclamation" width="10" height="10" aria-hidden="true"></i>{{ d.needsImprovement }} %</span>
+					<span class="dist-key-poor" title="{{ d.poor }} % des chargements étaient mauvais"><i class="fa-solid fa-circle-xmark" width="10" height="10" aria-hidden="true"></i>{{ d.poor }} %</span>
 				</span>
-				{% else %}&mdash;{% endif %}
-			</td>
-			{% endif %}
-		</tr>
-	{% endfor %}
-	</tbody>
-</table>
-</div>
-{% endmacro %}
+					{% else %}&mdash;{% endif %}
+				</td>
+				{% endif %}
+			</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	</div>
+	{% endmacro %}
 
-{#
-	The same three columns the metrics table settled on: the value, the change
-	over the range it moved within, and the shape of the window. Current and
-	previous were two columns saying one thing — the delta beside them was
-	already the difference — and best and worst are the ends of a range, which
-	is one fact rather than two columns to scan.
-#}
-{% macro trendtable(rows, entryData, prefix="") %}
-<div class="table-scroll">
-<table class="grid">
-	<thead>
-		<tr>
-			<th class="col-site">Metric</th>
-			<th>Value</th>
-			<th>Change / range</th>
-			<th class="col-trend">Trend</th>
-		</tr>
-	</thead>
-	<tbody>
-	{% for row in rows %}
-	{% set t = entryData.trends[prefix + row.key] %}
-	{% if t %}
-		<tr>
-			<td class="col-site">
-				<strong>{{ row.label }}</strong>
-				{% if row.note %}<span class="muted small block">{{ row.note }}</span>{% endif %}
-			</td>
-			<td class="num">{{ t.current | unit(row.unit) }}</td>
-			{#
-				Only the change line is colored — the range is neither good nor bad,
-				it is where this metric has been. The badge sits on its own line under
-				the change it qualifies rather than inline, where a whole word set the
-				width of the column to its own.
-			#}
-			<td class="num">
+	{#
+	Les trois mêmes colonnes que dans le tableau des métriques : la valeur,
+	la variation et sa plage, puis l’évolution sur la période. Les colonnes
+	« actuelle » et « précédente » exprimaient la même information, puisque
+	la variation affichée à côté indiquait déjà la différence. Le minimum et
+	le maximum sont les bornes d’une plage : une seule information plutôt que
+	deux colonnes à parcourir.
+	#}
+	{% macro trendtable(rows, entryData, prefix="") %}
+	<div class="table-scroll">
+		<table class="grid">
+			<thead>
+			<tr>
+				<th class="col-site">Métrique</th>
+				<th>Valeur</th>
+				<th>Variation / plage</th>
+				<th class="col-trend">Tendance</th>
+			</tr>
+			</thead>
+			<tbody>
+			{% for row in rows %}
+			{% set t = entryData.trends[prefix + row.key] %}
+			{% if t %}
+			<tr>
+				<td class="col-site">
+					<strong>{{ row.label }}</strong>
+					{% if row.note %}<span class="muted small block">{{ row.note }}</span>{% endif %}
+				</td>
+				<td class="num">{{ t.current | unit(row.unit) }}</td>
+				{#
+				Seule la ligne de variation est colorée : la plage n’est ni bonne ni
+				mauvaise, elle indique les valeurs observées pour cette métrique. Le
+				badge apparaît sur sa propre ligne sous la variation qu’il qualifie ;
+				placé sur la même ligne, un mot entier pourrait élargir la colonne.
+				#}
+				<td class="num">
 				<span class="cell-main {{ t.vsPrevious | deltaClass }}">
 					{% if t.vsPrevious %}{{ t.vsPrevious | deltaArrow }} {{ t.vsPrevious | deltaText(row.unit) }}{% else %}&mdash;{% endif %}
 				</span>
-				{% if t.significant %}
-				<span class="cell-flag"><span class="badge badge-sig" title="Larger than this metric's normal run-to-run noise">significant</span></span>
-				{% endif %}
-				<span class="cell-sub" title="Best and worst across the measured window">
+					{% if t.significant %}
+					<span class="cell-flag"><span class="badge badge-sig" title="Variation supérieure au bruit habituel d’une exécution à l’autre pour cette métrique">significative</span></span>
+					{% endif %}
+					<span class="cell-sub" title="Valeurs minimale et maximale sur la période mesurée">
 					{{ (t.min if t.lowerIsBetter else t.max) | unit(row.unit) }} &ndash; {{ (t.max if t.lowerIsBetter else t.min) | unit(row.unit) }}
 				</span>
-			</td>
-			<td class="col-trend">{% sparkline t %}</td>
-		</tr>
-	{% endif %}
-	{% endfor %}
-	</tbody>
-</table>
-</div>
-{% endmacro %}
+				</td>
+				<td class="col-trend">{% sparkline t %}</td>
+			</tr>
+			{% endif %}
+			{% endfor %}
+			</tbody>
+		</table>
+	</div>
+	{% endmacro %}
 
 
-<section class="panel" id="scores">
-	<h2>Lighthouse Scores <span class="tag">LAB</span>{{ throttleTag(labKind) }}</h2>
-	<div class="cards">
-		{% for score in metrics.SCORES %}
-		{% set t = entry.trends[score.key] %}
-		{% set value = entry.latest.lab.scores[score.key] %}
-		{#
-			A card whose score still bands good gets the softened pink rather than
-			red, the same as the metrics table below and the leaderboard trends: 96
-			after 99 moved the wrong way, and the number above is green.
-		#}
-		{% set scoreGood = (value | scoreClass) == "good" %}
-		<div class="card">
-			<div class="card-value score-{{ value | scoreClass }}">{{ value if value != null else "—" }}</div>
-			<div class="card-label">{{ score.label }}</div>
-			{% if t %}
-			<div class="card-spark">{% sparkline t, { good: scoreGood } %}</div>
-			{% if t.vsPrevious and not t.vsPrevious.unchanged %}
-			<div class="card-delta {{ t.vsPrevious | deltaClass(scoreGood) }}">
-				{{ t.vsPrevious | deltaArrow }} {{ t.vsPrevious | deltaText }}
+	<section class="panel" id="scores">
+		<h2>Scores Lighthouse <span class="tag">LABORATOIRE</span>{{ throttleTag(labKind) }}</h2>
+		<div class="cards">
+			{% for score in metrics.SCORES %}
+			{% set t = entry.trends[score.key] %}
+			{% set value = entry.latest.lab.scores[score.key] %}
+			{#
+			Si le score reste dans la catégorie « bon », la carte utilise le rose
+			atténué plutôt que le rouge, comme les tendances des tableaux de
+			métriques et du classement : passer de 99 à 96 est une évolution
+			défavorable, même si le nombre affiché au-dessus est vert.
+			#}
+			{% set scoreGood = (value | scoreClass) == "good" %}
+			<div class="card">
+				<div class="card-value score-{{ value | scoreClass }}">{{ value if value != null else "—" }}</div>
+				<div class="card-label">{{ score.label }}</div>
+				{% if t %}
+				<div class="card-spark">{% sparkline t, { good: scoreGood } %}</div>
+				{% if t.vsPrevious and not t.vsPrevious.unchanged %}
+				<div class="card-delta {{ t.vsPrevious | deltaClass(scoreGood) }}">
+					{{ t.vsPrevious | deltaArrow }} {{ t.vsPrevious | deltaText }}
+				</div>
+				{% else %}
+				<div class="card-delta flat">aucun changement</div>
+				{% endif %}
+				{% endif %}
 			</div>
-			{% else %}
-			<div class="card-delta flat">no change</div>
-			{% endif %}
-			{% endif %}
+			{% endfor %}
 		</div>
-		{% endfor %}
-	</div>
-</section>
+	</section>
+	<section class="panel" id="lab">
+		<h2>
+			Métriques
+			<span class="tag">LABORATOIRE</span>
+			{%- if showField %} <span class="tag">TERRAIN</span>{% endif %} </h2>
 
-<section class="panel" id="lab">
-	<h2>
-		Metrics
-		<span class="tag">LAB</span>
-		{%- if showField %} <span class="tag">FIELD</span>{% endif %}
-	</h2>
+		{#
+		Le verdict Core Web Vitals apparaît au-dessus du tableau qui contient
+		désormais les chiffres. Un panneau distinct répétait trois lignes du
+		tableau et les séparait du reste de l’écran ; la seule information qu’il
+		apportait était le verdict de réussite ou d’échec. C’est ce qui reste ici.
 
-	{#
-		The Core Web Vitals verdict, above the table that now carries its numbers.
-		A panel of its own restated three rows of this table and put them a screen
-		apart from the rest; what it alone could say is the pass or fail, and that
-		is what is left here.
+		Ce verdict concerne uniquement une évaluation fondée sur des données
+		d’utilisateurs réels. Si CrUX ne dispose d’aucune donnée pour un site,
+		aucun verdict ne s’affiche : les lignes sont marquées « CWV (estimation) »
+		et évaluées dans la colonne Laboratoire, qui indique l’origine des chiffres.
+		Une bannière au-dessus de ces données prétendrait parler d’utilisateurs
+		qui n’ont pas été mesurés.
 
-		Only for an assessment made of real-user data. A site CrUX has nothing for
-		gets no verdict here: its rows are marked `CWV (estimate)` and graded in
-		the Lab column, which is the column that says where the numbers came from.
-		A banner over those would be a claim about users nobody measured.
-
-		Keeps `id="cwv"` so links written against the old section still land on it.
-	#}
-	{% if hasRealCwv %}
-	<div class="cwv-verdict cwv-verdict-{{ "pass" if entry.cwv.pass else ("fail" if entry.cwv.pass === false else "none") }}" id="cwv">
+		On conserve `id="cwv"` pour que les liens créés vers l’ancienne section
+		continuent d’y mener.
+		#}
+		{% if hasRealCwv %}
+		<div class="cwv-verdict cwv-verdict-{{ " pass
+		" if entry.cwv.pass else ("fail" if entry.cwv.pass === false else "none") }}" id="cwv">
 		<strong>
-			Core Web Vitals:
-			{% if entry.cwv.pass %}passing{% elif entry.cwv.pass === false %}failing{% else %}not assessed{% endif %}
+			Core Web Vitals :
+			{% if entry.cwv.pass %}conformes{% elif entry.cwv.pass === false %}non conformes{% else %}non évalués{%
+			endif %}
 		</strong>
-		<span class="muted small">{{ entry.cwv.assessed }} of 3 assessed from real Chrome users.</span>
-	</div>
-	{% endif %}
-
-	{% if showField %}
-	<p class="muted small">
-		Field figures are the p75 across real Chrome users over a 28-day trailing window
-		{%- if fieldPeriod.first %} ({{ fieldPeriod.first }} &rarr; {{ fieldPeriod.last }}){% endif %}
-		{%- if fieldScope %}, {{ fieldScope }}-level{% endif %}.
-		{% if not hasField %}
-		From the backfilled CrUX history rather than this measurement, which predates the API key.
+		<span class="muted small">{{ entry.cwv.assessed }} sur 3 évalués à partir de données Chrome d’utilisateurs réels.</span>
+		</div>
 		{% endif %}
-	</p>
-	{% else %}
-	{#
-		Why the table is half the width it is on other sites. Without this the
-		field columns are simply absent, which reads as a page that forgot them
-		rather than as a site too quiet for CrUX to report on — and it is the
-		commonest case in this corpus by a wide margin.
-	#}
-	<p class="muted small">
-		{% if sites.cruxEnabled %}
-		No field data: the Chrome UX Report has too few samples for this URL to report on,
-		so every figure below is from the Lighthouse run. This is ordinary for a site
-		without much traffic, and says nothing about how fast it is.
+
+		{% if showField %}
+		<p class="muted small">
+			Les données de terrain correspondent au 75e percentile parmi de vrais utilisateurs de Chrome sur une période
+			glissante de 28 jours
+			{%- if fieldPeriod.first %} ({{ fieldPeriod.first }} &rarr; {{ fieldPeriod.last }}){% endif %}
+			{%- if fieldScope %}, à l’échelle {{ fieldScope }}{% endif %}.
+			{% if not hasField %}
+			Elles proviennent de l’historique CrUX complété, et non de cette mesure, qui précède la clé API.
+			{% endif %} </p>
 		{% else %}
-		No field data: the Chrome UX Report is not being collected for this project,
-		so every figure below is from the Lighthouse run.
-		{% endif %}
-	</p>
-	{% endif %}
-	{{ metricstable(entry.metricsTable, entry, showField, throttleTag(labKind)) }}
-
-	{#
-		The throttled filmstrip pass's subparts where there are any: a slow load, like the Lab LCP they sit under.
-		Otherwise the scored runs', read off a full-speed load before Lighthouse modeled one.
-	#}
-	{% set lcpParts = entry.latest.throttledLcpBreakdown or entry.latest.lab.lcpBreakdown %}
-	{% if lcpParts %}
-	<h3>LCP Subparts <span class="tag">LAB</span>{{ throttleTag("throttled" if entry.latest.throttledLcpBreakdown else observedKind) }}</h3>
-	<p class="muted small">
-		The subparts attribute LCP to your server, resource discovery, download, or rendering.
-		{% if entry.latest.throttledLcpBreakdown %}
-		They come from one throttled load, the same one as the filmstrip, so they add up to that load&rsquo;s LCP rather than the simulated Lab LCP above.
-		{% elif labMethod == "simulate" %}
-		Note that the Lab LCP shown above <em>is</em> a simulated throttled estimate.
-		{% endif %}
-	</p>
-	{#
-		The unthrottled fallback will not add up to the LCP above, and the gap is usually large — 225
-		milliseconds against 4.07 seconds on one site here. Both are honest; they
-		are measured in different worlds.
-
-		Lighthouse runs with `throttlingMethod: "simulate"`: it loads the page at
-		this machine's real speed, records that trace, and then models what the
-		load would have taken on an emulated phone over slow 4G. LCP above is the
-		model's answer. These subparts are read off the observed trace, before any
-		of that modelling. The same record shows the difference plainly — the
-		server answered in 44ms, and the model bills 620ms for it.
-
-		The ratio is not a constant to divide out: it depends on the request
-		graph, and runs from about 10x to 20x across this corpus. So the durations
-		are shown as measured and labeled for what they are, rather than scaled
-		to a total they were never part of.
-	#}
-	<div class="breakdown">
-		{% set lcpMax = lcpParts | sortByValue | maxValue("value") %}
-		{% for part in lcpParts | sortByValue %}
-		<div class="breakdown-row">
-			<span class="breakdown-label breakdown-key">{{ part.key | humanize }}</span>
-			{% bar part.value, lcpMax, "warn" %}
-			<span class="breakdown-value">{{ part.value | ms }}</span>
-		</div>
-		{% endfor %}
-	</div>
-	{% endif %}
-
-	{#
-		What the combined table above cannot hold: the same metric measured two
-		ways. It sits under the table rather than in a panel of its own, because it
-		is about the rows above it.
-
-		The weeks behind the current p75 are a log of past measurements, so they
-		are down in the measurement log with the rest of them.
-	#}
-	{% if entry.labVsField %}
-	<h3 id="field">LCP <span class="tag">LAB</span>{{ throttleTag(labKind) }} vs LCP <span class="tag">FIELD</span></h3>
-	{#
-		Two bars against one scale, so the comparison is a length rather than a
-		subtraction the reader performs. Both are widths of the larger of the two,
-		which is the only scale on which "twice as long" looks twice as long.
-
-		The lab bar is neutral and the field bar carries its Core Web Vitals
-		rating: the lab number has no verdict attached — it is a simulation — while
-		the field number is the one Google grades.
-	#}
-	{% set lvfMax = entry.labVsField.lab if entry.labVsField.lab > entry.labVsField.field else entry.labVsField.field %}
-	{#
-		Recomputed from the two stored millisecond figures rather than read from
-		`labVsField.ratio`, which is rounded to a tenth for the leaderboards — a
-		column of a thousand rows wants a figure you can scan, and this is one
-		site, where 1.17 says more than 1.2. Both numbers it is derived from are on
-		screen directly above, so the arithmetic is checkable.
-	#}
-	{% set lvfRatio = entry.labVsField.lab / entry.labVsField.field %}
-	<div class="lvf-compare">
-		<div class="lvf-row">
-			<span class="lvf-name">Lab</span>
-			<span class="bar"><span class="bar-fill lvf-fill-lab" style="width: {{ (entry.labVsField.lab / lvfMax * 100) | round }}%"></span></span>
-			<span class="lvf-ms">{{ entry.labVsField.lab | ms }}</span>
-		</div>
-		<div class="lvf-row">
-			<span class="lvf-name">Field p75</span>
-			<span class="bar"><span class="bar-fill lvf-fill-{{ entry.latest.field.metrics.lcp.rating | ratingClass }}" style="width: {{ (entry.labVsField.field / lvfMax * 100) | round }}%"></span></span>
-			<span class="lvf-ms">{{ entry.labVsField.field | ms }}</span>
-		</div>
-	</div>
-	<p class="muted small">
 		{#
-			The multiple, then what it implies — rather than "N× faster", which only
-			reads correctly in one direction: a field number worse than the lab
-			gives a figure below 1, and "0.33× slower" is not a sentence.
-
-			And not "faster than the test says", which sounds like the test was
-			wrong. It was not: it measured a mid-range phone on a throttled
-			connection, deliberately. A field number better than that says something
-			about who is visiting, not about the accuracy of the lab — hence
-			"likely", since this is an inference about an audience rather than a
-			measurement of one.
+		Pourquoi ce tableau est deux fois moins large que sur les autres sites.
+		Sans ce texte, l’absence des colonnes de terrain pourrait donner
+		l’impression qu’elles ont été oubliées, plutôt que d’indiquer que le
+		site ne génère pas assez de données pour CrUX. C’est de loin le cas le
+		plus fréquent dans ce corpus.
 		#}
-		The lab LCP is <strong>{{ lvfRatio | round(2) }}×</strong> the field p75 —
-		{#
-			Within a tenth either way is not a finding. `fieldWorse` is a strict
-			comparison, so without this band a site a single millisecond apart would
-			be told its audience is below average.
-
-			Tested on the rounded ratio, which is the one displayed: a reader seeing
-			0.9x should get the same verdict as anyone else seeing 0.9x, rather than
-			two sites reading identically and being described differently.
-		#}
-		{% if lvfRatio >= 0.9 and lvfRatio <= 1.1 %}
-		real users likely have similar hardware or network connectivity to the lab test.
-		{%- else %}
-		real users likely have {{ "below" if entry.labVsField.fieldWorse else "above" }}-average
-		hardware or network connectivity.
-		{%- endif %}
-		{#
-			1.5x worse or more, expressed the way round the ratio now runs: 1/1.5
-			is 0.667, which one decimal renders as 0.7 — so the test has to include
-			it rather than sit below a value the data can no longer produce.
-		#}
-		{% if entry.labVsField.fieldWorse and lvfRatio <= 0.7 %}
-		A gap this wide usually means real users are on slower devices or networks
-		than the simulated ones — the lab number is flattering you.
+		<p class="muted small">
+			{% if sites.cruxEnabled %}
+			Aucune donnée de terrain : le Chrome UX Report ne dispose pas d’assez d’échantillons pour cette URL.
+			Tous les chiffres ci-dessous proviennent donc de l’exécution Lighthouse. C’est courant pour un site
+			qui reçoit peu de trafic et cela ne dit rien sur sa vitesse.
+			{% else %}
+			Aucune donnée de terrain : le Chrome UX Report n’est pas collecté pour ce projet.
+			Tous les chiffres ci-dessous proviennent donc de l’exécution Lighthouse.
+			{% endif %} </p>
 		{% endif %}
-	</p>
-	{% endif %}
-</section>
+		{{ metricstable(entry.metricsTable, entry, showField, throttleTag(labKind)) }}
 
-<section class="panel" id="weight">
-	<h2>Page weight</h2>
-	{{ trendtable(metrics.WEIGHT_METRICS, entry) }}
+		{#
+		Les sous-parties de LCP, lorsqu’elles existent, proviennent de la capture
+		avec limitation de vitesse. Elles correspondent donc à un chargement lent,
+		comme le LCP Laboratoire qui les précède. Sinon, elles proviennent des
+		exécutions notées : elles sont relevées sur un chargement à pleine vitesse,
+		avant que Lighthouse ne le modélise.
+		#}
+		{% set lcpParts = entry.latest.throttledLcpBreakdown or entry.latest.lab.lcpBreakdown %}
+		{% if lcpParts %}
+		<h3>Sous-parties du LCP <span class="tag">LABORATOIRE</span>{{ throttleTag("throttled" if
+			entry.latest.throttledLcpBreakdown else observedKind) }}</h3>
+		<p class="muted small">
+			Les sous-parties attribuent le LCP au serveur, à la découverte de la ressource, à son téléchargement ou à
+			son rendu.
+			{% if entry.latest.throttledLcpBreakdown %}
+			Elles proviennent d’un chargement avec limitation de vitesse — le même que celui de la séquence d’images —
+			et leur somme correspond donc au LCP de ce chargement, plutôt qu’au LCP Laboratoire simulé ci-dessus.
+			{% elif labMethod == "simulate" %}
+			À noter : le LCP Laboratoire affiché ci-dessus <em>est</em> une estimation simulée avec limitation de
+			vitesse.
+			{% endif %} </p>
+		{#
+		Les valeurs de repli non limitées en vitesse ne totaliseront pas le LCP
+		ci-dessus, et l’écart est souvent important — 225 millisecondes contre
+		4,07 secondes sur un site de cet ensemble. Les deux valeurs sont exactes :
+		elles ont été mesurées dans des conditions différentes.
 
-	{% if entry.weightByType.length %}
-	<h3>By resource type</h3>
-	{#
-		A bar per type at its share of the whole page.
+		Lighthouse utilise `throttlingMethod: "simulate"` : il charge la page à
+		la vitesse réelle de cette machine, enregistre la trace, puis modélise
+		la durée du chargement sur un téléphone émulé avec une connexion 4G lente.
+		Le LCP affiché ci-dessus correspond au résultat de cette modélisation.
+		Ces sous-parties sont relevées sur la trace observée, avant toute
+		modélisation. Un même enregistrement montre clairement l’écart : le
+		serveur a répondu en 44 ms, mais le modèle lui attribue 620 ms.
 
-		Shares come from lib/report.js, which also drops `third-party`: it is a
-		tally across the other types rather than one of them, and adding it here
-		would take the bar past its own total.
-	#}
-	<div class="table-scroll table-narrow">
-	<table class="grid compact">
-		<thead>
-			<tr>
-				<th class="col-site">Type</th>
-				<th class="col-tpbar">Transfer</th>
-				<th>Share</th>
-				<th>Size</th>
-				<th>Requests</th>
-			</tr>
-		</thead>
-		<tbody>
-		{% for t in entry.weightByType %}
-			<tr>
-				<td class="col-site">{{ t.key | humanize }}</td>
-				<td class="col-tpbar"><span class="tpbar" style="width: {{ t.share }}%" aria-hidden="true"><span class="stackbar-part type-{{ t.key }}" style="width: 100%"></span></span></td>
-				<td class="num">{{ t.shareText }}</td>
-				<td class="num">{{ t.bytes | bytes }}</td>
-				<td class="num">{{ t.requests | num }}</td>
-			</tr>
-		{% endfor %}
-		</tbody>
-		<tfoot>
-			<tr>
-				<td class="col-site"><strong>Total</strong></td>
-				<td></td>
-				<td></td>
-				<td class="num"><strong>{{ entry.latest.lab.weight.total | bytes }}</strong></td>
-				<td class="num"><strong>{{ entry.latest.lab.weight.requests | num }}</strong></td>
-			</tr>
-		</tfoot>
-	</table>
-	</div>
-	{% endif %}
+		Ce rapport n’est pas un coefficient fixe par lequel diviser : il dépend
+		du graphe des requêtes, et varie d’environ 10 à 20 fois dans ce corpus.
+		Les durées sont donc affichées telles qu’elles ont été mesurées et
+		identifiées comme telles, plutôt que redimensionnées pour correspondre à
+		un total dont elles ne font pas partie.
+		#}
+		<div class="breakdown">
+			{% set lcpMax = lcpParts | sortByValue | maxValue("value") %}
+			{% for part in lcpParts | sortByValue %}
+			<div class="breakdown-row">
+				<span class="breakdown-label breakdown-key">{{ part.key | humanize }}</span>
+				{% bar part.value, lcpMax, "warn" %}
+				<span class="breakdown-value">{{ part.value | ms }}</span>
+			</div>
+			{% endfor %}
+		</div>
+		{% endif %}
 
-	{% if entry.latest.lab.thirdParty and entry.latest.lab.thirdParty.count %}
-	<h3>Third parties <span class="tag">{{ entry.latest.lab.thirdParty.count }} entities</span></h3>
-	<div class="table-scroll table-narrow">
-	<table class="grid compact">
-		<thead>
-			<tr>
-				<th class="col-site">Entity</th>
-				<th class="col-tpbar">Transfer</th>
-				<th>Size</th>
-				<th>Main thread{{ throttleTag(labKind, "Lighthouse's default simulated throttling: the page loaded at full speed and the main thread time was scaled afterwards to a slow phone's processor.") }}</th>
-			</tr>
-		</thead>
-		<tbody>
-		{% set tpMax = entry.thirdPartyRows | maxValue("bytes") %}
-		{% for tp in entry.thirdPartyRows %}
-			<tr>
-				<td class="col-site">{{ tp.entity }}</td>
-				<td class="col-tpbar">
-				{#
-					Two bars, one shape. Where the request types are known the bar is
-					stacked and says what the third party is; where they are not — an
-					older record, or a row whose URLs the network audit did not report —
-					it falls back to the plain bar this section has always drawn.
+		{#
+		Ce que le tableau combiné ci-dessus ne peut pas montrer : une même
+		métrique mesurée de deux façons. Cette comparaison se trouve sous le
+		tableau plutôt que dans un panneau séparé, car elle porte sur les lignes
+		qui le composent.
 
-					The row's width is still its share of the largest third party, so
-					the rows compare with each other exactly as before. Only the fill
-					inside that width is new.
-				#}
-				{#
-					The label threshold is the segment's share of the *row width*, not
-					of its own bar: these bars are scaled against the largest third
-					party, so a segment that is all of a small third party is still only
-					a few pixels wide, and its own share says 100%.
-				#}
-				{% if tp.parts.length %}
-				<span class="tpbar" style="width: {{ (tp.bytes / tpMax * 100) | round(1) }}%"
-					title="{% for part in tp.parts %}{{ part.key }} {{ part.bytes | bytes }} ({{ part.shareText }}){% if not loop.last %}, {% endif %}{% endfor %}">
+		Les semaines de mesures qui précèdent le 75e percentile actuel sont
+		consignées dans l’historique des mesures, avec les autres.
+		#}
+		{% if entry.labVsField %}
+		<h3 id="field">LCP <span class="tag">LABORATOIRE</span>{{ throttleTag(labKind) }} et LCP <span class="tag">TERRAIN</span>
+		</h3>
+		{#
+		Deux barres sur la même échelle : on compare leur longueur, plutôt que
+		de demander au lecteur de faire une soustraction. Leur largeur est
+		calculée par rapport à la plus grande des deux ; c’est la seule échelle
+		où « deux fois plus long » apparaît effectivement deux fois plus long.
+
+		La barre de laboratoire est neutre, tandis que la barre de terrain porte
+		l’évaluation Core Web Vitals. La valeur de laboratoire n’a pas de verdict :
+		c’est une simulation. Google évalue la valeur de terrain.
+		#}
+		{% set lvfMax = entry.labVsField.lab if entry.labVsField.lab > entry.labVsField.field else
+		entry.labVsField.field %}
+		{#
+		Le rapport est recalculé à partir des deux valeurs en millisecondes
+		enregistrées, plutôt que repris de `labVsField.ratio`, arrondi au dixième
+		pour les classements. Une liste de mille sites doit afficher un chiffre
+		facile à parcourir ; ici, pour un seul site, 1,17 est plus informatif que
+		1,2. Les deux nombres utilisés pour le calcul sont affichés juste
+		au-dessus, ce qui permet de vérifier le calcul.
+		#}
+		{% set lvfRatio = entry.labVsField.lab / entry.labVsField.field %}
+		<div class="lvf-compare">
+			<div class="lvf-row">
+				<span class="lvf-name">Laboratoire</span>
+				<span class="bar"><span class="bar-fill lvf-fill-lab" style="width: {{ (entry.labVsField.lab / lvfMax * 100) | round }}%"></span></span>
+				<span class="lvf-ms">{{ entry.labVsField.lab | ms }}</span>
+			</div>
+			<div class="lvf-row">
+				<span class="lvf-name">Terrain, 75e percentile</span>
+				<span class="bar"><span class="bar-fill lvf-fill-{{ entry.latest.field.metrics.lcp.rating | ratingClass }}" style="width: {{ (entry.labVsField.field / lvfMax * 100) | round }}%"></span></span>
+				<span class="lvf-ms">{{ entry.labVsField.field | ms }}</span>
+			</div>
+		</div>
+		<p class="muted small">
+			{#
+			On indique d’abord le rapport, puis ce qu’il implique — plutôt que
+			« N fois plus rapide », qui ne fonctionne que dans un sens : si la
+			valeur de terrain est moins bonne que celle du laboratoire, le rapport
+			est inférieur à 1 et « 0,33 fois plus lent » n’est pas une formulation
+			claire.
+
+			On évite aussi « plus rapide que ce qu’indique le test », qui pourrait
+			laisser croire que le test est erroné. Ce n’est pas le cas : il a
+			délibérément mesuré un téléphone de milieu de gamme avec une connexion
+			ralentie. Une valeur de terrain supérieure à cette valeur renseigne
+			plutôt sur les visiteurs que sur l’exactitude du test de laboratoire.
+			C’est pourquoi on dit « probablement » : il s’agit d’une déduction au
+			sujet du public, et non d’une mesure de celui-ci.
+			#}
+			Le LCP Laboratoire représente <strong>{{ lvfRatio | round(2) }}×</strong> le 75e percentile de terrain —
+			{#
+			Un écart inférieur ou égal à un dixième ne permet pas de tirer de
+			conclusion. `fieldWorse` correspond à une comparaison stricte ; sans
+			cette marge, un écart d’une seule milliseconde suffirait à laisser
+			entendre que le public du site est en dessous de la moyenne.
+
+			La comparaison porte sur le rapport arrondi affiché : un lecteur qui
+			voit 0,9× doit obtenir la même conclusion que toute autre personne
+			voyant 0,9×, plutôt que de voir deux sites affichant le même chiffre
+			recevoir des descriptions différentes.
+			#}
+			{% if lvfRatio >= 0.9 and lvfRatio <= 1.1 %}
+			les utilisateurs réels ont probablement un matériel ou une connexion réseau comparables à ceux du test de
+			laboratoire.
+			{%- else %}
+			les utilisateurs réels ont probablement un matériel ou une connexion réseau
+			{{ "inférieurs à la moyenne" if entry.labVsField.fieldWorse else "supérieurs à la moyenne" }}.
+			{%- endif %}
+			{#
+			Un résultat au moins 1,5 fois moins bon, exprimé dans le sens où le
+			rapport est désormais calculé : 1/1,5 donne 0,667, qui s’affiche 0,7
+			arrondi à une décimale. Il faut donc inclure cette valeur dans le test,
+			au lieu de ne pas la prendre en compte.
+			#}
+			{% if entry.labVsField.fieldWorse and lvfRatio <= 0.7 %}
+			Un écart aussi important signifie généralement que les utilisateurs réels ont
+			des appareils ou des réseaux plus lents que ceux simulés : la valeur de laboratoire
+			est donc plus flatteuse.
+			{% endif %} </p>
+		{% endif %}
+	</section>
+
+	<section class="panel" id="weight">
+		<h2>Poids de la page</h2>
+		{{ trendtable(metrics.WEIGHT_METRICS, entry) }}
+
+		{% if entry.weightByType.length %}
+		<h3>Par type de ressource</h3>
+		{#
+		Une barre par type, dont la longueur représente sa part du poids total
+		de la page.
+
+		Les proportions sont calculées dans lib/report.js, qui exclut
+		`third-party` : il s’agit d’un total portant sur les autres types,
+		pas d’un type de ressource. L’ajouter ici ferait dépasser le total
+		affiché par la barre.
+		#}
+		<div class="table-scroll table-narrow">
+			<table class="grid compact">
+				<thead>
+				<tr>
+					<th class="col-site">Type</th>
+					<th class="col-tpbar">Transfert</th>
+					<th>Part</th>
+					<th>Taille</th>
+					<th>Requêtes</th>
+				</tr>
+				</thead>
+				<tbody>
+				{% for t in entry.weightByType %}
+				<tr>
+					<td class="col-site">{{ t.key | humanize }}</td>
+					<td class="col-tpbar">
+						<span class="tpbar" style="width: {{ t.share }}%" aria-hidden="true"><span class="stackbar-part type-{{ t.key }}" style="width: 100%"></span></span>
+					</td>
+					<td class="num">{{ t.shareText }}</td>
+					<td class="num">{{ t.bytes | bytes }}</td>
+					<td class="num">{{ t.requests | num }}</td>
+				</tr>
+				{% endfor %}
+				</tbody>
+				<tfoot>
+				<tr>
+					<td class="col-site"><strong>Total</strong></td>
+					<td></td>
+					<td></td>
+					<td class="num"><strong>{{ entry.latest.lab.weight.total | bytes }}</strong></td>
+					<td class="num"><strong>{{ entry.latest.lab.weight.requests | num }}</strong></td>
+				</tr>
+				</tfoot>
+			</table>
+		</div>
+		{% endif %}
+
+		{% if entry.latest.lab.thirdParty and entry.latest.lab.thirdParty.count %}
+		<h3>Services tiers <span class="tag">{{ entry.latest.lab.thirdParty.count }} entités</span></h3>
+		<div class="table-scroll table-narrow">
+			<table class="grid compact">
+				<thead>
+				<tr>
+					<th class="col-site">Entité</th>
+					<th class="col-tpbar">Transfert</th>
+					<th>Taille</th>
+					<th>Fil principal{{ throttleTag(labKind, "Limitation simulée par défaut de Lighthouse : la page a
+						été chargée à pleine vitesse, puis le temps du fil principal a été ajusté pour correspondre au
+						processeur d’un téléphone lent.") }}
+					</th>
+				</tr>
+				</thead>
+				<tbody>
+				{% set tpMax = entry.thirdPartyRows | maxValue("bytes") %}
+				{% for tp in entry.thirdPartyRows %}
+				<tr>
+					<td class="col-site">{{ tp.entity }}</td>
+					<td class="col-tpbar">
+						{#
+						Deux barres, un même format. Lorsque les types de requêtes sont
+						connus, la barre est segmentée et indique le contenu du service
+						tiers. Sinon — ancien enregistrement, ou ligne dont les URL ne
+						figurent pas dans l’audit réseau —, elle reprend la barre simple
+						qui a toujours été utilisée dans cette section.
+
+						La largeur de la ligne représente toujours sa part par rapport au
+						service tiers le plus important : les lignes restent donc
+						comparables comme auparavant. Seul le détail de la barre est
+						nouveau.
+						#}
+						{#
+						Le seuil d’affichage du libellé correspond à la part du segment
+						dans la largeur de la ligne, et non dans sa propre barre. Les
+						barres étant mises à l’échelle par rapport au plus grand service
+						tiers, le segment qui occupe toute la barre d’un petit service
+						tiers peut ne faire que quelques pixels. Sa propre proportion
+						indiquerait pourtant 100 %.
+						#}
+						{% if tp.parts.length %}
+						<span class="tpbar" style="width: {{ (tp.bytes / tpMax * 100) | round(1) }}%" title="{% for part in tp.parts %}{{ part.key }} {{ part.bytes | bytes }} ({{ part.shareText }}){% if not loop.last %}, {% endif %}{% endfor %}">
 					{%- for part in tp.parts %}<span class="stackbar-part type-{{ part.key }}" style="width: {{ part.share }}%">{% if part.share * tp.bytes / tpMax >= 15 %}<span class="stackbar-name">{{ part.key | humanize }}</span>{% endif %}</span>{% endfor -%}
 					{%- if tp.untyped %}<span class="stackbar-part type-other" style="width: {{ (tp.untyped / tp.bytes * 100) | round(1) }}%"></span>{% endif -%}
 				</span>
-				{% else %}
-				{% bar tp.bytes, tpMax, "warn" %}
-				{% endif %}
-				</td>
-				<td class="num">{{ tp.bytes | bytes }}</td>
-				<td class="num">{{ tp.mainThreadMs | ms }}</td>
-			</tr>
-		{% endfor %}
-		</tbody>
-		<tfoot>
-			<tr>
-				{#- Only the top five get rows, so the total names what it covers when that is more. #}
-				<td class="col-site"><strong>{% if entry.latest.lab.thirdParty.count > entry.thirdPartyRows.length %}All {{ entry.latest.lab.thirdParty.count }}{% else %}Total{% endif %}</strong></td>
-				<td></td>
-				<td class="num"><strong>{{ entry.latest.lab.thirdParty.bytes | bytes }}</strong></td>
-				<td class="num"><strong>{{ entry.latest.lab.thirdParty.mainThreadMs | ms }}</strong></td>
-			</tr>
-		</tfoot>
-	</table>
-	</div>
-	{% endif %}
-</section>
+						{% else %}
+						{% bar tp.bytes, tpMax, "warn" %}
+						{% endif %}
+					</td>
+					<td class="num">{{ tp.bytes | bytes }}</td>
+					<td class="num">{{ tp.mainThreadMs | ms }}</td>
+				</tr>
+				{% endfor %}
+				</tbody>
+				<tfoot>
+				<tr>
+					{#- Seuls les cinq premiers services ont une ligne : le total précise donc ce qu’il inclut si la
+					liste est plus longue. #}
+					<td class="col-site"><strong>{% if entry.latest.lab.thirdParty.count > entry.thirdPartyRows.length
+						%}Les {{ entry.latest.lab.thirdParty.count }}{% else %}Total{% endif %}</strong></td>
+					<td></td>
+					<td class="num"><strong>{{ entry.latest.lab.thirdParty.bytes | bytes }}</strong></td>
+					<td class="num"><strong>{{ entry.latest.lab.thirdParty.mainThreadMs | ms }}</strong></td>
+				</tr>
+				</tfoot>
+			</table>
+		</div>
+		{% endif %}
+	</section>
 
-{% if hasNoJs %}
-{#
-	The same page twice: as the browser renders it, and with script execution
-	disabled before the navigation. Both are captured on the axe pass, at the
-	same viewport, moments apart — so the difference between them is JavaScript
-	and nothing else. Neither is a full-page capture, deliberately: a site that
-	renders nothing without JavaScript would otherwise produce a tall picture
-	beside a short one, and the comparison would be between two aspect ratios.
-
-	Not a claim about whether the site *should* work without JavaScript. Plenty
-	of these pages are applications, where the answer is obviously no. It is the
-	one thing a screenshot can show that a number cannot.
-
-	Decorative, like the screenshot at the top: the headings above each frame
-	carry the information, and they are text.
-#}
-<section class="panel" id="without-javascript">
-	<h2>Without JavaScript</h2>
-	{% if entry.clientRendered %}
+	{% if hasNoJs %}
 	{#
+	La même page est affichée deux fois : une fois par le navigateur et une
+	fois avec l’exécution des scripts désactivée avant la navigation. Les deux
+	captures sont prises pendant l’audit axe, à la même taille de fenêtre et à
+	quelques instants d’intervalle. La différence entre elles provient donc
+	uniquement de JavaScript. Aucune n’est une capture de pleine page, à dessein :
+	un site qui n’affiche rien sans JavaScript produirait autrement une grande
+	image à côté d’une petite, et la comparaison porterait sur deux formats
+	différents.
+
+	Cela ne prétend pas dire si le site *devrait* fonctionner sans JavaScript.
+	De nombreuses pages sont des applications, pour lesquelles la réponse est
+	évidemment non. C’est simplement une information qu’une capture d’écran
+	peut montrer, contrairement à un chiffre.
+
+	Cette illustration est décorative, comme la capture en haut de page : les
+	titres au-dessus de chaque image apportent l’information, et ils sont
+	présentés sous forme de texte.
+	#}
+	<section class="panel" id="without-javascript">
+		<h2>Without JavaScript</h2>
+		{% if entry.clientRendered %}
+		{#
 		Directly under the heading, ahead of the caption and the frames, so the
 		reader knows what they are looking at before they look. A blank capture
 		beside a full one is ambiguous on sight — it could as easily be a load
@@ -1127,62 +1223,58 @@ eleventyComputed:
 		had to be told to span the width. The same notice treatment the page uses
 		above for stale data and redirects, because it is the same kind of
 		statement — a caveat about what follows, not a caption on it.
-	#}
-	<div class="notice notice-warn nojs-verdict">
-		<strong><i class="fa-solid fa-triangle-exclamation csr-icon" width="12" height="12" aria-hidden="true"></i> This page is client rendered.</strong>
-		<p>
-			Nothing was painted until the scripts ran. This is a web performance and robustness issue!
-			{# Only {{ entry.ownScreenshot.noJsText }}% of the capture on the left is
-			text. #}
-		</p>
-	</div>
-	{% endif %}
-	<p class="muted small">
-		The same load, photographed twice at
-		{{ entry.ownScreenshot.width or 800 }}&times;{{ entry.ownScreenshot.height or 600 }}: once with
-		scripts disabled, once as rendered.
-	</p>
-	{#
+		#}
+		<div class="notice notice-warn nojs-verdict">
+			<strong><i class="fa-solid fa-triangle-exclamation csr-icon" width="12" height="12" aria-hidden="true"></i>
+				This page is client rendered.</strong>
+			<p>
+				Nothing was painted until the scripts ran. This is a web performance and robustness issue!
+				{# Only {{ entry.ownScreenshot.noJsText }}% of the capture on the left is
+				text. #} </p>
+		</div>
+		{% endif %}
+		<p class="muted small">
+			The same load, photographed twice at
+			{{ entry.ownScreenshot.width or 800 }}&times;{{ entry.ownScreenshot.height or 600 }}: once with
+			scripts disabled, once as rendered. </p>
+		{#
 		The share of pixels that differ between the two captures.
 
 		Described as visual difference and not as "how much of this page needs
 		JavaScript", because the two are not the same thing and the gap between
-		them is large. A page that renders identically but carries a <noscript>
-		banner has its whole layout pushed down by the height of that banner, so
-		nearly every pixel moves and the figure lands above 50% — pypi.org is the
-		case in point, and it works fine without scripts.
+		them is large. A page that renders identically but carries a
+		<noscript>
+			banner has its whole layout pushed down by the height of that banner, so
+			nearly every pixel moves and the figure lands above 50% — pypi.org is the
+			case in point, and it works fine without scripts.
 
-		Not banded green-to-red either: a high number is unremarkable for an
-		application and damning for a blog, and this page cannot tell which it is
-		looking at. The figure is stated and left alone.
-	#}
-	{#
-		Scripts disabled first, so the eye lands on it before the familiar one.
-		The rendered page is what everybody expects a screenshot to be; putting it
-		second makes it read as the answer to the picture beside it rather than as
-		the subject the no-JS shot is a footnote to.
+			Not banded green-to-red either: a high number is unremarkable for an
+			application and damning for a blog, and this page cannot tell which it is
+			looking at. The figure is stated and left alone.
+			#}
+			{#
+			Scripts disabled first, so the eye lands on it before the familiar one.
+			The rendered page is what everybody expects a screenshot to be; putting it
+			second makes it read as the answer to the picture beside it rather than as
+			the subject the no-JS shot is a footnote to.
 
-		The figure comes last, after both, because it is the conclusion drawn from
-		the pair rather than a label on either — you read the two, then how far
-		apart they are.
-	#}
-	<div class="nojs-pair">
-		<figure class="nojs-shot">
-			<figcaption>Scripts disabled</figcaption>
-			<img src="{{ entry.ownScreenshot.noJs.src }}"
-				width="{{ entry.ownScreenshot.noJs.width or 800 }}" height="{{ entry.ownScreenshot.noJs.height or 600 }}"
-				alt="" loading="lazy" decoding="async">
-		</figure>
-		<figure class="nojs-shot">
-			<figcaption>As rendered</figcaption>
-			<img src="{{ entry.ownScreenshot.src }}"
-				width="{{ entry.ownScreenshot.width or 800 }}" height="{{ entry.ownScreenshot.height or 600 }}"
-				alt="" loading="lazy" decoding="async">
-		</figure>
-		{% if entry.ownScreenshot.difference !== null %}
-		<p class="nojs-diff">
-			<strong>{{ entry.ownScreenshot.difference }}%</strong>
-			<span class="muted small">of pixels differ &mdash;
+			The figure comes last, after both, because it is the conclusion drawn from
+			the pair rather than a label on either — you read the two, then how far
+			apart they are.
+			#}
+			<div class="nojs-pair">
+				<figure class="nojs-shot">
+					<figcaption>Scripts disabled</figcaption>
+					<img src="{{ entry.ownScreenshot.noJs.src }}" width="{{ entry.ownScreenshot.noJs.width or 800 }}" height="{{ entry.ownScreenshot.noJs.height or 600 }}" alt="" loading="lazy" decoding="async">
+				</figure>
+				<figure class="nojs-shot">
+					<figcaption>As rendered</figcaption>
+					<img src="{{ entry.ownScreenshot.src }}" width="{{ entry.ownScreenshot.width or 800 }}" height="{{ entry.ownScreenshot.height or 600 }}" alt="" loading="lazy" decoding="async">
+				</figure>
+				{% if entry.ownScreenshot.difference !== null %}
+				<p class="nojs-diff">
+					<strong>{{ entry.ownScreenshot.difference }}%</strong>
+					<span class="muted small">of pixels differ &mdash;
 				{% if entry.ownScreenshot.difference >= 95 %}they have almost nothing in common
 				{%- elif entry.ownScreenshot.difference >= 50 %}the page changes substantially
 				{%- elif entry.ownScreenshot.difference >= 10 %}parts of the page change
@@ -1190,247 +1282,280 @@ eleventyComputed:
 				{%- else %}they are identical{% endif %}.
 				A shifted layout counts as difference, so a &lt;noscript&gt; banner alone
 				can account for a large figure.</span>
-		</p>
+				</p>
+				{% endif %}
+			</div>
+	</section>
+	{% endif %}
+	<section class="panel" id="health">
+		<h2>État de la page</h2>
+		{{ trendtable(metrics.HEALTH_METRICS, entry) }}
+
+		{% if entry.latest.lab.mainThread and entry.latest.lab.mainThread.byGroup %}
+		<h3>Travail du thread principal</h3>
+		{% set mtParts = entry.latest.lab.mainThread.byGroup | sortByValue %}
+		{% set mtTotal = entry.latest.lab.mainThread.total or (mtParts | maxValue("value")) %}
+		<div class="table-scroll table-narrow">
+			<table class="grid compact">
+				<thead>
+				<tr>
+					<th class="col-site">Tâche</th>
+					<th class="col-tpbar">Temps</th>
+					<th>Part</th>
+					<th>Durée{{ throttleTag(labKind, "Limitation simulée par défaut de Lighthouse : la page a été
+						chargée à pleine vitesse, puis ces durées ont été mises à l’échelle pour correspondre au
+						processeur lent d’un téléphone.") }}
+					</th>
+				</tr>
+				</thead>
+				<tbody>
+				{% for part in mtParts %}
+				<tr>
+					<td class="col-site breakdown-key">{{ part.key | humanize }}</td>
+					<td class="col-tpbar">{% bar part.value, mtTotal, "neutral" %}</td>
+					<td class="num">{{ (part.value / mtTotal * 100) | round }} %</td>
+					<td class="num">{{ part.value | ms }}</td>
+				</tr>
+				{% endfor %}
+				</tbody>
+				{% if entry.latest.lab.mainThread.total %}
+				<tfoot>
+				<tr>
+					<td class="col-site"><strong>Total</strong></td>
+					<td></td>
+					<td></td>
+					<td class="num"><strong>{{ entry.latest.lab.mainThread.total | ms }}</strong></td>
+				</tr>
+				</tfoot>
+				{% endif %}
+			</table>
+		</div>
 		{% endif %}
-	</div>
-</section>
-{% endif %}
 
-<section class="panel" id="health">
-	<h2>Page health</h2>
-	{{ trendtable(metrics.HEALTH_METRICS, entry) }}
-
-	{% if entry.latest.lab.mainThread and entry.latest.lab.mainThread.byGroup %}
-	<h3>Main thread work</h3>
-	{% set mtParts = entry.latest.lab.mainThread.byGroup | sortByValue %}
-	{% set mtTotal = entry.latest.lab.mainThread.total or (mtParts | maxValue("value")) %}
-	<div class="table-scroll table-narrow">
-	<table class="grid compact">
-		<thead>
-			<tr>
-				<th class="col-site">Task</th>
-				<th class="col-tpbar">Time</th>
-				<th>Share</th>
-				<th>Duration{{ throttleTag(labKind, "Lighthouse's default simulated throttling: the page loaded at full speed and these durations were scaled afterwards to a slow phone's processor.") }}</th>
-			</tr>
-		</thead>
-		<tbody>
-		{% for part in mtParts %}
-			<tr>
-				<td class="col-site breakdown-key">{{ part.key | humanize }}</td>
-				<td class="col-tpbar">{% bar part.value, mtTotal, "neutral" %}</td>
-				<td class="num">{{ (part.value / mtTotal * 100) | round }}%</td>
-				<td class="num">{{ part.value | ms }}</td>
-			</tr>
-		{% endfor %}
-		</tbody>
-		{% if entry.latest.lab.mainThread.total %}
-		<tfoot>
-			<tr>
-				<td class="col-site"><strong>Total</strong></td>
-				<td></td>
-				<td></td>
-				<td class="num"><strong>{{ entry.latest.lab.mainThread.total | ms }}</strong></td>
-			</tr>
-		</tfoot>
+		{% if entry.axe %}
+		<h3>
+			Violations Axe
+			<span class="tag">axe-core {{ entry.axe.version }}, ensemble complet de règles</span>
+		</h3>
+		{% if entry.axe.error %}
+		<p class="muted small">L’analyse Axe a échoué : <code>{{ entry.axe.error }}</code></p>
+		{% else %}
+		<p class="muted small">
+			<strong>{{ entry.axe.violations }}</strong> nœud{{ "s" if entry.axe.violations != 1 }} en violation
+			selon {{ entry.axe.violationRules }} règle{{ "s" if entry.axe.violationRules != 1 }},
+			{{ entry.axe.passes }} vérifications réussies. Il s’agit d’une exécution autonome d’Axe CLI, plus stricte
+			que le
+			sous-ensemble déjà inclus dans Lighthouse. </p>
+		{% if entry.axe.top.length %}
+		<ul class="failures">
+			{% for v in entry.axe.top %}
+			<li>
+				<span class="badge badge-{{ 'error' if v.impact == 'critical' or v.impact == 'serious' else 'stale' }}">{{ v.impact }}</span>
+				<code>{{ v.id }}</code> — {% if v.helpUrl %}<a href="{{ v.helpUrl }}">{{ v.help }}</a>{% else %}{{
+				v.help }}{% endif %}
+				<span class="badge">{{ v.nodes }} nœud{{ "s" if v.nodes != 1 }}</span>
+				{% set samples = v.samples %}{% set total = v.nodes %}{% include "failure-nodes.njk" %}
+			</li>
+			{% endfor %}
+		</ul>
 		{% endif %}
-	</table>
-	</div>
-	{% endif %}
+		{% endif %}
+		{% endif %}
 
-	{% if entry.axe %}
-	<h3>
-		Axe violations
-		<span class="tag">axe-core {{ entry.axe.version }}, full rule set</span>
-	</h3>
-	{% if entry.axe.error %}
-	<p class="muted small">The axe run failed: <code>{{ entry.axe.error }}</code></p>
-	{% else %}
-	<p class="muted small">
-		<strong>{{ entry.axe.violations }}</strong> violating node{{ "s" if entry.axe.violations != 1 }}
-		across {{ entry.axe.violationRules }} rule{{ "s" if entry.axe.violationRules != 1 }},
-		{{ entry.axe.passes }} passing. This is a standalone Axe CLI run and is stricter than the
-		subset Lighthouse already includes.
-	</p>
-	{% if entry.axe.top.length %}
-	<ul class="failures">
-		{% for v in entry.axe.top %}
-		<li>
-			<span class="badge badge-{{ 'error' if v.impact == 'critical' or v.impact == 'serious' else 'stale' }}">{{ v.impact }}</span>
-			<code>{{ v.id }}</code> — {% if v.helpUrl %}<a href="{{ v.helpUrl }}">{{ v.help }}</a>{% else %}{{ v.help }}{% endif %}
-			<span class="badge">{{ v.nodes }} node{{ "s" if v.nodes != 1 }}</span>
-			{% set samples = v.samples %}{% set total = v.nodes %}{% include "failure-nodes.njk" %}
-		</li>
-		{% endfor %}
-	</ul>
-	{% endif %}
-	{% endif %}
-	{% endif %}
+		{% if entry.latest.lab.accessibility.failing.length %}
+		<h3>Échecs d’accessibilité <span class="tag">{{ entry.latest.lab.accessibility.failingCount }} sur {{ entry.latest.lab.accessibility.applicableCount }} vérifications</span>
+		</h3>
+		<ul class="failures">
+			{% for fail in entry.latest.lab.accessibility.failing %}
+			<li>
+				<code>{{ fail.id }}</code> — {{ fail.title }}
+				{% if fail.nodes %}<span class="badge">{{ fail.nodes }} nœud{{ "s" if fail.nodes != 1 }}</span>{% endif
+				%}
+			</li>
+			{% endfor %}
+		</ul>
+		{% endif %}
 
-	{% if entry.latest.lab.accessibility.failing.length %}
-	<h3>Accessibility failures <span class="tag">{{ entry.latest.lab.accessibility.failingCount }} of {{ entry.latest.lab.accessibility.applicableCount }} audits</span></h3>
-	<ul class="failures">
-		{% for fail in entry.latest.lab.accessibility.failing %}
-		<li>
-			<code>{{ fail.id }}</code> — {{ fail.title }}
-			{% if fail.nodes %}<span class="badge">{{ fail.nodes }} node{{ "s" if fail.nodes != 1 }}</span>{% endif %}
-		</li>
-		{% endfor %}
-	</ul>
-	{% endif %}
-
-	{#
-		Best Practices and SEO are pass/fail checklists, so a score below 100 is
-		always one or two named checks — listed here because the number alone
-		never said which. Older measurements predate this and have no list.
-	#}
-	{% for cat in [
-		{data: entry.latest.lab.bestPractices, label: "Best Practices"},
+		{#
+		Best Practices et SEO sont des listes de vérifications réussies ou échouées.
+		Un score inférieur à 100 correspond donc toujours à une ou deux vérifications
+		nommées — affichées ici, car le chiffre seul n’indique pas lesquelles.
+		Les anciennes mesures sont antérieures à cette fonctionnalité et ne comportent
+		pas de liste.
+		#}
+		{% for cat in [
+		{data: entry.latest.lab.bestPractices, label: "Bonnes pratiques"},
 		{data: entry.latest.lab.seo, label: "SEO"}
-	] %}
-	{% if cat.data.failing.length %}
-	<h3>{{ cat.label }} failures <span class="tag">{{ cat.data.failingCount }} of {{ cat.data.applicableCount }} audits</span></h3>
-	<ul class="failures">
-		{% for fail in cat.data.failing %}
-		<li>
-			<code>{{ fail.id }}</code> — {{ fail.title }}
-			{% if fail.nodes %}<span class="badge">{{ fail.nodes }} item{{ "s" if fail.nodes != 1 }}</span>{% endif %}
-		</li>
+		] %}
+		{% if cat.data.failing.length %}
+		<h3>Échecs — {{ cat.label }} <span class="tag">{{ cat.data.failingCount }} sur {{ cat.data.applicableCount }} vérifications</span>
+		</h3>
+		<ul class="failures">
+			{% for fail in cat.data.failing %}
+			<li>
+				<code>{{ fail.id }}</code> — {{ fail.title }}
+				{% if fail.nodes %}<span class="badge">{{ fail.nodes }} élément{{ "s" if fail.nodes != 1 }}</span>{%
+				endif %}
+			</li>
+			{% endfor %}
+		</ul>
+		{% endif %}
 		{% endfor %}
-	</ul>
-	{% endif %}
-	{% endfor %}
 
-	{#
-		The checks a page either does or does not have, kept beside the numbers
-		they belong with rather than in a panel of their own — a row of chips was
-		never a section's worth of page.
-	#}
-	<h3 id="hygiene">Hygiene</h3>
-	<div class="chips">
-		{% set h = entry.latest.lab.hygiene %}
-		{% for check in [
+		{#
+		Les vérifications qui indiquent si une page possède ou non certains
+		éléments sont placées à côté des chiffres correspondants plutôt que dans
+		un panneau distinct : une rangée de pastilles ne justifiait pas une section.
+		#}
+		<h3 id="hygiene">Hygiène</h3>
+		<div class="chips">
+			{% set h = entry.latest.lab.hygiene %}
+			{% for check in [
 			{k: "https", label: "HTTPS"},
 			{k: "hsts", label: "HSTS"},
 			{k: "csp", label: "CSP"},
-			{k: "clickjacking", label: "Clickjacking protection"},
-			{k: "originIsolation", label: "Origin isolation"},
+			{k: "clickjacking", label: "Protection contre le détournement de clic"},
+			{k: "originIsolation", label: "Isolation de l’origine"},
 			{k: "trustedTypes", label: "Trusted Types"},
 			{k: "bfCache", label: "bfcache"}
-		] %}
-		<span class="chip chip-{{ 'good' if h[check.k] == 1 else ('poor' if h[check.k] == 0 else 'none') }}">
+			] %}
+			<span class="chip chip-{{ 'good' if h[check.k] == 1 else ('poor' if h[check.k] == 0 else 'none') }}">
 			{{ check.label }}
 		</span>
-		{% endfor %}
-		<span class="chip chip-none">{{ h.protocol or "—" }}</span>
-		{% if h.consoleErrors %}<span class="chip chip-poor">{{ h.consoleErrors }} console error{{ "s" if h.consoleErrors != 1 }}</span>{% endif %}
-	</div>
-</section>
-
-<section class="panel" id="log">
-	<h2>Measurement log</h2>
-	{% if hasFieldHistory %}
-	<h3 id="field-history">Field history <span class="tag">{{ entry.fieldHistory.series.length }} weeks</span></h3>
-	<p class="muted small">
-		Weekly p75 from the CrUX History API, backfilled in a single request.
-	</p>
-	<div class="table-scroll">
-	<table class="grid compact">
-		<thead>
-			<tr>
-				<th class="col-site">Week ending</th>
-				<th>LCP</th><th>INP</th><th>CLS</th><th>FCP</th><th>TTFB</th>
-			</tr>
-		</thead>
-		<tbody>
-		{#
-			`rows`, not `series`: consecutive weeks CrUX had no data for arrive here
-			already merged into one row. The limit then counts merged rows, so a site
-			whose older weeks are blank spends one row on the gap and the rest on
-			weeks that have numbers.
-		#}
-		{% for row in entry.fieldHistory.rows | reverse | limit(12) %}
-			{% if row.metrics %}
-			<tr>
-				<td class="col-site muted">{{ row.date }}</td>
-				{% for m in metrics.FIELD_METRICS %}
-				{% set v = row.metrics[m.key] %}
-				<td class="num"><span class="pill pill-{{ v.rating | ratingClass }}">{{ v.p75 | unit(m.unit) }}</span></td>
-				{% endfor %}
-			</tr>
-			{% else %}
-			{#
-				One cell across the metric columns rather than five empty pills. There
-				is a single fact in this row — CrUX saw too little traffic that week to
-				report anything — and five blank pills state it five times while looking
-				like the table failed to render.
-			#}
-			<tr>
-				<td class="col-site muted">{% if row.weeks > 1 %}{{ row.from }} → {{ row.to }}{% else %}{{ row.date }}{% endif %}</td>
-				<td class="muted gap-cell" colspan="{{ metrics.FIELD_METRICS.length }}">
-					No data — {{ row.weeks }} {{ row.weeks | plural("week") }} under the CrUX reporting threshold
-				</td>
-			</tr>
-			{% endif %}
-		{% endfor %}
-		</tbody>
-	</table>
-	</div>
-	{% endif %}
-
-	{#
-		Named only when the field table sits above it: both halves are this URL over
-		time, and the reader has to be told which is which. Alone under the section
-		heading it is the measurement log, and a subheading would repeat it.
-	#}
-	{% if hasFieldHistory %}<h3>Runs</h3>{% endif %}
-	<p class="muted small">
-		Every stored run for this URL, newest first.
-	</p>
-	<div class="table-scroll">
-	<table class="grid compact">
-		<thead>
-			<tr>
-				<th class="col-site">When</th>
-				<th class="col-logdots" title="The four Lighthouse categories, then violating nodes from the axe run and the Core Web Vitals verdict, as they stood at this measurement">Scores</th>
-				<th>Perf</th><th>LCP</th><th>CLS</th><th>TBT</th><th>Weight</th>
-				<th>Runs</th><th>Spread</th><th>Bench</th><th>Took</th>
-				<th class="col-archive" title="The Wayback Machine's nearest capture to each measurement">Archive</th>
-			</tr>
-		</thead>
-		<tbody>
-		{% for point in entry.history | reverse | limit(30) %}
-			{#
-				A generator change is a fact about this row: the measurement below
-				is the first one that saw the new tag. Rendered as its own row
-				above it rather than a badge inside it, so the change reads as
-				something that happened between two measurements — which is all we
-				can honestly say about when it happened.
-			#}
-			{% for change in entry.generatorHistory %}
-			{% if change.date == point.date %}
-			<tr class="row-change">
-				<td colspan="12">
-					<span class="change-mark">{{ "↩" if change.returnedToEleventy else "→" }}</span>
-					Generator changed from <strong>{{ change.from }}</strong> to
-					<strong>{{ change.to }}</strong>
-					{% if change.leftEleventy %}<span class="badge badge-redirect" title="This is the move 11ty Emeritus is for — measurement follows it on its own">left Eleventy</span>{% endif %}
-					{% if change.returnedToEleventy %}<span class="badge badge-unlisted" title="Back on Eleventy or Build Awesome — it returns to Built Awesome on its own">back on Eleventy</span>{% endif %}
-					<span class="muted small">first seen this measurement</span>
-				</td>
-			</tr>
-			{% endif %}
 			{% endfor %}
-			<tr{% if point.error %} class="row-failing"{% endif %}>
+			<span class="chip chip-none">{{ h.protocol or "—" }}</span>
+			{% if h.consoleErrors %}<span class="chip chip-poor">{{ h.consoleErrors }} erreur{{ "s" if h.consoleErrors != 1 }} dans la console</span>{%
+			endif %}
+		</div>
+	</section>
+
+	<section class="panel" id="log">
+		<h2>Journal des mesures</h2>
+		{% if hasFieldHistory %}
+		<h3 id="field-history">Historique des données réelles <span class="tag">{{ entry.fieldHistory.series.length }} semaines</span>
+		</h3>
+		<p class="muted small">
+			Valeurs p75 hebdomadaires issues de l’API CrUX History, récupérées en une seule requête. </p>
+		<div class="table-scroll">
+			<table class="grid compact">
+				<thead>
+				<tr>
+					<th class="col-site">Semaine se terminant le</th>
+					<th>LCP</th>
+					<th>INP</th>
+					<th>CLS</th>
+					<th>FCP</th>
+					<th>TTFB</th>
+				</tr>
+				</thead>
+				<tbody>
+				{#
+				`rows`, et non `series` : les semaines consécutives sans données CrUX
+				sont regroupées en une seule ligne. La limite porte ensuite sur les lignes
+				regroupées : si un site n’a pas de données pour ses anciennes semaines,
+				la lacune occupe une ligne et les autres sont réservées aux semaines
+				comportant des chiffres.
+				#}
+				{% for row in entry.fieldHistory.rows | reverse | limit(12) %}
+				{% if row.metrics %}
+				<tr>
+					<td class="col-site muted">{{ row.date }}</td>
+					{% for m in metrics.FIELD_METRICS %}
+					{% set v = row.metrics[m.key] %}
+					<td class="num">
+						<span class="pill pill-{{ v.rating | ratingClass }}">{{ v.p75 | unit(m.unit) }}</span></td>
+					{% endfor %}
+				</tr>
+				{% else %}
+				{#
+				Une seule cellule couvre les colonnes de mesures au lieu d’afficher
+				cinq pastilles vides. Il n’y a qu’une information dans cette ligne :
+				le trafic CrUX était insuffisant cette semaine pour publier des données.
+				#}
+				<tr>
+					<td class="col-site muted">{% if row.weeks > 1 %}{{ row.from }} → {{ row.to }}{% else %}{{ row.date
+						}}{% endif %}
+					</td>
+					<td class="muted gap-cell" colspan="{{ metrics.FIELD_METRICS.length }}">
+						Aucune donnée — {{ row.weeks }} {{ row.weeks | plural("semaine") }} sous le seuil de publication
+						CrUX
+					</td>
+				</tr>
+				{% endif %}
+				{% endfor %}
+				</tbody>
+			</table>
+		</div>
+		{% endif %}
+
+		{#
+		Un sous-titre est ajouté uniquement lorsque le tableau des données réelles
+		le précède : les deux parties montrent l’évolution de cette URL et doivent
+		être distinguées. Seul sous le titre de section, il ferait doublon.
+		#}
+		{% if hasFieldHistory %}<h3>Exécutions</h3>{% endif %}
+		<p class="muted small">
+			Toutes les exécutions enregistrées pour cette URL, de la plus récente à la plus ancienne. </p>
+		<div class="table-scroll">
+			<table class="grid compact">
+				<thead>
+				<tr>
+					<th class="col-site">Date</th>
+					<th class="col-logdots" title="Les quatre catégories Lighthouse, puis les nœuds en violation lors de l’analyse Axe et le verdict Core Web Vitals au moment de cette mesure">
+						Scores
+					</th>
+					<th>Performances</th>
+					<th>LCP</th>
+					<th>CLS</th>
+					<th>TBT</th>
+					<th>Poids</th>
+					<th>Exécutions</th>
+					<th>Dispersion</th>
+					<th>Référence</th>
+					<th>Durée</th>
+					<th class="col-archive" title="La capture de la Wayback Machine la plus proche de chaque mesure">
+						Archive
+					</th>
+				</tr>
+				</thead>
+				<tbody>
+				{% for point in entry.history | reverse | limit(30) %}
+				{#
+				Un changement de générateur est indiqué sur la ligne de la première
+				mesure ayant détecté la nouvelle balise. Il est affiché dans sa
+				propre ligne au-dessus, car c’est tout ce que l’on peut établir
+				honnêtement quant au moment du changement.
+				#}
+				{% for change in entry.generatorHistory %}
+				{% if change.date == point.date %}
+				<tr class="row-change">
+					<td colspan="12">
+						<span class="change-mark">{{ "↩" if change.returnedToEleventy else "→" }}</span>
+						Le générateur est passé de <strong>{{ change.from }}</strong> à
+						<strong>{{ change.to }}</strong>
+						{% if change.leftEleventy
+						%}<span class="badge badge-redirect" title="C’est le changement prévu par 11ty Emeritus — la mesure le détecte automatiquement">a quitté Eleventy</span>{%
+						endif %}
+						{% if change.returnedToEleventy
+						%}<span class="badge badge-unlisted" title="De retour sur Eleventy ou Build Awesome — le site redevient automatiquement Built Awesome">de retour sur Eleventy</span>{%
+						endif %}
+						<span class="muted small">première détection lors de cette mesure</span>
+					</td>
+				</tr>
+				{% endif %}
+				{% endfor %}
+				<tr
+				{% if point.error %} class="row-failing"{% endif %}>
 				<td class="col-site">
 					{{ point.date | date("long") }}
 					{% if entry.movedFrom and point.via != entry.url %}
-					<span class="badge" title="Measured at {{ point.via }}, before the move">old URL</span>
+					<span class="badge" title="Mesuré à l’adresse {{ point.via }}, avant le changement d’adresse">ancienne URL</span>
 					{% endif %}
 				</td>
 				{#
-					This run's own circles, not the site's current ones. A row is a
-					measurement, and the point of a log is that rows differ.
+				Les pastilles propres à cette exécution, et non celles du site
+				actuel. Chaque ligne représente une mesure, et elles peuvent
+				différer les unes des autres.
 				#}
 				<td class="col-logdots">
 					{% if not point.error %}
@@ -1440,90 +1565,90 @@ eleventyComputed:
 					{% endif %}
 				</td>
 				{% if point.error %}
-					<td colspan="8" class="muted"><code>{{ point.error }}</code></td>
-					<td class="num muted">{{ (point.durationMs / 1000) | round(1) }}s</td>
+				<td colspan="8" class="muted"><code>{{ point.error }}</code></td>
+				<td class="num muted">{{ (point.durationMs / 1000) | round(1) }} s</td>
 				{% else %}
-					<td class="score score-{{ point.performance | scoreClass }}">{{ point.performance }}</td>
-					<td class="num">{{ point.lcp | ms }}</td>
-					<td class="num">{{ point.cls | unit("") }}</td>
-					<td class="num">{{ point.tbt | ms }}</td>
-					<td class="num">{{ point.total | bytes }}</td>
-					<td class="num muted">{{ point.completedRuns }}/{{ point.requestedRuns }}</td>
-					<td class="num muted">{{ ("±" + point.spread) if point.spread != null else "—" }}</td>
-					{#
-						The benchmark index, and how far off the project median it
-						sat. On its own the number means nothing to a reader — 2470 is
-						not good or bad — but "+27%" explains a TBT that jumped
-						without the site changing, which is the only reason this
-						column is here.
+				<td class="score score-{{ point.performance | scoreClass }}">{{ point.performance }}</td>
+				<td class="num">{{ point.lcp | ms }}</td>
+				<td class="num">{{ point.cls | unit("") }}</td>
+				<td class="num">{{ point.tbt | ms }}</td>
+				<td class="num">{{ point.total | bytes }}</td>
+				<td class="num muted">{{ point.completedRuns }}/{{ point.requestedRuns }}</td>
+				<td class="num muted">{{ ("±" + point.spread) if point.spread != null else "—" }}</td>
+				{#
+				L’indice de référence et son écart par rapport à la médiane du
+				projet. Le chiffre seul n’a pas de signification pour le lecteur,
+				mais le pourcentage explique pourquoi le TBT a pu augmenter sans
+				que le site ait changé.
 
-						Against the project median rather than the row above, so each
-						row stands alone: the step between two rows says nothing about
-						whether either machine was a fair one to measure on. Marked
-						when it falls outside the same band the notice at the top of
-						the page draws, so a reader can see which rows that notice is
-						about.
-					#}
-					<td class="num muted" title="Lighthouse benchmark index of the measuring machine{% if point.benchVsMedian != null %} — {{ point.benchVsMedian | signed }}% against this project's median{% if point.benchOutside %}, outside the {{ sites.benchmark.driftBand.pct }}% band{% endif %}{% endif %}">
-						{{ point.bench | num }}
-						{%- if point.benchVsMedian != null %}
-						<span class="bench-change {{ 'outside' if point.benchOutside }}">{{ point.benchVsMedian | signed }}%</span>
-						{%- endif %}
-					</td>
-					<td class="num muted">{{ (point.durationMs / 1000) | round(1) }}s</td>
+				La comparaison se fait avec la médiane du projet plutôt qu’avec
+				la ligne précédente, afin que chaque ligne soit interprétable
+				indépendamment. Un marqueur signale les écarts dépassant la même
+				marge que l’avis en haut de la page.
+				#}
+				<td class="num muted" title="Indice de référence Lighthouse de la machine de mesure{% if point.benchVsMedian != null %} — {{ point.benchVsMedian | signed }} % par rapport à la médiane de ce projet{% if point.benchOutside %}, en dehors de la marge de {{ sites.benchmark.driftBand.pct }} %{% endif %}{% endif %}">
+					{{ point.bench | num }}
+					{%- if point.benchVsMedian != null %}
+					<span class="bench-change {{ 'outside' if point.benchOutside }}">{{ point.benchVsMedian | signed }} %</span>
+					{%- endif %}
+				</td>
+				<td class="num muted">{{ (point.durationMs / 1000) | round(1) }} s</td>
 				{% endif %}
 				{#
-					Only for runs that produced a measurement: a failed run says
-					nothing about what was archived, so the link is left off rather
-					than sending a reader to a capture that explains nothing.
-					`point.via` rather than the site's current URL, so a row taken
-					before a move points at the address that was actually measured
-					then.
+				Le lien d’archive n’apparaît que pour les exécutions ayant produit
+				une mesure : une exécution échouée ne renseigne pas sur le contenu
+				archivé. `point.via` est utilisé plutôt que l’URL actuelle du site,
+				afin que les anciennes lignes pointent vers l’adresse réellement
+				mesurée à l’époque.
 				#}
 				<td class="col-archive">
 					{% if not point.error %}
-					<a href="{{ (point.via or entry.url) | wayback(point.date) }}"
-						title="The Wayback Machine's nearest capture to this measurement — it may be far from this date, or missing entirely"><img class="action-mark" src="{{ "https://web.archive.org/" | avatar(meta.avatarService) }}" width="16" height="16" alt="" decoding="async" loading="lazy">Wayback</a>
+					<a href="{{ (point.via or entry.url) | wayback(point.date) }}" title="La capture de la Wayback Machine la plus proche de cette mesure — elle peut être éloignée de cette date, voire inexistante"><img class="action-mark" src="{{ " https://web.archive.org/"
+						| avatar(meta.avatarService) }}" width="16" height="16" alt="" decoding="async"
+						loading="lazy">Wayback</a>
 					{% endif %}
 				</td>
-			</tr>
-		{% endfor %}
-		</tbody>
-	</table>
-	</div>
-</section>
+				</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+		</div>
+	</section>
 
-{% endif %}
+	{% endif %}
 
-{#
-	Only where a category asks for it — see `showEmbed` in config/sites.js. The
-	table of contents entry above is behind the same condition, so a page without
-	the section does not advertise one.
-#}
-{% if entry.showEmbed %}
-<section class="panel" id="embed">
-	<h2>Embed this score</h2>
-	<p class="muted small">
-		Use <a href="/embed/">this web component to show {{ entry.displayUrl }}'s scores on any website</a>, updated whenever this instance re-measures. <em>Don’t forget to bundle the <code>speedlify2-score.js</code> component code into your site!</em>
-	</p>
 	{#
-		The live one and the snippet resolve their instance URL differently, and
-		the difference is the point.
-
-		This example runs on this site, so htmlBaseUrl — the same base every other
-		link here uses, correct whether served from a subdirectory or a root.
-
-		The snippet below gets pasted onto a *different* site, where a path like
-		/speedlify2/ would resolve against that site's domain. It needs the
-		absolute URL, which is meta.url.
+	Affiché uniquement lorsque la catégorie le demande — voir `showEmbed`
+	dans config/sites.js. L’entrée correspondante de la table des matières
+	est soumise à la même condition, afin qu’une page sans cette section
+	ne l’annonce pas.
 	#}
-	<script type="module" src="/js/speedlify2-score.js"></script>
-	<p class="embed-live">
-		<speedlify2-score speedlify-url="{{ '/' | htmlBaseUrl }}" url="{{ entry.url }}"></speedlify2-score>
-	</p>
+	{% if entry.showEmbed %}
+	<section class="panel" id="embed">
+		<h2>Intégrer ce score</h2>
+		<p class="muted small">
+			Utilisez <a href="/embed/">ce composant Web pour afficher les scores de {{ entry.displayUrl }} sur n’importe
+			quel site</a> ; ils sont actualisés à chaque nouvelle mesure de cette instance. <em>N’oubliez pas d’intégrer
+			le code du composant <code>speedlify2-score.js</code> à votre site !</em>
+		</p>
+		{#
+		L’instance active et l’extrait de code ne déterminent pas leur URL de la
+		même façon, et c’est intentionnel.
 
-	<pre><code>&lt;speedlify2-score speedlify-url="{{ meta.url }}/" url="{{ entry.url }}"&gt;&lt;/speedlify2-score&gt;</code></pre>
-</section>
-{% endif %}
+		Cet exemple s’exécute sur ce site : il utilise htmlBaseUrl, la même base
+		que les autres liens de la page, que le site soit à la racine ou dans un
+		sous-répertoire.
 
+		L’extrait ci-dessous est destiné à être collé sur un autre site, où un
+		chemin tel que /speedlify2/ pointerait vers le domaine de ce site.
+		Il lui faut donc une URL absolue, fournie par meta.url.
+		#}
+		<script type="module" src="/js/speedlify2-score.js"></script>
+		<p class="embed-live">
+			<speedlify2-score speedlify-url="{{ '/' | htmlBaseUrl }}" url="{{ entry.url }}"></speedlify2-score>
+		</p>
+
+		<pre><code>&lt;speedlify2-score speedlify-url="{{ meta.url }}/" url="{{ entry.url }}"&gt;&lt;/speedlify2-score&gt;</code></pre>
+	</section>
+	{% endif %}
 </article>
