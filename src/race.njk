@@ -1309,7 +1309,7 @@ images au lieu de se retrouver avec des commandes inactives.
 		}
 	}
 
-	fetch("/api/race.json")
+	fetch("{{ '/api/race.json' | url }}")
 		.then(function (response) {
 			if (!response.ok) throw new Error(response.status);
 			return response.json();
