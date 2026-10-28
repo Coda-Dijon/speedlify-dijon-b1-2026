@@ -22,7 +22,7 @@ export default {
 	// intégrés sur d’autres sites : une URL absolue est donc nécessaire, car un simple chemin
 	// serait résolu par rapport à leur domaine. Ne mettez pas de barre oblique finale : les modèles
 	// en ajoutent une, et deux barres produiraient //js/speedlify2-score.js.
-	url: process.env.SPEEDLIFY_SITE_URL || "https://www.speedlify.dev",
+	url: process.env.SPEEDLIFY_SITE_URL || "https://github.com/Coda-Dijon/speedlify-dijon-b1-2026",
 	// Emplacement du code source, indiqué par un lien dans le pied de page. Une valeur par défaut
 	// est préférable à une chaîne vide : sinon, le lien disparaît sans avertissement — comme celui
 	// de l’en-tête, dont l’absence est passée inaperçue pendant si longtemps. Remplacez cette valeur
