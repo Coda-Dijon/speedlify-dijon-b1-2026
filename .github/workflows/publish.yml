@@ -65,7 +65,7 @@ jobs:
         env:
           SPEEDLIFY_SITE_URL: ${{ steps.pages.outputs.base_url }}
 #          SPEEDLIFY_BASE_HREF: ${{ steps.pages.outputs.base_path }}
-          SPEEDLIFY_BASE_HREF: /speedlify-dijon-b1-2026/
+          SPEEDLIFY_BASE_HREF: /speedlify-dijon-b1-2026
           # A repository variable, so a copy of this template gets no analytics
           # until it sets its own.
           SPEEDLIFY_GOATCOUNTER_URL: ${{ vars.SPEEDLIFY_GOATCOUNTER_URL }}
