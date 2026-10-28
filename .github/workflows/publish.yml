@@ -63,7 +63,7 @@ jobs:
         # case has to be guessed, and a fork with a custom domain does not get
         # its repository name wrongly prepended to every URL.
         env:
-          SPEEDLIFY_REPO_URL: "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
+          SPEEDLIFY_REPO_URL: ${{github.server_url}}/${{github.repository}}
           SPEEDLIFY_SITE_URL: ${{ steps.pages.outputs.base_url }}
           SPEEDLIFY_BASE_HREF: ${{ steps.pages.outputs.base_path }}
           # SPEEDLIFY_BASE_HREF: /speedlify-dijon-b1-2026
