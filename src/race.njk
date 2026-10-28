@@ -346,10 +346,6 @@ images au lieu de se retrouver avec des commandes inactives.
 		grid.appendChild(L.renderRuler(timeline));
 
 		lanes.forEach(function (lane, index) {
-            // Prepend frame with base path for absolute URL
-            lane.site.frames = lane.site.frames.map(frame => ({
-                ...frame,src:"{{meta.url}}" + frame.src
-            }))
 			lane.index = index;
 			/* Kept, so the clock can mark the winning row — see setTime. */
 			lane.nameEl = renderName(lane);
@@ -1313,7 +1309,7 @@ images au lieu de se retrouver avec des commandes inactives.
 		}
 	}
 
-	fetch("{{meta.url}}/api/race.json")
+	fetch("/api/race.json")
 		.then(function (response) {
 			if (!response.ok) throw new Error(response.status);
 			return response.json();
