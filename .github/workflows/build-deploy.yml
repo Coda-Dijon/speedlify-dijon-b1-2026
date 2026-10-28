@@ -40,7 +40,7 @@ jobs:
           SPEEDLIFY_SITE_URL: https://coda-dijon.github.io/speedlify-dijon-b1-2026
           SPEEDLIFY_REPO_URL: https://github.com/Coda-Dijon/speedlify-dijon-b1-2026
         run: |
-          npm run build -- --pathprefix=${GITHUB_REPOSITORY#*/}
+          npm run build
           npm run zip-results
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
