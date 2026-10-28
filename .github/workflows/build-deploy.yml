@@ -1,5 +1,6 @@
 name: Deploy Pages
-
+env:
+  SPEEDLIFY_SITE_URL=https://coda-dijon.github.io/speedlify-dijon-b1-2026
 on:
   push:
     branches: ["live"]
