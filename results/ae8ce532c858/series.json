@@ -1,0 +1,3 @@
+{"version":1,"url":"https://coda-dijon.github.io/html-b1-2026-template/docs/Github-Pages","updated":"2026-10-29T00:05:57.425Z","points":[
+{"t":1793232322316,"gen":"Jekyll v3.10.0","performance":100,"accessibility":92,"best-practices":100,"seo":100,"lcp":1533,"cls":0,"tbt":0,"fcp":1533,"si":1533,"ttfb":613,"total":17449,"requests":4,"bytes":2798,"mainThreadMs":0.4,"unusedJsBytes":0,"unusedCssBytes":11207,"mainThreadTotal":117.9,"longTasks":0,"elements":40,"failingCount":2,"failingNodes":2,"axeViolations":3,"axePasses":108,"bench":2482.5,"runs":3,"reqRuns":3,"ms":35024,"spread":1}
+]}

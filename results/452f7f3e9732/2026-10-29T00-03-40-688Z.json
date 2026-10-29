@@ -1,0 +1,254 @@
+{
+  "url": "https://coda-dijon.github.io/html-b1-2026-g1/index.html",
+  "name": "coda-dijon.github.io",
+  "group": "html-b1-2026-g1",
+  "groupName": "html-b1-2026-g1",
+  "timestamp": 1793232220688,
+  "date": "2026-10-29T00:03:40.688Z",
+  "runId": "2026-10-29T00-01-39-629Z",
+  "formFactor": "mobile",
+  "requestedRuns": 3,
+  "completedRuns": 3,
+  "durationMs": 33988,
+  "error": null,
+  "variance": {
+    "min": 100,
+    "max": 100,
+    "spread": 0,
+    "runs": 3
+  },
+  "lab": {
+    "requestedUrl": "https://coda-dijon.github.io/html-b1-2026-g1/index.html",
+    "finalUrl": "https://coda-dijon.github.io/html-b1-2026-g1/index.html",
+    "redirect": null,
+    "statusCode": "ok",
+    "scores": {
+      "performance": 100,
+      "accessibility": 94,
+      "best-practices": 100,
+      "seo": 90,
+      "agentic-browsing": 100
+    },
+    "timings": {
+      "fcp": 775,
+      "lcp": 775,
+      "si": 775,
+      "tbt": 0,
+      "tti": 775,
+      "cls": 0,
+      "ttfb": 613,
+      "maxPotentialFid": 16,
+      "serverResponseTime": 13,
+      "networkRtt": 0,
+      "networkServerLatency": 12.7
+    },
+    "lcpBreakdown": {
+      "timeToFirstByte": 14.3,
+      "elementRenderDelay": 27.1
+    },
+    "weight": {
+      "total": 564,
+      "requests": 1,
+      "mainDocument": 564,
+      "byType": {
+        "document": {
+          "bytes": 564,
+          "requests": 1
+        },
+        "total": {
+          "bytes": 564,
+          "requests": 1
+        },
+        "stylesheet": {
+          "bytes": 0,
+          "requests": 0
+        },
+        "image": {
+          "bytes": 0,
+          "requests": 0
+        },
+        "media": {
+          "bytes": 0,
+          "requests": 0
+        },
+        "font": {
+          "bytes": 0,
+          "requests": 0
+        },
+        "script": {
+          "bytes": 0,
+          "requests": 0
+        },
+        "other": {
+          "bytes": 0,
+          "requests": 0
+        },
+        "third-party": {
+          "bytes": 564,
+          "requests": 1
+        }
+      },
+      "scripts": 0,
+      "stylesheets": 0,
+      "fonts": 0
+    },
+    "thirdParty": {
+      "count": 0,
+      "bytes": 0,
+      "mainThreadMs": 0,
+      "top": []
+    },
+    "mainThread": {
+      "total": 67.3,
+      "byGroup": {
+        "other": 45.4,
+        "styleLayout": 10.9,
+        "scriptEvaluation": 8.3,
+        "paintCompositeRender": 1.3,
+        "parseHTML": 0.9,
+        "scriptParseCompile": 0.5
+      },
+      "bootupMs": 0,
+      "longTasks": 0,
+      "longestTaskMs": null
+    },
+    "dom": {
+      "elements": 4,
+      "depth": 2,
+      "maxChildren": 2
+    },
+    "waste": {
+      "unusedJsBytes": 0,
+      "unusedCssBytes": 0,
+      "legacyJsBytes": 0,
+      "duplicatedJsBytes": 0,
+      "unminifiedJsBytes": 0,
+      "unminifiedCssBytes": 0,
+      "renderBlockingMs": 0,
+      "renderBlockingCount": 0,
+      "poorlyCachedBytes": 0,
+      "poorlyCachedCount": 0
+    },
+    "accessibility": {
+      "failingCount": 1,
+      "applicableCount": 8,
+      "failingNodes": 1,
+      "failing": [
+        {
+          "id": "landmark-one-main",
+          "title": "Document does not have a main landmark.",
+          "weight": 3,
+          "nodes": 1
+        }
+      ]
+    },
+    "bestPractices": {
+      "failingCount": 0,
+      "applicableCount": 19,
+      "failing": []
+    },
+    "seo": {
+      "failingCount": 1,
+      "applicableCount": 7,
+      "failing": [
+        {
+          "id": "meta-description",
+          "title": "Document does not have a meta description",
+          "weight": 1,
+          "nodes": null
+        }
+      ]
+    },
+    "hygiene": {
+      "https": 1,
+      "hsts": 1,
+      "csp": 1,
+      "clickjacking": 1,
+      "originIsolation": 1,
+      "trustedTypes": 1,
+      "bfCache": 1,
+      "bfCacheFailures": 0,
+      "protocol": "h2",
+      "legacyHttpRequests": 0,
+      "redirectMs": 0,
+      "consoleErrors": 0,
+      "baselineLimitedFeatures": 0
+    },
+    "environment": {
+      "lighthouseVersion": "13.4.1",
+      "benchmarkIndex": 2494,
+      "formFactor": "mobile",
+      "throttlingMethod": "simulate",
+      "userAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Mobile Safari/537.36",
+      "fetchTime": "2026-10-29T00:03:47.925Z",
+      "runtimeMs": 5519.6
+    }
+  },
+  "throttledLcpBreakdown": {
+    "timeToFirstByte": 576,
+    "elementRenderDelay": 45.9
+  },
+  "field": null,
+  "axe": {
+    "navigationTimedOut": false,
+    "generator": null,
+    "probe": {
+      "metas": [],
+      "marks": [],
+      "markVersions": {}
+    },
+    "interstitial": null,
+    "host": {
+      "id": "github",
+      "name": "GitHub Pages",
+      "icon": "Github",
+      "source": "x-github-request-id"
+    },
+    "headers": {
+      "server": "GitHub.com",
+      "via": "1.1 varnish",
+      "x-fastly-request-id": "c41347d4a092c901f4fedcc6c5ad1fe633526392",
+      "x-github-request-id": "AFD0:2A6688:23EB494:281FAB4:6AE28D5D",
+      "x-served-by": "cache-chi-kmdw8640034-CHI"
+    },
+    "violations": 3,
+    "passes": 11,
+    "incomplete": 0,
+    "violationRules": 2,
+    "version": "4.13.0",
+    "top": [
+      {
+        "id": "region",
+        "impact": "moderate",
+        "nodes": 2,
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/region?application=axe-puppeteer",
+        "samples": [
+          {
+            "selector": "h1",
+            "snippet": "<h1>Page hébergée sur Github Pages</h1>"
+          },
+          {
+            "selector": "p",
+            "snippet": "<p>Cette page est déployée depuis un dépôt Github.</p>"
+          }
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "nodes": 1,
+        "help": "Document should have one main landmark",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/landmark-one-main?application=axe-puppeteer",
+        "samples": [
+          {
+            "selector": "html",
+            "snippet": "<html lang=\"fr\"><head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"> <title>Accueil</title> </head> <body> <h1>Page hébergée sur Github Pages</h1> <p>Cet…"
+          }
+        ]
+      }
+    ],
+    "error": null
+  },
+  "consecutiveFailures": 0
+}
