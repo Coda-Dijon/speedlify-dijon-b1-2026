@@ -1,0 +1,316 @@
+{
+  "url": "https://coda-dijon.github.io/html-b1-2026-template/docs/Serveur-http",
+  "name": "coda-dijon.github.io",
+  "group": "html-b1-2026-template",
+  "groupName": "html-b1-2026-template",
+  "timestamp": 1793232144577,
+  "date": "2026-10-29T00:02:24.577Z",
+  "runId": "2026-10-29T00-01-39-393Z",
+  "formFactor": "mobile",
+  "requestedRuns": 3,
+  "completedRuns": 3,
+  "durationMs": 35643,
+  "error": null,
+  "variance": {
+    "min": 99,
+    "max": 99,
+    "spread": 0,
+    "runs": 3
+  },
+  "lab": {
+    "requestedUrl": "https://coda-dijon.github.io/html-b1-2026-template/docs/Serveur-http",
+    "finalUrl": "https://coda-dijon.github.io/html-b1-2026-template/docs/Serveur-http",
+    "redirect": null,
+    "statusCode": "ok",
+    "scores": {
+      "performance": 99,
+      "accessibility": 86,
+      "best-practices": 100,
+      "seo": 100,
+      "agentic-browsing": 100
+    },
+    "timings": {
+      "fcp": 1552,
+      "lcp": 1552,
+      "si": 1552,
+      "tbt": 0,
+      "tti": 1552,
+      "cls": 0,
+      "ttfb": 618,
+      "maxPotentialFid": 16,
+      "serverResponseTime": 18,
+      "networkRtt": 0,
+      "networkServerLatency": 33.8
+    },
+    "lcpBreakdown": {
+      "timeToFirstByte": 19.2,
+      "elementRenderDelay": 50.3
+    },
+    "weight": {
+      "total": 17858,
+      "requests": 4,
+      "mainDocument": 2289,
+      "byType": {
+        "total": {
+          "bytes": 16862,
+          "requests": 3
+        },
+        "stylesheet": {
+          "bytes": 11786,
+          "requests": 1
+        },
+        "script": {
+          "bytes": 2787,
+          "requests": 1
+        },
+        "document": {
+          "bytes": 2289,
+          "requests": 1
+        },
+        "image": {
+          "bytes": 0,
+          "requests": 0
+        },
+        "media": {
+          "bytes": 0,
+          "requests": 0
+        },
+        "font": {
+          "bytes": 0,
+          "requests": 0
+        },
+        "other": {
+          "bytes": 0,
+          "requests": 0
+        },
+        "third-party": {
+          "bytes": 16862,
+          "requests": 3
+        }
+      },
+      "scripts": 1,
+      "stylesheets": 1,
+      "fonts": 1
+    },
+    "thirdParty": {
+      "count": 1,
+      "bytes": 2787,
+      "mainThreadMs": 0.4,
+      "top": [
+        {
+          "entity": "Cloudflare CDN",
+          "bytes": 2787,
+          "mainThreadMs": 0.4,
+          "byType": {
+            "script": 2787
+          },
+          "typedBytes": 2787
+        }
+      ]
+    },
+    "mainThread": {
+      "total": 114.3,
+      "byGroup": {
+        "other": 61.5,
+        "styleLayout": 26.3,
+        "scriptEvaluation": 14,
+        "parseHTML": 6.9,
+        "paintCompositeRender": 4.2,
+        "scriptParseCompile": 1.5
+      },
+      "bootupMs": 4.2,
+      "longTasks": 0,
+      "longestTaskMs": null
+    },
+    "dom": {
+      "elements": 60,
+      "depth": 7,
+      "maxChildren": 22
+    },
+    "waste": {
+      "unusedJsBytes": 0,
+      "unusedCssBytes": 11077,
+      "legacyJsBytes": 0,
+      "duplicatedJsBytes": 0,
+      "unminifiedJsBytes": 0,
+      "unminifiedCssBytes": 0,
+      "renderBlockingMs": 784,
+      "renderBlockingCount": 2,
+      "poorlyCachedBytes": 10803.833333333332,
+      "poorlyCachedCount": 1
+    },
+    "accessibility": {
+      "failingCount": 3,
+      "applicableCount": 16,
+      "failingNodes": 7,
+      "failing": [
+        {
+          "id": "link-in-text-block",
+          "title": "Links rely on color to be distinguishable.",
+          "weight": 7,
+          "nodes": 5
+        },
+        {
+          "id": "color-contrast",
+          "title": "Background and foreground colors do not have a sufficient contrast ratio.",
+          "weight": 7,
+          "nodes": 1
+        },
+        {
+          "id": "landmark-one-main",
+          "title": "Document does not have a main landmark.",
+          "weight": 3,
+          "nodes": 1
+        }
+      ]
+    },
+    "bestPractices": {
+      "failingCount": 0,
+      "applicableCount": 19,
+      "failing": []
+    },
+    "seo": {
+      "failingCount": 0,
+      "applicableCount": 8,
+      "failing": []
+    },
+    "hygiene": {
+      "https": 1,
+      "hsts": 1,
+      "csp": 1,
+      "clickjacking": 1,
+      "originIsolation": 1,
+      "trustedTypes": 1,
+      "bfCache": 1,
+      "bfCacheFailures": 0,
+      "protocol": "h2",
+      "legacyHttpRequests": 0,
+      "redirectMs": 0,
+      "consoleErrors": 0,
+      "baselineLimitedFeatures": 1
+    },
+    "environment": {
+      "lighthouseVersion": "13.4.1",
+      "benchmarkIndex": 2489,
+      "formFactor": "mobile",
+      "throttlingMethod": "simulate",
+      "userAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Mobile Safari/537.36",
+      "fetchTime": "2026-10-29T00:02:38.020Z",
+      "runtimeMs": 5751.5
+    }
+  },
+  "throttledLcpBreakdown": {
+    "timeToFirstByte": 582.1,
+    "elementRenderDelay": 700.4
+  },
+  "field": null,
+  "axe": {
+    "navigationTimedOut": false,
+    "generator": {
+      "id": "jekyll",
+      "name": "Jekyll",
+      "icon": "Jekyll",
+      "version": "3.10.0",
+      "source": "meta",
+      "raw": "Jekyll v3.10.0"
+    },
+    "probe": {
+      "metas": [
+        "Jekyll v3.10.0"
+      ],
+      "marks": [],
+      "markVersions": {}
+    },
+    "interstitial": null,
+    "host": {
+      "id": "github",
+      "name": "GitHub Pages",
+      "icon": "Github",
+      "source": "x-github-request-id"
+    },
+    "headers": {
+      "server": "GitHub.com",
+      "via": "1.1 varnish",
+      "x-fastly-request-id": "11b79c126619d94291a4e956982e944ac06135a6",
+      "x-github-request-id": "ECCC:2D7A7B:2AE82A2:2E9F7D7:6AE28D11",
+      "x-served-by": "cache-dfw-kdfw8210152-DFW"
+    },
+    "violations": 8,
+    "passes": 143,
+    "incomplete": 0,
+    "violationRules": 4,
+    "version": "4.13.0",
+    "top": [
+      {
+        "id": "link-in-text-block",
+        "impact": "serious",
+        "nodes": 5,
+        "help": "Links must be distinguishable without relying on color",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/link-in-text-block?application=axe-puppeteer",
+        "samples": [
+          {
+            "selector": "a[href$=\"nginx.org/\"]",
+            "snippet": "<a href=\"https://nginx.org/\">Nginx</a>"
+          },
+          {
+            "selector": "a[href$=\"httpd.apache.org/\"]",
+            "snippet": "<a href=\"https://httpd.apache.org/\">Apache</a>"
+          },
+          {
+            "selector": "p:nth-child(11) > a",
+            "snippet": "<a href=\"https://docs.python.org/3/library/http.server.html\">python</a>"
+          },
+          {
+            "selector": "a[href$=\"cli\"]",
+            "snippet": "<a href=\"https://vite.dev/guide/cli\">vite</a>"
+          },
+          {
+            "selector": ".footer > a",
+            "snippet": "<a href=\"https://github.com/Coda-Dijon/html-b1-2026-template/edit/main/docs/Serveur-http.md\">Improve this page</a>"
+          }
+        ]
+      },
+      {
+        "id": "color-contrast",
+        "impact": "serious",
+        "nodes": 1,
+        "help": "Elements must meet minimum color contrast ratio thresholds",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/color-contrast?application=axe-puppeteer",
+        "samples": [
+          {
+            "selector": ".c",
+            "snippet": "<span class=\"c\"># python3 -m http.server</span>"
+          }
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "nodes": 1,
+        "help": "Document should have one main landmark",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/landmark-one-main?application=axe-puppeteer",
+        "samples": [
+          {
+            "selector": "html",
+            "snippet": "<html lang=\"en-US\">"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "nodes": 1,
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/region?application=axe-puppeteer",
+        "samples": [
+          {
+            "selector": ".container-lg",
+            "snippet": "<div class=\"container-lg px-3 my-5 markdown-body\">"
+          }
+        ]
+      }
+    ],
+    "error": null
+  },
+  "consecutiveFailures": 0
+}
