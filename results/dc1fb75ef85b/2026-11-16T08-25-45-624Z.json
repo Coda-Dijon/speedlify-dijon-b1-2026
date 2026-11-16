@@ -1,0 +1,209 @@
+{
+  "url": "https://coda-dijon.github.io/crack-me",
+  "name": "coda-dijon.github.io",
+  "group": "autres-sites-coda-dijon",
+  "groupName": "autres-sites-coda-dijon",
+  "timestamp": 1794817545624,
+  "date": "2026-11-16T08:25:45.624Z",
+  "runId": "2026-11-16T08-25-44-576Z",
+  "formFactor": "mobile",
+  "requestedRuns": 3,
+  "completedRuns": 3,
+  "durationMs": 42855,
+  "error": null,
+  "variance": {
+    "min": 98,
+    "max": 100,
+    "spread": 2,
+    "runs": 3
+  },
+  "lab": {
+    "requestedUrl": "https://coda-dijon.github.io/crack-me",
+    "finalUrl": "https://coda-dijon.github.io/crack-me/",
+    "redirect": null,
+    "statusCode": "ok",
+    "scores": {
+      "performance": 100,
+      "accessibility": 100,
+      "best-practices": 100,
+      "seo": 100,
+      "agentic-browsing": 100
+    },
+    "timings": {
+      "fcp": 1206,
+      "lcp": 1206,
+      "si": 1206,
+      "tbt": 0,
+      "tti": 1206,
+      "cls": 0.027,
+      "ttfb": 606,
+      "maxPotentialFid": 16,
+      "serverResponseTime": 5,
+      "networkRtt": 0,
+      "networkServerLatency": 6.4
+    },
+    "lcpBreakdown": {
+      "timeToFirstByte": 14.4,
+      "elementRenderDelay": 55
+    },
+    "weight": {
+      "total": 96552,
+      "requests": 10,
+      "mainDocument": 1459,
+      "byType": {
+        "total": {
+          "bytes": 95124,
+          "requests": 9
+        },
+        "font": {
+          "bytes": 86242,
+          "requests": 4
+        },
+        "stylesheet": {
+          "bytes": 3161,
+          "requests": 1
+        },
+        "image": {
+          "bytes": 2288,
+          "requests": 1
+        },
+        "script": {
+          "bytes": 1795,
+          "requests": 1
+        },
+        "document": {
+          "bytes": 1459,
+          "requests": 1
+        },
+        "other": {
+          "bytes": 179,
+          "requests": 1
+        },
+        "media": {
+          "bytes": 0,
+          "requests": 0
+        },
+        "third-party": {
+          "bytes": 95124,
+          "requests": 9
+        }
+      },
+      "scripts": 1,
+      "stylesheets": 1,
+      "fonts": 4
+    },
+    "thirdParty": {
+      "count": 0,
+      "bytes": 0,
+      "mainThreadMs": 0,
+      "top": []
+    },
+    "mainThread": {
+      "total": 312.4,
+      "byGroup": {
+        "other": 169.6,
+        "styleLayout": 88.3,
+        "paintCompositeRender": 27.4,
+        "scriptEvaluation": 19,
+        "parseHTML": 7.4,
+        "scriptParseCompile": 0.7
+      },
+      "bootupMs": 18,
+      "longTasks": 0,
+      "longestTaskMs": null
+    },
+    "dom": {
+      "elements": 63,
+      "depth": 6,
+      "maxChildren": 30
+    },
+    "waste": {
+      "unusedJsBytes": 0,
+      "unusedCssBytes": 0,
+      "legacyJsBytes": 0,
+      "duplicatedJsBytes": 0,
+      "unminifiedJsBytes": 0,
+      "unminifiedCssBytes": 0,
+      "renderBlockingMs": 0,
+      "renderBlockingCount": 1,
+      "poorlyCachedBytes": 85695.5,
+      "poorlyCachedCount": 7
+    },
+    "accessibility": {
+      "failingCount": 0,
+      "applicableCount": 24,
+      "failingNodes": 0,
+      "failing": []
+    },
+    "bestPractices": {
+      "failingCount": 0,
+      "applicableCount": 19,
+      "failing": []
+    },
+    "seo": {
+      "failingCount": 0,
+      "applicableCount": 8,
+      "failing": []
+    },
+    "hygiene": {
+      "https": 1,
+      "hsts": 1,
+      "csp": 1,
+      "clickjacking": 1,
+      "originIsolation": 1,
+      "trustedTypes": 1,
+      "bfCache": 1,
+      "bfCacheFailures": 0,
+      "protocol": "h2",
+      "legacyHttpRequests": 0,
+      "redirectMs": 756.4,
+      "consoleErrors": 0,
+      "baselineLimitedFeatures": 5
+    },
+    "environment": {
+      "lighthouseVersion": "13.4.1",
+      "benchmarkIndex": 2510,
+      "formFactor": "mobile",
+      "throttlingMethod": "simulate",
+      "userAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Mobile Safari/537.36",
+      "fetchTime": "2026-11-16T08:26:02.359Z",
+      "runtimeMs": 5999.4
+    }
+  },
+  "throttledLcpBreakdown": {
+    "timeToFirstByte": 1700.2,
+    "elementRenderDelay": 174.1
+  },
+  "field": null,
+  "axe": {
+    "navigationTimedOut": false,
+    "generator": null,
+    "probe": {
+      "metas": [],
+      "marks": [],
+      "markVersions": {}
+    },
+    "interstitial": null,
+    "host": {
+      "id": "github",
+      "name": "GitHub Pages",
+      "icon": "Github",
+      "source": "x-github-request-id"
+    },
+    "headers": {
+      "server": "GitHub.com",
+      "via": "1.1 varnish",
+      "x-fastly-request-id": "bb6319cc09836c4c5c7e2426999c8a878d0251f0",
+      "x-github-request-id": "E43C:28FA29:14DE7D:1CC4B8:6AFABE0B",
+      "x-served-by": "cache-bfi-krnt7300087-BFI"
+    },
+    "violations": 0,
+    "passes": 78,
+    "incomplete": 9,
+    "violationRules": 0,
+    "version": "4.13.0",
+    "top": [],
+    "error": null
+  },
+  "consecutiveFailures": 0
+}
