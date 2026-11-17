@@ -1,0 +1,327 @@
+{
+  "url": "https://coda-dijon.github.io/developper-avec-conscience",
+  "name": "coda-dijon.github.io",
+  "group": "autres-sites-coda-dijon",
+  "groupName": "autres-sites-coda-dijon",
+  "timestamp": 1794904585331,
+  "date": "2026-11-17T08:36:25.331Z",
+  "runId": "2026-11-17T08-35-43-214Z",
+  "formFactor": "mobile",
+  "requestedRuns": 3,
+  "completedRuns": 3,
+  "durationMs": 64586,
+  "error": null,
+  "variance": {
+    "min": 81,
+    "max": 81,
+    "spread": 0,
+    "runs": 3
+  },
+  "lab": {
+    "requestedUrl": "https://coda-dijon.github.io/developper-avec-conscience",
+    "finalUrl": "https://coda-dijon.github.io/developper-avec-conscience/1",
+    "redirect": {
+      "from": "https://coda-dijon.github.io/developper-avec-conscience",
+      "to": "https://coda-dijon.github.io/developper-avec-conscience/1",
+      "chain": [
+        {
+          "url": "https://coda-dijon.github.io/developper-avec-conscience",
+          "status": 301
+        },
+        {
+          "url": "https://coda-dijon.github.io/developper-avec-conscience/",
+          "status": 200
+        }
+      ],
+      "statuses": [
+        301
+      ],
+      "change": "path",
+      "permanent": true,
+      "schemeUpgrade": false,
+      "hops": 1
+    },
+    "statusCode": "ok",
+    "scores": {
+      "performance": 81,
+      "accessibility": 89,
+      "best-practices": 100,
+      "seo": 100,
+      "agentic-browsing": 100
+    },
+    "timings": {
+      "fcp": 3036,
+      "lcp": 4011,
+      "si": 3036,
+      "tbt": 85,
+      "tti": 4045,
+      "cls": 0.003,
+      "ttfb": 604,
+      "maxPotentialFid": 107,
+      "serverResponseTime": 3,
+      "networkRtt": 0,
+      "networkServerLatency": 19.6
+    },
+    "lcpBreakdown": {
+      "timeToFirstByte": 9.6,
+      "resourceLoadDelay": 8.1,
+      "resourceLoadDuration": 4.7,
+      "elementRenderDelay": 245.8
+    },
+    "weight": {
+      "total": 3706564,
+      "requests": 141,
+      "mainDocument": 2056,
+      "byType": {
+        "total": {
+          "bytes": 3706564,
+          "requests": 131
+        },
+        "image": {
+          "bytes": 3362762,
+          "requests": 98
+        },
+        "script": {
+          "bytes": 221067,
+          "requests": 19
+        },
+        "other": {
+          "bytes": 61048,
+          "requests": 3
+        },
+        "font": {
+          "bytes": 32168,
+          "requests": 2
+        },
+        "stylesheet": {
+          "bytes": 27463,
+          "requests": 8
+        },
+        "document": {
+          "bytes": 2056,
+          "requests": 1
+        },
+        "media": {
+          "bytes": 0,
+          "requests": 0
+        },
+        "third-party": {
+          "bytes": 3706564,
+          "requests": 131
+        }
+      },
+      "scripts": 19,
+      "stylesheets": 8,
+      "fonts": 2
+    },
+    "thirdParty": {
+      "count": 2,
+      "bytes": 154577,
+      "mainThreadMs": 0,
+      "top": [
+        {
+          "entity": "JSDelivr CDN",
+          "bytes": 121347,
+          "mainThreadMs": 0,
+          "byType": {
+            "other": 121347
+          },
+          "typedBytes": 121347
+        },
+        {
+          "entity": "Google Fonts",
+          "bytes": 33230,
+          "mainThreadMs": 0,
+          "byType": {
+            "font": 32168,
+            "stylesheet": 1062
+          },
+          "typedBytes": 33230
+        }
+      ]
+    },
+    "mainThread": {
+      "total": 908.5,
+      "byGroup": {
+        "other": 467.3,
+        "scriptEvaluation": 271.2,
+        "styleLayout": 112,
+        "parseHTML": 27.5,
+        "paintCompositeRender": 15,
+        "garbageCollection": 12.3,
+        "scriptParseCompile": 3.1
+      },
+      "bootupMs": 268,
+      "longTasks": 2,
+      "longestTaskMs": 107
+    },
+    "dom": {
+      "elements": 109,
+      "depth": 12,
+      "maxChildren": 14
+    },
+    "waste": {
+      "unusedJsBytes": 86177,
+      "unusedCssBytes": 16537,
+      "legacyJsBytes": 0,
+      "duplicatedJsBytes": 0,
+      "unminifiedJsBytes": 0,
+      "unminifiedCssBytes": 0,
+      "renderBlockingMs": 1072,
+      "renderBlockingCount": 3,
+      "poorlyCachedBytes": 3309377.5000000014,
+      "poorlyCachedCount": 124
+    },
+    "accessibility": {
+      "failingCount": 2,
+      "applicableCount": 12,
+      "failingNodes": 3,
+      "failing": [
+        {
+          "id": "target-size",
+          "title": "Touch targets do not have sufficient size or spacing.",
+          "weight": 7,
+          "nodes": 2
+        },
+        {
+          "id": "landmark-one-main",
+          "title": "Document does not have a main landmark.",
+          "weight": 3,
+          "nodes": 1
+        }
+      ]
+    },
+    "bestPractices": {
+      "failingCount": 0,
+      "applicableCount": 19,
+      "failing": []
+    },
+    "seo": {
+      "failingCount": 0,
+      "applicableCount": 8,
+      "failing": []
+    },
+    "hygiene": {
+      "https": 1,
+      "hsts": 1,
+      "csp": 1,
+      "clickjacking": 1,
+      "originIsolation": 1,
+      "trustedTypes": 1,
+      "bfCache": 0,
+      "bfCacheFailures": 1,
+      "protocol": "h2",
+      "legacyHttpRequests": 0,
+      "redirectMs": 754.1,
+      "consoleErrors": 0,
+      "baselineLimitedFeatures": 20
+    },
+    "environment": {
+      "lighthouseVersion": "13.4.1",
+      "benchmarkIndex": 3005.5,
+      "formFactor": "mobile",
+      "throttlingMethod": "simulate",
+      "userAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Mobile Safari/537.36",
+      "fetchTime": "2026-11-17T08:36:34.393Z",
+      "runtimeMs": 6324.5
+    }
+  },
+  "throttledLcpBreakdown": {
+    "timeToFirstByte": 1173.3,
+    "resourceLoadDelay": 0,
+    "resourceLoadDuration": 1284.3,
+    "elementRenderDelay": 3327.8
+  },
+  "field": null,
+  "axe": {
+    "navigationTimedOut": false,
+    "generator": {
+      "id": "vite",
+      "name": "Vite",
+      "icon": "Vite",
+      "version": null,
+      "source": "dom",
+      "raw": null
+    },
+    "probe": {
+      "metas": [],
+      "marks": [
+        "vue",
+        "vite"
+      ],
+      "markVersions": {
+        "vue": "3.5.43"
+      }
+    },
+    "interstitial": null,
+    "host": {
+      "id": "github",
+      "name": "GitHub Pages",
+      "icon": "Github",
+      "source": "x-github-request-id"
+    },
+    "headers": {
+      "server": "GitHub.com",
+      "via": "1.1 varnish",
+      "x-fastly-request-id": "0fcb05c08daee23bd2c4227183b9541542d32bd3",
+      "x-github-request-id": "BFF0:218214:18F1C38:1AD6451:6AFC120A",
+      "x-served-by": "cache-iad-khef600090-IAD"
+    },
+    "violations": 5,
+    "passes": 107,
+    "incomplete": 4,
+    "violationRules": 3,
+    "version": "4.13.0",
+    "top": [
+      {
+        "id": "nested-interactive",
+        "impact": "serious",
+        "nodes": 2,
+        "help": "Interactive controls must not be nested",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/nested-interactive?application=axe-puppeteer",
+        "samples": [
+          {
+            "selector": ".relative.flex:nth-child(11) > button",
+            "snippet": "<button class=\"\">"
+          },
+          {
+            "selector": ".relative.flex:nth-child(12) > button",
+            "snippet": "<button class=\"\"><button class=\"slidev-icon-btn\" title=\"More Options\"><span class=\"sr-only\">More Options</span><div class=\"i-carbon:settings-adjust\"></div><!--v-if--></button></button>"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "nodes": 2,
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/region?application=axe-puppeteer",
+        "samples": [
+          {
+            "selector": ".slidev-page-1",
+            "snippet": "<div data-v-9167a1ed=\"\" data-v-7fa97661=\"\" data-slidev-no=\"1\" class=\"slidev-page slidev-page-1\" style=\"user-select: none;\">"
+          },
+          {
+            "selector": "#slidev-goto-dialog",
+            "snippet": "<div data-v-6a338f52=\"\" id=\"slidev-goto-dialog\" class=\"fixed right-5 transition-all -top-20 op0 pointer-events-none\" w-90=\"\" max-w-90=\"\" min-w-90=\"\">"
+          }
+        ]
+      },
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "nodes": 1,
+        "help": "Document should have one main landmark",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/landmark-one-main?application=axe-puppeteer",
+        "samples": [
+          {
+            "selector": "html",
+            "snippet": "<html lang=\"en\" class=\"light\" style=\"--vh: 8.23px; --slidev-slide-scale: 0.4204081632653061;\">"
+          }
+        ]
+      }
+    ],
+    "error": null
+  },
+  "consecutiveFailures": 0
+}
