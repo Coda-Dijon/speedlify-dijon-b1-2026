@@ -1,4 +1,14 @@
 {
   "version": 1,
-  "aliases": []
+  "aliases": [
+    {
+      "from": "https://coda-dijon.github.io/developper-avec-conscience",
+      "to": "https://coda-dijon.github.io/developper-avec-conscience/1",
+      "confirmedAt": "2026-11-18T09:12:56.678Z",
+      "lastSeen": "2026-11-18T09:12:56.678Z",
+      "observations": 3,
+      "since": "2026-10-29T00:02:21.878Z",
+      "source": "detected"
+    }
+  ]
 }
