@@ -1,0 +1,288 @@
+{
+  "url": "https://coda-dijon.github.io/html-b1-2026-template/docs/Github-Pages",
+  "name": "coda-dijon.github.io",
+  "group": "html-b1-2026-template",
+  "groupName": "html-b1-2026-template",
+  "timestamp": 1795257419766,
+  "date": "2026-11-21T10:36:59.766Z",
+  "runId": "2026-11-21T10-35-17-038Z",
+  "formFactor": "mobile",
+  "requestedRuns": 3,
+  "completedRuns": 3,
+  "durationMs": 35591,
+  "error": null,
+  "variance": {
+    "min": 98,
+    "max": 100,
+    "spread": 2,
+    "runs": 3
+  },
+  "lab": {
+    "requestedUrl": "https://coda-dijon.github.io/html-b1-2026-template/docs/Github-Pages",
+    "finalUrl": "https://coda-dijon.github.io/html-b1-2026-template/docs/Github-Pages",
+    "redirect": null,
+    "statusCode": "ok",
+    "scores": {
+      "performance": 100,
+      "accessibility": 92,
+      "best-practices": 96,
+      "seo": 100,
+      "agentic-browsing": 100
+    },
+    "timings": {
+      "fcp": 1526,
+      "lcp": 1526,
+      "si": 1526,
+      "tbt": 0,
+      "tti": 1526,
+      "cls": 0,
+      "ttfb": 609,
+      "maxPotentialFid": 16,
+      "serverResponseTime": 9,
+      "networkRtt": 0,
+      "networkServerLatency": 17.3
+    },
+    "lcpBreakdown": {
+      "timeToFirstByte": 10.1,
+      "elementRenderDelay": 33.9
+    },
+    "weight": {
+      "total": 22838,
+      "requests": 5,
+      "mainDocument": 1865,
+      "byType": {
+        "total": {
+          "bytes": 16456,
+          "requests": 3
+        },
+        "stylesheet": {
+          "bytes": 11802,
+          "requests": 1
+        },
+        "script": {
+          "bytes": 2789,
+          "requests": 1
+        },
+        "document": {
+          "bytes": 1865,
+          "requests": 1
+        },
+        "image": {
+          "bytes": 0,
+          "requests": 0
+        },
+        "media": {
+          "bytes": 0,
+          "requests": 0
+        },
+        "font": {
+          "bytes": 0,
+          "requests": 0
+        },
+        "other": {
+          "bytes": 0,
+          "requests": 0
+        },
+        "third-party": {
+          "bytes": 16456,
+          "requests": 3
+        }
+      },
+      "scripts": 1,
+      "stylesheets": 1,
+      "fonts": 1
+    },
+    "thirdParty": {
+      "count": 1,
+      "bytes": 2789,
+      "mainThreadMs": 0.4,
+      "top": [
+        {
+          "entity": "Cloudflare CDN",
+          "bytes": 2789,
+          "mainThreadMs": 0.4,
+          "byType": {
+            "script": 2789
+          },
+          "typedBytes": 2789
+        }
+      ]
+    },
+    "mainThread": {
+      "total": 99.1,
+      "byGroup": {
+        "other": 53.1,
+        "styleLayout": 23.6,
+        "scriptEvaluation": 11.5,
+        "parseHTML": 5.6,
+        "paintCompositeRender": 3.8,
+        "scriptParseCompile": 1.5
+      },
+      "bootupMs": 0,
+      "longTasks": 0,
+      "longestTaskMs": null
+    },
+    "dom": {
+      "elements": 40,
+      "depth": 10,
+      "maxChildren": 11
+    },
+    "waste": {
+      "unusedJsBytes": 0,
+      "unusedCssBytes": 11207,
+      "legacyJsBytes": 0,
+      "duplicatedJsBytes": 0,
+      "unminifiedJsBytes": 0,
+      "unminifiedCssBytes": 0,
+      "renderBlockingMs": 767,
+      "renderBlockingCount": 2,
+      "poorlyCachedBytes": 10818.5,
+      "poorlyCachedCount": 1
+    },
+    "accessibility": {
+      "failingCount": 2,
+      "applicableCount": 18,
+      "failingNodes": 2,
+      "failing": [
+        {
+          "id": "link-in-text-block",
+          "title": "Links rely on color to be distinguishable.",
+          "weight": 7,
+          "nodes": 1
+        },
+        {
+          "id": "landmark-one-main",
+          "title": "Document does not have a main landmark.",
+          "weight": 3,
+          "nodes": 1
+        }
+      ]
+    },
+    "bestPractices": {
+      "failingCount": 1,
+      "applicableCount": 19,
+      "failing": [
+        {
+          "id": "errors-in-console",
+          "title": "Browser errors were logged to the console",
+          "weight": 1,
+          "nodes": 1
+        }
+      ]
+    },
+    "seo": {
+      "failingCount": 0,
+      "applicableCount": 8,
+      "failing": []
+    },
+    "hygiene": {
+      "https": 1,
+      "hsts": 1,
+      "csp": 1,
+      "clickjacking": 1,
+      "originIsolation": 1,
+      "trustedTypes": 1,
+      "bfCache": 1,
+      "bfCacheFailures": 0,
+      "protocol": "h2",
+      "legacyHttpRequests": 0,
+      "redirectMs": 0,
+      "consoleErrors": 1,
+      "baselineLimitedFeatures": 1
+    },
+    "environment": {
+      "lighthouseVersion": "13.4.1",
+      "benchmarkIndex": 3015,
+      "formFactor": "mobile",
+      "throttlingMethod": "simulate",
+      "userAgent": "Mozilla/5.0 (Linux; Android 11; moto g power (2022)) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Mobile Safari/537.36",
+      "fetchTime": "2026-11-21T10:37:13.492Z",
+      "runtimeMs": 5376.8
+    }
+  },
+  "throttledLcpBreakdown": {
+    "timeToFirstByte": 1126.6,
+    "elementRenderDelay": 152.4
+  },
+  "field": null,
+  "axe": {
+    "navigationTimedOut": false,
+    "generator": {
+      "id": "jekyll",
+      "name": "Jekyll",
+      "icon": "Jekyll",
+      "version": "3.10.0",
+      "source": "meta",
+      "raw": "Jekyll v3.10.0"
+    },
+    "probe": {
+      "metas": [
+        "Jekyll v3.10.0"
+      ],
+      "marks": [],
+      "markVersions": {}
+    },
+    "interstitial": null,
+    "host": {
+      "id": "github",
+      "name": "GitHub Pages",
+      "icon": "Github",
+      "source": "x-github-request-id"
+    },
+    "headers": {
+      "server": "GitHub.com",
+      "via": "1.1 varnish",
+      "x-fastly-request-id": "9c02f543309d7285b2a681a26aa37accbb65513f",
+      "x-github-request-id": "875A:111102:2A52AC:2C51A9:6B01744C",
+      "x-served-by": "cache-hhr-khhr2060030-HHR"
+    },
+    "violations": 3,
+    "passes": 108,
+    "incomplete": 0,
+    "violationRules": 3,
+    "version": "4.13.0",
+    "top": [
+      {
+        "id": "landmark-one-main",
+        "impact": "moderate",
+        "nodes": 1,
+        "help": "Document should have one main landmark",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/landmark-one-main?application=axe-puppeteer",
+        "samples": [
+          {
+            "selector": "html",
+            "snippet": "<html lang=\"en-US\">"
+          }
+        ]
+      },
+      {
+        "id": "link-in-text-block",
+        "impact": "serious",
+        "nodes": 1,
+        "help": "Links must be distinguishable without relying on color",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/link-in-text-block?application=axe-puppeteer",
+        "samples": [
+          {
+            "selector": ".footer > a",
+            "snippet": "<a href=\"https://github.com/Coda-Dijon/html-b1-2026-template/edit/main/docs/Github-Pages.md\">Improve this page</a>"
+          }
+        ]
+      },
+      {
+        "id": "region",
+        "impact": "moderate",
+        "nodes": 1,
+        "help": "All page content should be contained by landmarks",
+        "helpUrl": "https://dequeuniversity.com/rules/axe/4.13/region?application=axe-puppeteer",
+        "samples": [
+          {
+            "selector": ".container-lg",
+            "snippet": "<div class=\"container-lg px-3 my-5 markdown-body\">"
+          }
+        ]
+      }
+    ],
+    "error": null
+  },
+  "consecutiveFailures": 0
+}
